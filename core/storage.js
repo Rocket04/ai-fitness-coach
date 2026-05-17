@@ -66,12 +66,14 @@ export async function saveSession(session) {
 
 /**
  * Возвращает все сессии за указанный месяц.
- * @param {number} year  – год (например, 2026).
- * @param {number} month – месяц (0‑based, 0 = январь).
+ * @param {string} prefix – строка вида "YYYY-MM".
  * @returns {Promise<Array<Object>>}
  */
-export async function getSessionsByMonth(year, month) {
+export async function getSessionsByMonth(prefix) {
   try {
+    const [yearStr, monthStr] = prefix.split('-');
+    const year = Number(yearStr);
+    const month = Number(monthStr) - 1; // Dexie месяцы 0‑based
     const start = new Date(Date.UTC(year, month, 1)).toISOString().slice(0, 10);
     const end = new Date(Date.UTC(year, month + 1, 0)).toISOString().slice(0, 10);
     return await db.sessions
@@ -203,18 +205,18 @@ export async function getCheckinsForLastDays(days) {
 
 /**
  * Сохраняет новое достижение.
- * @param {Object} achievement
- * @param {string} achievement.achievementKey – уникальный ключ достижения.
- * @param {number} achievement.earnedAt       – timestamp момента получения.
+ * @param {string} achievementKey – уникальный ключ достижения.
  * @returns {Promise<number>} id созданного достижения.
  */
-export async function saveAchievement(achievement) {
+export async function saveAchievement(achievementKey) {
   try {
-    const { achievementKey, earnedAt } = achievement;
-    if (achievementKey === undefined || earnedAt === undefined) {
-      throw new Error('Для достижения обязательны поля achievementKey и earnedAt');
+    if (achievementKey === undefined) {
+      throw new Error('Для достижения обязательно поле achievementKey');
     }
-    return await db.achievements.add({ achievementKey, earnedAt });
+    return await db.achievements.add({
+      achievementKey,
+      earnedAt: Date.now()
+    });
   } catch (err) {
     throw new Error(`Ошибка при сохранении достижения: ${err.message}`, { cause: err });
   }
