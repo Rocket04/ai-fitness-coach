@@ -378,7 +378,7 @@ export function buildSessionFromMonth(monthIndex, dayIndex, readiness, debt, mul
 export function checkAchievements(sessions, checkins) {
   const newlyUnlocked = [];
 
-  for const achievement of ACHIEVEMENTS) {
+  for (const achievement of ACHIEVEMENTS) {
     // Предполагаем, что каждый achievement имеет поле key и функцию test(sessions, checkins) => boolean
     if (achievement.test && achievement.test(sessions, checkins)) {
       newlyUnlocked.push(achievement.key);
