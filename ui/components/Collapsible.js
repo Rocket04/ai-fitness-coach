@@ -8,12 +8,14 @@ import React, { useState } from 'react';
 export default function Collapsible({ title, defaultOpen = false, children }) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
-  return (
-    <div className="collapsible">
-      <div className="collapsible-header" onClick={() => setIsOpen(!isOpen)}>
-        {title}
-      </div>
-      {isOpen && <div className="collapsible-content">{children}</div>}
-    </div>
+  return React.createElement(
+    'div',
+    { className: 'collapsible' },
+    React.createElement(
+      'div',
+      { className: 'collapsible-header', onClick: () => setIsOpen(!isOpen) },
+      title
+    ),
+    isOpen && React.createElement('div', { className: 'collapsible-content' }, children)
   );
 }

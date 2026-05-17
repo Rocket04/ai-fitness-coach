@@ -6,5 +6,5 @@ import React from 'react';
  * @returns {JSX.Element}
  */
 export default function Pill({ tone, children }) {
-  return <span className={`pill ${tone}`}>{children}</span>;
+  return React.createElement('span', { className: `pill ${tone}` }, children);
 }

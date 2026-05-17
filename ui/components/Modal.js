@@ -8,17 +8,23 @@ import React from 'react';
 export default function Modal({ open, title, onClose, children }) {
   if (!open) return null;
 
-  return (
-    <>
-      <div className="modal-overlay" onClick={onClose}>
-        <div className="modal" onClick={e => e.stopPropagation()}>
-          <h2 className="modal-title">{title}</h2>
-          <button className="modal-close" onClick={onClose}>
-            ×
-          </button>
-          <div className="modal-content">{children}</div>
-        </div>
-      </div>
-    </>
+  return React.createElement(
+    React.Fragment,
+    null,
+    React.createElement(
+      'div',
+      { className: 'modal-overlay', onClick: onClose },
+      React.createElement(
+        'div',
+        { className: 'modal', onClick: e => e.stopPropagation() },
+        React.createElement('h2', { className: 'modal-title' }, title),
+        React.createElement(
+          'button',
+          { className: 'modal-close', onClick: onClose },
+          '×'
+        ),
+        React.createElement('div', { className: 'modal-content' }, children)
+      )
+    )
   );
 }

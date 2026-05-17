@@ -1,6 +1,6 @@
 // core/engine.js
 import ACHIEVEMENTS from '../config/achievements.js';
-import MONTHS from '../config/constants.js';
+import { MONTHS } from '../config/constants.js';
 
 /**
  * Определяет готовность (readiness) на основе показателей чек‑ина.
@@ -56,7 +56,7 @@ export function detectRecoveryDebt(recentCheckins) {
     if (restHR >= 76) total += 2;
     else if (restHR === 71) total += 1;
     // боль
-    const pain = Math.max(hipHR || 0, shoulderPain || 0);
+    const pain = Math.max(hipPain || 0, shoulderPain || 0);
     if (pain >= 3) total += 1;
     if (pain >= 5) total += 2;
     // дыхание
@@ -95,7 +95,7 @@ export function calculateRecoveryScore(checkin, allCheckins) {
 
   // ----- Пульс покоя (20%) -----
   const idealHR = 60; // идеальный пульс
-  let hrScore = (idealHR / restHR) * 100;
+  let hrScore = restHR > 0 ? (idealHR / restHR) * 100 : 50;
   hrScore = Math.min(Math.max(hrScore, 0), 100);
 
   // Итоговый балл до штрафов
@@ -171,37 +171,30 @@ export function getWeeklySummary(sessions, checkins, today) {
  * @param {Object} weeklySummary - результат getWeeklySummary.
  * @returns {Array<string>} советы на русском языке.
  */
-export function getCoachAdvice(recoveryScore, checkin, testHistory, weeklySummary) {
+export function getCoachAdvice(recoveryScore, checkin = {}, testHistory = [], weeklySummary = {}) {
   const advice = [];
+  const score = typeof recoveryScore === 'number' ? recoveryScore : 0;
 
-  // Совет по восстановлению
-  if (recoveryScore >= 80) {
-    advice.push(`Recovery Score ${recoveryScore} – отлично, полный план`);
-  } else if (recoveryScore >= 60) {
-    advice.push(`Recovery Score ${recoveryScore} – хороший, можно умеренный план`);
+  if (score >= 80) {
+    advice.push(`Recovery Score ${score} – отлично, полный план`);
+  } else if (score >= 60) {
+    advice.push(`Recovery Score ${score} – хороший, можно умеренный план`);
   } else {
-    advice.push(`Recovery Score ${recoveryScore} – низкий, рекомендуется лёгкий план или отдых`);
+    advice.push(`Recovery Score ${score} – низкий, рекомендуется лёгкий план или отдых`);
   }
 
-  // Совет по сну
-  if (checkin.sleepHours < 7) {
-    advice.push(`Ты спал всего ${checkin.sleepHours} ч – постарайся лечь сегодня пораньше`);
+  const sleepHours = checkin?.sleepHours;
+  if (typeof sleepHours === 'number' && sleepHours > 0 && sleepHours < 7) {
+    advice.push(`Ты спал всего ${sleepHours} ч – постарайся лечь сегодня пораньше`);
   }
 
-  // Совет по HRV (сравнение с 7‑дневным средним, если есть история)
-  if (testHistory.length >= 2) {
-    const recentHRV = testHistory.slice(-2).map(s => s.testResults?.hrv).filter(v => typeof v === 'number');
-    if (recentHRV.length === 2) {
-      const [prev, cur] = recentHRV;
-      if (cur < prev * 0.9) {
-        advice.push(`HRV упал – обрати внимание на восстановление`);
-      }
-    }
+  const hrv = checkin?.hrv;
+  if (typeof hrv === 'number' && hrv > 0 && hrv < 45) {
+    advice.push('HRV ниже нормы – снизь нагрузку и добавь сон');
   }
 
-  // Совет по недельной динамике готовности
-  if (weeklySummary.green < 3) {
-    advice.push(`На этой неделе мало зелёных дней – сосредоточься на восстановлении`);
+  if ((weeklySummary?.green ?? 0) < 3 && (weeklySummary?.green ?? 0) >= 0) {
+    advice.push('На этой неделе мало зелёных дней – сосредоточься на восстановлении');
   }
 
   return advice;
@@ -263,8 +256,7 @@ export function applyApreAdjustment(exercises, lastSession) {
   if (typeof rpe !== 'number') return exercises;
 
   return exercises.map(ex => {
-    // Не трогаем тестовые упражнения
-    if (ex.isTest) return ex;
+    if (ex.isTest || !ex.reps) return ex;
 
     let reps = ex.reps;
     const rangeMatch = reps.match(/^(\d+)-(\d+)$/);
@@ -347,7 +339,10 @@ export function buildSessionFromMonth(monthIndex, dayIndex, readiness, debt, mul
   const day = week.days?.[dayInWeek];
   if (!day || !day.exercises) return [];
 
-  let exercises = [...day.exercises]; // копируем
+  let exercises = day.exercises.map(ex => ({
+    ...ex,
+    type: ex.type ?? day.type,
+  }));
 
   // 1) применяем множитель теста
   exercises = applyMultiplierToExercises(exercises, multiplier);

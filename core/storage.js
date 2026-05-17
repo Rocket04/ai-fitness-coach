@@ -54,11 +54,11 @@ export async function init() {
 export async function saveSession(session) {
   try {
     const { key, ...data } = session;
-    if (key !== undefined && key !== null) {
-      await db.sessions.update(key, data);
-      return key;
+    if (key === undefined || key === null) {
+      throw new Error('Для сессии обязательно поле key');
     }
-    return await db.sessions.add(data);
+    await db.sessions.put({ key, ...data });
+    return key;
   } catch (err) {
     throw new Error(`Ошибка при сохранении сессии: ${err.message}`, { cause: err });
   }
@@ -122,12 +122,11 @@ export async function getSessionsByType(type) {
 export async function getLatestTestResults() {
   try {
     const sessions = await db.sessions
-      .filter((s) => s.testResults !== undefined && s.testResults !== null)
-      .sortBy('date')
-      .reverse()
-      .limit(1)
+      .filter(s => s.testResults != null)
       .toArray();
-    return sessions.length > 0 ? sessions[0].testResults ?? null : null;
+    if (!sessions.length) return null;
+    sessions.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+    return sessions[0].testResults ?? null;
   } catch (err) {
     throw new Error(`Ошибка при получении последних результатов теста: ${err.message}`, { cause: err });
   }
@@ -248,5 +247,54 @@ export async function hasAchievement(key) {
   }
 }
 
-/* Экспортируем также сам объект db для возможного прямого доступа */
-export { db, init };
+/**
+ * Экспортирует все данные приложения в JSON.
+ * @returns {Promise<Object>}
+ */
+export async function exportAllData() {
+  const [sessions, checkins, achievements] = await Promise.all([
+    db.sessions.toArray(),
+    db.checkins.toArray(),
+    db.achievements.toArray(),
+  ]);
+  return {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    sessions,
+    checkins,
+    achievements,
+  };
+}
+
+/**
+ * Импортирует данные из JSON-файла.
+ * @param {Object} data
+ * @returns {Promise<void>}
+ */
+export async function importAllData(data) {
+  if (!data || typeof data !== 'object') {
+    throw new Error('Некорректный формат файла');
+  }
+  await db.transaction('rw', db.sessions, db.checkins, db.achievements, async () => {
+    await db.sessions.clear();
+    await db.checkins.clear();
+    await db.achievements.clear();
+    if (Array.isArray(data.sessions)) await db.sessions.bulkPut(data.sessions);
+    if (Array.isArray(data.checkins)) await db.checkins.bulkPut(data.checkins);
+    if (Array.isArray(data.achievements)) await db.achievements.bulkAdd(data.achievements);
+  });
+}
+
+/**
+ * Удаляет все данные из IndexedDB.
+ * @returns {Promise<void>}
+ */
+export async function clearAllData() {
+  await db.transaction('rw', db.sessions, db.checkins, db.achievements, async () => {
+    await db.sessions.clear();
+    await db.checkins.clear();
+    await db.achievements.clear();
+  });
+}
+
+export { db };

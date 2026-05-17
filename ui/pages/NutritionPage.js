@@ -8,33 +8,49 @@ import React from 'react';
  * @returns {JSX.Element}
  */
 export default function NutritionPage({ NUTRITION }) {
-  return (
-    <>
-      <div className="card">
-        <h2>Ежедневный ориентир питания</h2>
-        {NUTRITION.map((item, idx) => (
-          <div key={idx} className="row" style={{ marginBottom: '0.5rem' }}>
-            <div style={{ width: '40%' }}><strong>{item.label}:</strong></div>
-            <div style={{ width: '40%' }}>{item.value}</div>
-            {item.note && (
-              <div style={{ width: '20%', fontSize: '0.875rem', color: 'var(--text2)' }}>
-                {item.note}
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-
-      <div className="card">
-        <h2>Простой дневной план</h2>
-        <p>
-          Завтрак: белковый (яйца, творог) + сложный углевод (овсянка) + фрукт.<br/>
-          Обед: нежирное мясо/рыба + овощи + крупа.<br/>
-          Ужин: лёгкий белок + овощи.<br/>
-          Перекусы: орехи, йогурт, фрукты.<br/>
-          Питьё: вода 2–2.5 л, ограничить кофеин после 14:00.
-        </p>
-      </div>
-    </>
+  return React.createElement(
+    React.Fragment,
+    null,
+    React.createElement(
+      'div',
+      { className: 'card' },
+      React.createElement('h2', null, 'Ежедневный ориентир питания'),
+      NUTRITION.map((item, idx) =>
+        React.createElement(
+          'div',
+          { key: idx, className: 'row', style: { marginBottom: '0.5rem' } },
+          React.createElement(
+            'div',
+            { style: { width: '40%' } },
+            React.createElement('strong', null, item.label, ':')
+          ),
+          React.createElement('div', { style: { width: '40%' } }, item.value),
+          item.note &&
+            React.createElement(
+              'div',
+              { style: { width: '20%', fontSize: '0.875rem', color: 'var(--text2)' } },
+              item.note
+            )
+        )
+      )
+    ),
+    React.createElement(
+      'div',
+      { className: 'card' },
+      React.createElement('h2', null, 'Простой дневной план'),
+      React.createElement(
+        'p',
+        null,
+        'Завтрак: белковый (яйца, творог) + сложный углевод (овсянка) + фрукт.',
+        React.createElement('br', null),
+        'Обед: нежирное мясо/рыба + овощи + крупа.',
+        React.createElement('br', null),
+        'Ужин: лёгкий белок + овощи.',
+        React.createElement('br', null),
+        'Перекусы: орехи, йогурт, фрукты.',
+        React.createElement('br', null),
+        'Питьё: вода 2–2.5 л, ограничить кофеин после 14:00.'
+      )
+    )
   );
 }

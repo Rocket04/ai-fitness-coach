@@ -21,41 +21,56 @@ export default function RehabPage({
   MORNING_ROUTINE,
   EVENING_ROUTINE
 }) {
-  return (
-    <>
-      <div className="card">
-        <h2>Утренняя активация</h2>
-        <Collapsible title="Упражнения" defaultOpen={true}>
-          {MORNING_ROUTINE.map((ex, idx) => (
-            <div key={idx} className="exercise-name">{ex.name}</div>
-          ))}
-          <div className="row center" style={{ marginTop: '1rem' }}>
-            <button
-              className={morningDone ? 'btn btn-green' : 'btn'}
-              onClick={markMorning}
-            >
-              {morningDone ? 'Выполнено' : 'Отметить как выполнено'}
-            </button>
-          </div>
-        </Collapsible>
-      </div>
-
-      <div className="card">
-        <h2>Вечернее расслабление</h2>
-        <Collapsible title="Упражнения" defaultOpen={true}>
-          {EVENING_ROUTINE.map((ex, idx) => (
-            <div key={idx} className="exercise-name">{ex.name}</div>
-          ))}
-          <div className="row center" style={{ marginTop: '1rem' }}>
-            <button
-              className={eveningDone ? 'btn btn-green' : 'btn'}
-              onClick={markEvening}
-            >
-              {eveningDone ? 'Выполнено' : 'Отметить как выполнено'}
-            </button>
-          </div>
-        </Collapsible>
-      </div>
-    </>
+  return React.createElement(
+    React.Fragment,
+    null,
+    React.createElement(
+      'div',
+      { className: 'card' },
+      React.createElement('h2', null, 'Утренняя активация'),
+      React.createElement(
+        Collapsible,
+        { title: 'Упражнения', defaultOpen: true },
+        MORNING_ROUTINE.map((ex, idx) =>
+          React.createElement('div', { key: idx, className: 'exercise-name' }, ex.name)
+        ),
+        React.createElement(
+          'div',
+          { className: 'row center', style: { marginTop: '1rem' } },
+          React.createElement(
+            'button',
+            {
+              className: morningDone ? 'btn btn-green' : 'btn',
+              onClick: markMorning,
+            },
+            morningDone ? 'Выполнено' : 'Отметить как выполнено'
+          )
+        )
+      )
+    ),
+    React.createElement(
+      'div',
+      { className: 'card' },
+      React.createElement('h2', null, 'Вечернее расслабление'),
+      React.createElement(
+        Collapsible,
+        { title: 'Упражнения', defaultOpen: true },
+        EVENING_ROUTINE.map((ex, idx) =>
+          React.createElement('div', { key: idx, className: 'exercise-name' }, ex.name)
+        ),
+        React.createElement(
+          'div',
+          { className: 'row center', style: { marginTop: '1rem' } },
+          React.createElement(
+            'button',
+            {
+              className: eveningDone ? 'btn btn-green' : 'btn',
+              onClick: markEvening,
+            },
+            eveningDone ? 'Выполнено' : 'Отметить как выполнено'
+          )
+        )
+      )
+    )
   );
 }
