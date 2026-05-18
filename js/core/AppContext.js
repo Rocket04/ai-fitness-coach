@@ -524,7 +524,7 @@ export function AppProvider({ children }) {
       showToast('Данные импортированы');
     } catch (err) {
       console.error('Import failed:', err);
-      alert('Не удалось импортировать файл. Проверьте формат JSON.');
+      showToast(err?.message || 'Не удалось импортировать файл. Проверьте формат JSON.', 'error');
     }
   }, [showToast]);
 

@@ -6,6 +6,7 @@ import React from 'react';
 const READINESS_LABELS = { green: 'Зелёный', yellow: 'Жёлтый', red: 'Красный' };
 
 export function ReadinessIndicator({ readiness, autoReadiness, manualOverride, onManualOverrideChange, lastCheckin, recoveryScore }) {
+  const [showSubjTooltip, setShowSubjTooltip] = React.useState(false);
   const isOverridden = manualOverride && manualOverride !== 'unknown';
 
   const hrvValue = lastCheckin?.hrv ? `${lastCheckin.hrv} мс` : '\u2014';
@@ -94,7 +95,53 @@ export function ReadinessIndicator({ readiness, autoReadiness, manualOverride, o
       { className: 'balance-row', style: { justifyContent: 'center' } },
       React.createElement('span', { className: `balance-chip ${readiness === 'green' ? 'green' : readiness === 'yellow' ? 'yellow' : 'red'}` }, `\u25CF HRV ${hrvValue}`),
       React.createElement('span', { className: `balance-chip ${readiness === 'green' ? 'green' : readiness === 'yellow' ? 'yellow' : 'red'}` }, `\u25CF Восст. ${recoveryValue}`),
-      React.createElement('span', { className: `balance-chip ${readiness === 'red' ? 'red' : readiness === 'yellow' ? 'yellow' : 'green'}` }, `\u25CF Субъект. ${subjectiveValue}`)
+      React.createElement(
+        'span',
+        { style: { position: 'relative', display: 'inline-block' } },
+        React.createElement('span', { className: `balance-chip ${readiness === 'red' ? 'red' : readiness === 'yellow' ? 'yellow' : 'green'}` },
+          `\u25CF Субъект. ${subjectiveValue}`,
+          React.createElement(
+            'button',
+            {
+              onClick: () => setShowSubjTooltip(v => !v),
+              style: {
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: 'inherit',
+                fontSize: '0.7rem',
+                padding: '0 0 0 0.2rem',
+                lineHeight: 1,
+                opacity: 0.7,
+              },
+              title: 'Подробнее о порогах',
+              'aria-label': 'Подробнее о порогах',
+            },
+            '(?)'
+          )
+        ),
+        showSubjTooltip && React.createElement(
+          'div',
+          {
+            style: {
+              position: 'absolute',
+              top: '100%',
+              left: '0',
+              marginTop: '0.35rem',
+              background: 'var(--surface2)',
+              border: '1px solid var(--surface3)',
+              borderRadius: '0.5rem',
+              padding: '0.5rem 0.75rem',
+              fontSize: '0.72rem',
+              color: 'var(--text2)',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+              zIndex: 10,
+              whiteSpace: 'nowrap',
+            },
+          },
+          'Пороги основаны на данных профессиональных спортсменов, могут требовать индивидуальной калибровки.'
+        )
+      )
     ),
     // Manual override buttons
     React.createElement(
@@ -134,15 +181,57 @@ export function ReadinessIndicator({ readiness, autoReadiness, manualOverride, o
 }
 
 export function RecoveryBar({ score }) {
+  const [showTooltip, setShowTooltip] = React.useState(false);
   const color = score >= 80 ? 'var(--green)' : score >= 60 ? 'var(--yellow)' : 'var(--red)';
   return React.createElement(
     'div',
-    { className: 'card', style: { padding: '0.75rem 1rem' } },
+    { className: 'card', style: { padding: '0.75rem 1rem', position: 'relative' } },
     React.createElement(
       'div',
       { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } },
-      React.createElement('span', { className: 'text-sm', style: { fontWeight: 500 } }, 'Восстановление'),
+      React.createElement('span', { className: 'text-sm', style: { fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.35rem' } },
+        'Восстановление',
+        React.createElement(
+          'button',
+          {
+            onClick: () => setShowTooltip(v => !v),
+            style: {
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: 'var(--text3)',
+              fontSize: '0.85rem',
+              padding: '0',
+              lineHeight: 1,
+            },
+            title: 'Подробнее о формуле',
+            'aria-label': 'Подробнее о формуле',
+          },
+          '(?)'
+        )
+      ),
       React.createElement('strong', { style: { color, fontSize: '1.1rem' } }, `${score}%`)
+    ),
+    showTooltip && React.createElement(
+      'div',
+      {
+        style: {
+          position: 'absolute',
+          bottom: '100%',
+          left: '0.5rem',
+          right: '0.5rem',
+          marginBottom: '0.5rem',
+          background: 'var(--surface2)',
+          border: '1px solid var(--surface3)',
+          borderRadius: '0.5rem',
+          padding: '0.5rem 0.75rem',
+          fontSize: '0.78rem',
+          color: 'var(--text2)',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+          zIndex: 10,
+        },
+      },
+      'Формула основана на исследованиях 2025-2026 гг., но не является клинически валидированной.'
     ),
     React.createElement(
       'div',

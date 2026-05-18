@@ -1,7 +1,7 @@
 // js/core/engine.js
 // Бизнес-логика фитнес-трекера — чистые функции без побочных эффектов
 
-import { MONTHS, TRAIN_ORDER } from '../config/constants.js';
+import { MONTHS, TRAIN_ORDER, RECOVERY_WEIGHTS, SUBJECTIVE_THRESHOLDS } from '../config/constants.js';
 import { formatISO, addDays, parseLocalDate } from './helpers.js';
 
 /* =================================================================
@@ -36,11 +36,11 @@ export function calcReadiness(checkin) {
     (hrv > 0 && hrv < 40) ||
     hip >= 5 || sh >= 5 ||
     breath === 'bad' ||
-    soreness >= 5 ||
-    (energy > 0 && energy <= 1) ||
-    (mood > 0 && mood <= 1) ||
-    (sleepQ > 0 && sleepQ <= 1) ||
-    stress >= 5;
+    soreness > SUBJECTIVE_THRESHOLDS.muscleSorenessHigh ||
+    (energy > 0 && energy < SUBJECTIVE_THRESHOLDS.energyLow) ||
+    (mood > 0 && mood < SUBJECTIVE_THRESHOLDS.moodLow) ||
+    (sleepQ > 0 && sleepQ < SUBJECTIVE_THRESHOLDS.sleepQualityLow) ||
+    stress > SUBJECTIVE_THRESHOLDS.stressHigh;
 
   const yellow =
     (sleep > 0 && sleep < 7) ||
@@ -48,11 +48,11 @@ export function calcReadiness(checkin) {
     (hrv > 0 && hrv < 55) ||
     hip >= 3 || sh >= 3 ||
     breath !== 'ok' ||
-    soreness >= 4 ||
-    (energy > 0 && energy <= 2) ||
-    (mood > 0 && mood <= 2) ||
-    (sleepQ > 0 && sleepQ <= 2) ||
-    stress >= 4;
+    soreness >= SUBJECTIVE_THRESHOLDS.muscleSorenessHigh ||
+    (energy > 0 && energy <= SUBJECTIVE_THRESHOLDS.energyLow) ||
+    (mood > 0 && mood <= SUBJECTIVE_THRESHOLDS.moodLow) ||
+    (sleepQ > 0 && sleepQ <= SUBJECTIVE_THRESHOLDS.sleepQualityLow) ||
+    stress >= SUBJECTIVE_THRESHOLDS.stressHigh;
 
   if (red) return 'red';
   if (yellow) return 'yellow';
@@ -118,129 +118,106 @@ export function detectRecoveryDebt(recentCheckins) {
     if (breath === 'bad') points += 2;
 
     // мышечная болезненность
-    if (soreness >= 4) points += 2;
-    else if (soreness >= 3) points += 1;
+    if (soreness > SUBJECTIVE_THRESHOLDS.muscleSorenessHigh) points += 2;
+    else if (soreness >= SUBJECTIVE_THRESHOLDS.muscleSorenessHigh) points += 1;
 
     // энергия
-    if (energy > 0 && energy <= 1) points += 2;
-    else if (energy > 0 && energy <= 2) points += 1;
+    if (energy > 0 && energy < SUBJECTIVE_THRESHOLDS.energyLow) points += 2;
+    else if (energy > 0 && energy <= SUBJECTIVE_THRESHOLDS.energyLow) points += 1;
 
     // настроение
-    if (mood > 0 && mood <= 1) points += 2;
-    else if (mood > 0 && mood <= 2) points += 1;
+    if (mood > 0 && mood < SUBJECTIVE_THRESHOLDS.moodLow) points += 2;
+    else if (mood > 0 && mood <= SUBJECTIVE_THRESHOLDS.moodLow) points += 1;
 
     // качество сна
-    if (sleepQ > 0 && sleepQ <= 1) points += 2;
-    else if (sleepQ > 0 && sleepQ <= 2) points += 1;
+    if (sleepQ > 0 && sleepQ < SUBJECTIVE_THRESHOLDS.sleepQualityLow) points += 2;
+    else if (sleepQ > 0 && sleepQ <= SUBJECTIVE_THRESHOLDS.sleepQualityLow) points += 1;
 
     // стресс
-    if (stress >= 5) points += 2;
-    else if (stress >= 4) points += 1;
+    if (stress > SUBJECTIVE_THRESHOLDS.stressHigh) points += 2;
+    else if (stress >= SUBJECTIVE_THRESHOLDS.stressHigh) points += 1;
   }
 
   return points >= 4;
 }
 
 /**
- * Recovery Score 0–100 на основе HRV, сна, пульса, боли, дыхания и субъективных метрик.
- * MVP-формула: старт со 100, вычеты по порогам.
+ * Recovery Score 0–100 на основе HRV, сна, пульса и субъективных метрик.
+ * Взвешенная z-score модель: HRV 40%, сон 30%, пульс 10%, субъективные 20%.
  * @param {Object} checkin — текущий чек-ин
- * @param {Array<Object>} allCheckins — массив всех чек-инов (для 7-дневного среднего HRV)
+ * @param {Array<Object>} allCheckins — массив всех чек-инов (для 14-дневного бейзлайна)
  * @returns {number} 0–100
  */
 export function calculateRecoveryScore(checkin, allCheckins) {
   const sleep = Number(checkin.sleepHours) || 8;
   const hrv = Number(checkin.hrv) || 70;
   const hr = Number(checkin.restHR) || 63;
-  const hip = Number(checkin.hipPain) || 0;
-  const sh = Number(checkin.shoulderPain) || 0;
-  const breath = checkin.breathing || 'ok';
 
   // Субъективные метрики
   const soreness = Number(checkin.muscleSoreness || 0);
   const energy = Number(checkin.energy || 0);
   const mood = Number(checkin.mood || 0);
-  const sleepQ = Number(checkin.sleepQuality || 0);
-  const stress = Number(checkin.stress || 0);
 
-  // Средний HRV за последние 7 дней
+  // 14-дневный бейзлайн
   const todayStr = checkin.date || formatISO(new Date());
   const today = parseLocalDate(todayStr) || new Date();
-  const sevenDaysAgo = addDays(today, -7);
+  const fourteenDaysAgo = addDays(today, -14);
 
-  const inLast7 = allCheckins.filter(c => {
-    if (!c || !c.hrv) return false;
+  const inLast14 = allCheckins.filter(c => {
+    if (!c || !c.date) return false;
     const cDate = parseLocalDate(c.date);
-    return cDate && cDate >= sevenDaysAgo && cDate <= today;
+    return cDate && cDate >= fourteenDaysAgo && cDate <= today;
   });
 
-  const hrvValues = inLast7.map(c => Number(c.hrv)).filter(v => v > 0);
-  let avgHrv = 70;
+  const hrvValues = inLast14.map(c => Number(c.hrv)).filter(v => v > 0);
+  const rhrValues = inLast14.map(c => Number(c.restHR)).filter(v => v > 0);
 
-  if (hrvValues.length >= 3) {
-    avgHrv = hrvValues.reduce((sum, v) => sum + v, 0) / hrvValues.length;
-  } else if (hrvValues.length === 2) {
-    avgHrv = (hrvValues[0] + hrvValues[1]) / 2;
-  } else if (hrvValues.length === 1) {
-    avgHrv = hrvValues[0];
+  function getBaseline(values) {
+    const n = values.length;
+    if (n < 3) return null;
+    const mean = values.reduce((a, b) => a + b, 0) / n;
+    const variance = values.reduce((sum, v) => sum + (v - mean) ** 2, 0) / n;
+    const std = Math.sqrt(variance) || 1;
+    return { mean, std };
   }
 
-  let score = 100;
-
-  // HRV (50% веса в штрафах)
-  if (hrv > 0) {
-    const ratio = hrv / (avgHrv || 70);
-    if (ratio >= 1.1) score -= 0;
-    else if (ratio >= 0.9) score -= 10;
-    else if (ratio >= 0.7) score -= 25;
-    else score -= 40;
+  function zScoreToScore(z, invert = false) {
+    if (invert) z = -z;
+    const score = 5 + z * 2.5;
+    return Math.min(10, Math.max(0, score));
   }
 
-  // Сон (30% веса)
-  if (sleep > 0) {
-    if (sleep >= 8) score -= 0;
-    else if (sleep >= 7) score -= 10;
-    else if (sleep >= 6) score -= 25;
-    else score -= 40;
+  // HRV score (0–10)
+  let hrvScore;
+  const hrvBaseline = getBaseline(hrvValues);
+  if (hrvBaseline) {
+    const z = (hrv - hrvBaseline.mean) / hrvBaseline.std;
+    hrvScore = zScoreToScore(z, false);
+  } else {
+    hrvScore = hrv >= 70 ? 10 : hrv >= 55 ? 7 : hrv >= 40 ? 4 : 1;
   }
 
-  // Пульс покоя (20% веса)
-  if (hr > 0) {
-    if (hr <= 63) score -= 0;
-    else if (hr <= 70) score -= 10;
-    else if (hr <= 76) score -= 20;
-    else score -= 35;
+  // Sleep score (0–10): 8 ч = 10
+  const sleepScore = Math.min(10, Math.max(0, (sleep / 8) * 10));
+
+  // RHR score (0–10): z-score, рост на 5+ уд/мин — тревожный сигнал
+  let rhrScore;
+  const rhrBaseline = getBaseline(rhrValues);
+  if (rhrBaseline) {
+    const z = (hr - rhrBaseline.mean) / rhrBaseline.std;
+    rhrScore = zScoreToScore(z, true);
+  } else {
+    rhrScore = hr <= 60 ? 10 : hr <= 70 ? 7 : hr <= 76 ? 4 : 1;
   }
 
-  // Штрафы за боль
-  if (hip >= 5 || sh >= 5) score -= 20;
-  else if (hip >= 3 || sh >= 3) score -= 10;
+  // Subjective score (0–10): среднее из энергии, настроения и инвертированной болезненности
+  const subjectiveRaw = (energy + mood + (5 - soreness)) / 3;
+  const subjectiveScore = Math.min(10, Math.max(0, subjectiveRaw * 2));
 
-  // Штрафы за дыхание
-  if (breath === 'bad') score -= 20;
-  else if (breath === 'mild') score -= 10;
-
-  // Штрафы за мышечную болезненность
-  if (soreness >= 4) score -= 15;
-  else if (soreness >= 3) score -= 8;
-
-  // Штрафы за низкую энергию
-  if (energy > 0 && energy <= 2) score -= 15;
-  else if (energy > 0 && energy <= 3) score -= 5;
-
-  // Штрафы за настроение
-  if (mood > 0 && mood <= 2) score -= 10;
-  else if (mood > 0 && mood <= 3) score -= 5;
-
-  // Штрафы за качество сна
-  if (sleepQ > 0 && sleepQ <= 2) score -= 10;
-  else if (sleepQ > 0 && sleepQ <= 3) score -= 5;
-
-  // Штрафы за стресс
-  if (stress >= 5) score -= 15;
-  else if (stress >= 4) score -= 8;
-
-  return Math.max(0, Math.min(100, score));
+  // Итоговый Score
+  const { hrv: wHrv, sleep: wSleep, rhr: wRhr, subjective: wSubjective } = RECOVERY_WEIGHTS;
+  const total = (hrvScore * wHrv + sleepScore * wSleep + rhrScore * wRhr + subjectiveScore * wSubjective) * 10;
+  return Math.round(total);
 }
 
 /* =================================================================

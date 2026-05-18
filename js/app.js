@@ -104,6 +104,9 @@ function AppContent() {
             )
           )
         ),
+        React.createElement('div', { style: { fontSize: '0.75rem', color: 'var(--muted)', marginTop: '0.5rem' } },
+          'Данные вводятся вручную. Алгоритмы не сертифицированы, продукт в стадии тестирования.'
+        ),
         React.createElement('div', { style: { display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '0.5rem' } },
           React.createElement('button', {
             className: 'btn',

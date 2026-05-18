@@ -318,46 +318,41 @@ export async function exportAllData() {
  * @returns {Promise<void>}
  */
 export async function importAllData(data) {
-  if (!data || typeof data !== 'object') {
-    throw new Error('Некорректный формат файла');
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    throw new Error('Некорректный формат файла: ожидался объект');
   }
 
-  // ── Нормализуем сессии ──
-  let sessions = [];
-  if (Array.isArray(data.sessions)) {
-    sessions = data.sessions;
-  } else if (data.sessions && typeof data.sessions === 'object') {
-    // MVP-формат: объект { "2025-01-06_A": {...} }
-    sessions = Object.entries(data.sessions).map(([key, s]) => ({
-      key,
-      ...s,
-    }));
+  // ── Валидация sessions ──
+  if (data.sessions !== undefined && !Array.isArray(data.sessions)) {
+    throw new Error('Некорректный формат файла: sessions должен быть массивом');
   }
 
-  // ── Нормализуем чек-ины ──
-  let checkins = [];
-  if (Array.isArray(data.checkins)) {
-    checkins = data.checkins;
-  } else if (data.checkins && typeof data.checkins === 'object') {
-    // MVP-формат: объект { "2025-01-06": {...} }
-    checkins = Object.entries(data.checkins).map(([date, c]) => ({
-      date,
-      ...c,
-    }));
+  // ── Валидация checkins ──
+  if (data.checkins !== undefined && !Array.isArray(data.checkins)) {
+    throw new Error('Некорректный формат файла: checkins должен быть массивом');
   }
 
-  // ── Настройки из MVP-формата (data.plan) ──
+  // ── Валидация settings ──
+  if (data.settings !== undefined) {
+    if (!data.settings || typeof data.settings !== 'object' || Array.isArray(data.settings)) {
+      throw new Error('Некорректный формат файла: settings должен быть объектом');
+    }
+    if (typeof data.settings.startDate !== 'string') {
+      throw new Error('Некорректный формат файла: settings.startDate должен быть строкой');
+    }
+    if (!Array.isArray(data.settings.trainDays) || !data.settings.trainDays.every(d => typeof d === 'number')) {
+      throw new Error('Некорректный формат файла: settings.trainDays должен быть массивом чисел');
+    }
+  }
+
+  const sessions = data.sessions ?? [];
+  const checkins = data.checkins ?? [];
+
+  // ── Настройки из data.settings ──
   const settingsMap = {};
-  if (data.settings && Array.isArray(data.settings)) {
-    data.settings.forEach(s => { settingsMap[s.key] = s; });
-  }
-  if (data.plan) {
-    if (data.plan.startDate) {
-      settingsMap.startDate = { key: 'startDate', value: data.plan.startDate };
-    }
-    if (data.plan.trainDays) {
-      settingsMap.trainDays = { key: 'trainDays', value: JSON.stringify(data.plan.trainDays) };
-    }
+  if (data.settings) {
+    settingsMap.startDate = { key: 'startDate', value: data.settings.startDate };
+    settingsMap.trainDays = { key: 'trainDays', value: JSON.stringify(data.settings.trainDays) };
   }
 
   // ── Транзакция: очистка + запись ──

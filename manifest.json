@@ -1,7 +1,7 @@
 {
-  "name": "Фитнес-трекер 12 недель",
-  "short_name": "Фитнес",
-  "description": "Персональный план тренировок с адаптацией и офлайн-доступом",
+  "name": "Smart Fitness Coach",
+  "short_name": "Smart Coach",
+  "description": "Интеллектуальный тренировочный дневник с авторегуляцией и офлайн-доступом",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0a0a0a",

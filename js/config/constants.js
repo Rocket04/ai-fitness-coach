@@ -7,6 +7,23 @@ export const DAYS = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
 /** Порядок ротации типов тренировок */
 export const TRAIN_ORDER = ['A', 'B', 'C'];
 
+/** Веса компонентов Recovery Score */
+export const RECOVERY_WEIGHTS = {
+  hrv: 0.4,
+  sleep: 0.3,
+  rhr: 0.1,
+  subjective: 0.2,
+};
+
+/** Субъективные пороги (Simonelli et al. 2025) */
+export const SUBJECTIVE_THRESHOLDS = {
+  muscleSorenessHigh: 4,
+  energyLow: 2,
+  moodLow: 2,
+  stressHigh: 4,
+  sleepQualityLow: 2,
+};
+
 /** Пульсовые зоны */
 export const ZONES = [
   { zone: "Z1", name: "Разминка", bpm: "Очень легко", pace: "Ходьба", color: "#4a7c59",
