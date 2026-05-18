@@ -1,0 +1,1259 @@
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Тренировочный план – 12 недель</title>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --surface: #141414;
+      --surface2: #1a1a1a;
+      --surface3: #242424;
+      --border: #2a2a2a;
+      --text: #f0f0f0;
+      --text2: #a0a0a0;
+      --green: #4ade80;
+      --yellow: #facc15;
+      --red: #f87171;
+      --blue: #60a5fa;
+      --accent: #4f7c44;
+      --radius: 18px;
+      --radius-sm: 14px;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      min-height: 100vh;
+      min-height: 100dvh;
+      overscroll-behavior: none;
+      -webkit-font-smoothing: antialiased;
+    }
+    #root {
+      max-width: 500px;
+      margin: 0 auto;
+      padding: 16px 16px 100px;
+    }
+    h1, h2, h3, p { margin: 0; }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 16px;
+      margin-bottom: 14px;
+    }
+    .card-inner {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      margin-bottom: 10px;
+    }
+    .btn {
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 14px 18px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #fff;
+      cursor: pointer;
+      width: 100%;
+      transition: all 0.15s;
+      display: block;
+      letter-spacing: 0.01em;
+      background: var(--surface3);
+      color: var(--text);
+      border: 1px solid var(--border);
+      font-family: var(--font);
+    }
+    .btn:active { transform: scale(0.97); opacity: 0.85; }
+    .btn-accent { background: #2d4a2d; border-color: #4f7c44; color: #c0e0c0; }
+    .btn-green { background: #14532d; border-color: #22c55e; }
+    .btn-red { background: #7f1d1d; border-color: #ef4444; }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1;
+      letter-spacing: 0.02em;
+    }
+    .pill.green { background: #14532d; color: #86efac; }
+    .pill.yellow { background: #422006; color: #fde047; }
+    .pill.red { background: #450a0a; color: #fca5a5; }
+    .pill.blue { background: #1e1b4b; color: #a5b4fc; }
+    .pill.gray { background: var(--surface3); color: var(--text2); }
+    .tabbar {
+      display: flex;
+      background: var(--surface2);
+      border-radius: var(--radius);
+      padding: 4px;
+      margin-bottom: 18px;
+      gap: 4px;
+    }
+    .tab {
+      flex: 1;
+      text-align: center;
+      padding: 10px 4px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text2);
+      border-radius: 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: transparent;
+      border: none;
+      font-family: var(--font);
+    }
+    .tab.active {
+      background: var(--surface3);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .row.center { align-items: center; }
+    .divider { height: 1px; background: var(--border); margin: 12px 0; }
+    .exercise {
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .exercise:last-child { border-bottom: none; padding-bottom: 0; }
+    .exercise-name {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      color: #f1f5f9;
+    }
+    .exercise-detail {
+      font-size: 13px;
+      color: var(--text2);
+      line-height: 1.5;
+    }
+    .exercise-note {
+      font-size: 12px;
+      color: #a5b4fc;
+      margin-top: 4px;
+    }
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      z-index: 100;
+      backdrop-filter: blur(2px);
+    }
+    .modal {
+      width: 100%;
+      max-width: 500px;
+      background: var(--surface);
+      border-radius: 24px 24px 0 0;
+      padding: 20px 16px 32px;
+      max-height: 82vh;
+      overflow-y: auto;
+      border-top: 1px solid var(--border);
+    }
+    input, select, textarea {
+      width: 100%;
+      background: var(--surface3);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      font-size: 15px;
+      outline: none;
+      transition: border 0.2s;
+      font-family: var(--font);
+    }
+    input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+    input[type="date"] { color-scheme: dark; }
+    textarea { min-height: 80px; resize: vertical; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .chip {
+      border: none;
+      border-radius: 999px;
+      padding: 9px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      background: var(--surface3);
+      color: var(--text2);
+      border: 1px solid var(--border);
+      transition: all 0.15s;
+      font-family: var(--font);
+    }
+    .chip.active {
+      background: #1e3a1e;
+      border-color: #4f7c44;
+      color: #c0e0c0;
+    }
+    .stat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .stat-box {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+    }
+    .stat-value { font-size: 22px; font-weight: 800; line-height: 1.1; }
+    .stat-label { font-size: 11px; color: var(--text2); margin-top: 4px; }
+    .text-sm { font-size: 14px; line-height: 1.55; color: var(--text2); }
+    .text-xs { font-size: 11px; line-height: 1.5; color: var(--text2); }
+    .highlight { color: #e2e8f0; font-weight: 600; }
+    .badge-ok { color: #86efac; }
+    .badge-warn { color: #fde047; }
+    .badge-bad { color: #fca5a5; }
+    .collapsible-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 14px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      margin-bottom: 6px;
+    }
+    .collapsible-content {
+      padding: 12px 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-top: none;
+      border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+      margin-bottom: 10px;
+    }
+    .toggle {
+      width: 52px;
+      height: 30px;
+      border-radius: 999px;
+      background: #2d3340;
+      position: relative;
+      flex-shrink: 0;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .toggle.on { background: #166534; border-color: #22c55e; }
+    .toggle::after {
+      content: '';
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #cbd5e1;
+      transition: all 0.2s;
+    }
+    .toggle.on::after { left: 25px; background: #86efac; }
+    .section-title {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: #c0d0c0;
+    }
+    .month-stats {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 16px 12px;
+      margin-bottom: 12px;
+    }
+    .month-stat-item {
+      text-align: center;
+    }
+    .month-stat-value {
+      font-size: 28px;
+      font-weight: 800;
+      line-height: 1.1;
+    }
+    .month-stat-label {
+      font-size: 11px;
+      color: var(--text2);
+      margin-top: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect, useMemo, useRef } = React;
+
+    // ─── КОНСТАНТЫ ──────────────────────────────────────────
+    const ZONES = [
+  { zone: "Z1", name: "Разминка", bpm: "Очень легко", pace: "Ходьба", color: "#4a7c59",
+    desc: "Дышишь носом, разговариваешь без усилий. Вообще не напрягаешься.", 
+    use: "Разминка ≥8 мин, заминка ≥7 мин, прогулки" },
+  { zone: "Z2", name: "Аэробная база", bpm: "Легко", pace: "Трусца", color: "#6b9a50",
+    desc: "Говоришь полными предложениями. Можешь петь — с трудом. Чуть жарко.", 
+    use: "ОСНОВНАЯ зона. 80% всех пробежек. Именно здесь растёт VO2max" },
+  { zone: "Z3", name: "Темповая", bpm: "Умеренно", pace: "Быстрый бег", color: "#b89a30",
+    desc: "Говоришь короткими фразами, не предложениями. Дышишь заметно.", 
+    use: "М2–М3 только. Короткие вставки ≤10 мин. Если жмёт грудь — сразу вниз" },
+  { zone: "Z4", name: "Пороговая", bpm: "Тяжело", pace: "Очень быстро", color: "#c87040",
+    desc: "⚠ Говоришь только словами. Дыхание шумное. Долго не удержать.", 
+    use: "Только интервалы ≤90 сек в М3. Риск бронхоспазма при длительной работе" },
+  { zone: "Z5", name: "Максимум", bpm: "Предел", pace: "Спринт", color: "#a04030",
+    desc: "🚫 Не говоришь вообще. Невозможно поддерживать дольше 30–60 сек.", 
+    use: "Исключена из плана. Астма + ранняя адаптация" },
+];
+
+    const HRV_GUIDE = [
+      { range: "< 40 мс", label: "Красный", color: "#8a3020", action: "Только мобильность 15–20 мин + лёгкая прогулка.", why: "Высокий симпатический тонус." },
+      { range: "40–55 мс", label: "Жёлтый", color: "#7a6020", action: "Сниженная нагрузка: Zone 1–2 бег, силовые −30%.", why: "Субоптимальное восстановление." },
+      { range: "56–80 мс", label: "Зелёный", color: "#3a6a40", action: "Плановая тренировка.", why: "Твой типичный диапазон." },
+      { range: "> 80 мс", label: "Синий", color: "#304870", action: "Можно добавить 10–15% объёма.", why: "Отличное восстановление." },
+    ];
+
+    const MORNING_ROUTINE = [
+      { name: "Кошка-корова", reps: "10 циклов", why: "Мобилизация позвоночника" },
+      { name: "Ротация грудного отдела лёжа", reps: "8 / сторону", why: "T-spine приоритет" },
+      { name: "Chin tuck", reps: "10 × 5 сек", why: "Коррекция forward head posture" },
+      { name: "90/90 stretch", reps: "60 сек / сторону", why: "Ротационная мобильность ТБС" },
+      { name: "Hip flexor stretch", reps: "40 сек / сторону", why: "Укороченный iliopsoas" },
+      { name: "Внешняя ротация плеча лёжа", reps: "10 / сторону", why: "Инфраспинатус" },
+      { name: "Box breathing", reps: "3 мин", why: "ЦНС + дыхательный контроль" },
+    ];
+
+    const EVENING_ROUTINE = [
+      { name: "МФР стоп и икр", reps: "2–3 мин", why: "Теннисный мяч или кулак/ладонь" },
+      { name: "МФР ТБС и грушевидной", reps: "3–4 мин", why: "Мяч или валик" },
+      { name: "Clamshell с паузой 2 сек", reps: "12 / сторону", why: "Средняя ягодичная" },
+      { name: "Ягодичный мост двуногий", reps: "15 (пауза 2 сек)", why: "Ягодичные" },
+      { name: "Pigeon лёжа (фигура 4)", reps: "45–60 сек / сторону", why: "Грушевидная + ТБС" },
+      { name: "Разгибание грудного отдела", reps: "30–40 сек", why: "Открытие грудной клетки" },
+      { name: "Wall slide", reps: "2×10", why: "Паттерн лопатки" },
+      { name: "Box breathing", reps: "5–8 мин", why: "Расслабление ЦНС" },
+    ];
+
+    const NUTRITION = [
+      { label: "Калории (цель набора)", val: "2500–2800 ккал/день", note: "Сейчас вероятно 1800–2200 — дефицит." },
+      { label: "Белок (ПРИОРИТЕТ)", val: "130–140 г/день", note: "Без этого мышечный рост невозможен." },
+      { label: "Яйца", val: "4–6 штук ежедневно", note: "6 яиц = ~42 г белка" },
+      { label: "Творог", val: "200–300 г/день", note: "Казеин = медленный белок." },
+      { label: "Кефир", val: "Продолжать", note: "Хорошо, но белка мало." },
+      { label: "Мясо/птица", val: "150–200 г в дни когда есть", note: "Куриное филе — ~31 г белка/100г" },
+      { label: "Магний цитрат", val: "200 мг вечером", note: "Улучшает сон." },
+      { label: "D3", val: "2500 МЕ", note: "Дефицит ухудшает силовые." },
+    ];
+
+    // ─── ПЛАНЫ ТРЕНИРОВОК ─────────────────────────────────
+    const month1 = {
+      title: "М1", full: "Месяц 1", subtitle: "Фундамент", weeks: "Нед. 1–4",
+      color: "#4a7c59",
+      days: [
+        { day: "ПН", label: "Бег Z2 + Тяга", exercises: [
+          { n: "Ходьба разминка", s: "—", r: "7–8 мин", c: "Пульс 100–110 прежде чем бежать.", w: "Прогрев бронхов" },
+          { n: "Бег Zone 2", s: "—", r: "12–15 мин · 125–140 bpm", w: "Главный аэробный стимул" },
+          { n: "Заминка", s: "—", r: "5–7 мин ходьба", w: "Профилактика бронхоспазма" },
+          { n: "Подтягивания параллельным хватом", s: "3", r: "5–6", c: "НЕ до отказа.", w: "Паттерн тяги" },
+          { n: "Австралийские подтягивания", s: "3", r: "8–10", c: "Тело прямое.", w: "Горизонтальная тяга" },
+          { n: "W-подъём лёжа на животе", s: "3", r: "10 медленно", w: "Нижние трапеции" },
+        ]},
+        { day: "ВТ", label: "Мобильность + Бёдра", exercises: [
+          { n: "Полная мобильная рутина", s: "—", r: "20–25 мин", w: "Не пропускать." },
+          { n: "Clamshell", s: "3", r: "12 / сторону", w: "Средняя ягодичная." },
+          { n: "Ягодичный мост", s: "3", r: "15 (пауза 2 сек)", w: "Стабилизатор таза." },
+          { n: "Dead bug", s: "3", r: "5 / сторону", w: "Глубокий кор." },
+        ]},
+        { day: "СР", label: "Бег Z2 + Жим", exercises: [
+          { n: "Ходьба разминка", s: "—", r: "7–8 мин", w: "Прогрев бронхов" },
+          { n: "Бег Zone 2", s: "—", r: "12–15 мин · 125–140 bpm", w: "Второй аэробный день" },
+          { n: "Заминка", s: "—", r: "5–7 мин", w: "Протокол астма" },
+          { n: "Отжимания темп 3-0-1", s: "3", r: "6–8", c: "3 сек вниз.", w: "Грудные + трицепс" },
+          { n: "Push-up plus (протракция)", s: "3", r: "8", w: "Передняя зубчатая" },
+          { n: "Внешняя ротация плеча лёжа", s: "3", r: "10 / сторону", w: "Инфраспинатус" },
+        ]},
+        { day: "ЧТ", label: "Кор + Дыхание", exercises: [
+          { n: "Планка на локтях", s: "3", r: "25–35 сек", w: "Антигравитационный кор" },
+          { n: "Боковая планка", s: "2", r: "20 сек / сторону", w: "Квадратная поясничная" },
+          { n: "Bird-dog", s: "3", r: "6 / сторону", w: "Разгибатели позвоночника" },
+          { n: "Wall slide", s: "2", r: "10", w: "Паттерн движения лопатки" },
+        ]},
+        { day: "ПТ", label: "Бег Z2 (длинный) + Полное тело", exercises: [
+          { n: "Ходьба разминка", s: "—", r: "8–10 мин", w: "Самая длинная пробежка" },
+          { n: "Бег Zone 2", s: "—", r: "18–22 мин · 125–140 bpm", w: "Главный аэробный объём" },
+          { n: "Заминка", s: "—", r: "7–8 мин", w: "Профилактика" },
+          { n: "Подтягивания + Австралийские суперсет", s: "3", r: "5 + 8", w: "Суммарный объём тяг" },
+          { n: "Отжимания + Push-up plus суперсет", s: "3", r: "6 + 6", w: "Жим + лопатка" },
+        ]},
+        { day: "СБ", label: "Активное восстановление", exercises: [{ n: "Прогулка", s: "—", r: "40–50 мин Zone 1", w: "Лимфодренаж" }, { n: "Мобильность", s: "—", r: "15 мин", w: "Поддержание" }] },
+        { day: "ВС", label: "Отдых", exercises: [{ n: "Полный отдых", s: "—", r: "—", w: "Суперкомпенсация" }] },
+      ],
+    };
+
+    const month2 = {
+      title: "М2", full: "Месяц 2", subtitle: "Развитие", weeks: "Нед. 5–8",
+      color: "#7a8a3a",
+      days: [
+        { day: "ПН", label: "Интервалы Z2/Z3 + Тяга", exercises: [
+          { n: "Разминка", s: "—", r: "10 мин", w: "Протокол астма" },
+          { n: "Интервалы 45 сек Z3 / 2 мин шаг", s: "5–6", r: "Z3: 136–154 bpm", w: "Стимул выше аэробного" },
+          { n: "Заминка", s: "—", r: "8–10 мин", w: "Критично" },
+          { n: "Подтягивания", s: "4", r: "6–8", w: "Прогрессия" },
+          { n: "Австралийские с паузой", s: "3", r: "10–12", w: "Изометрия" },
+          { n: "W+Y подъёмы", s: "3", r: "10 каждая", w: "Трапеции" },
+        ]},
+        { day: "ВТ", label: "Ноги + Бёдра", exercises: [
+          { n: "Clamshell с паузой", s: "3", r: "12 / сторону", w: "Прогрессия" },
+          { n: "Ягодичный мост одноногий", s: "3", r: "10 / сторону", w: "Унилатеральный" },
+          { n: "Сплит-присед (короткий шаг)", s: "3", r: "8 / сторону", w: "Без нагрузки на ТБС" },
+        ]},
+        { day: "СР", label: "Длинный Z2 + Жим", exercises: [
+          { n: "Разминка", s: "—", r: "8 мин", w: "Протокол" },
+          { n: "Бег Zone 2", s: "—", r: "22–28 мин", w: "Основной объём" },
+          { n: "Заминка", s: "—", r: "7 мин", w: "Обязательно" },
+          { n: "Отжимания темп 3-0-1", s: "4", r: "8–10", w: "+1 подход" },
+          { n: "Push-up plus", s: "3", r: "10", w: "Зубчатая" },
+          { n: "Алмазные отжимания", s: "3", r: "6–8", w: "Трицепс" },
+        ]},
+        { day: "ЧТ", label: "Кор усложнённый", exercises: [
+          { n: "Планка с касанием плеча", s: "3", r: "8 касаний", w: "Антиротация" },
+          { n: "Hollow body hold", s: "3", r: "15–20 сек", w: "Гимнастический кор" },
+          { n: "Bird-dog пауза 3 сек", s: "3", r: "6 / сторону", w: "Прогрессия" },
+        ]},
+        { day: "ПТ", label: "Темп Z3 + Полное тело", exercises: [
+          { n: "Разминка 10 мин", s: "—", r: "—", w: "Длинная" },
+          { n: "Темп Zone 3", s: "—", r: "10–12 мин · 136–150 bpm", w: "Темповый бег" },
+          { n: "Заминка 10 мин", s: "—", r: "—", w: "После темпового" },
+          { n: "Подтягивания + Push-up plus", s: "3", r: "6 + 8", w: "Суперсет" },
+          { n: "Сплит-присед + Ягодичный мост", s: "3", r: "8 + 10", w: "Полное тело" },
+        ]},
+        { day: "СБ", label: "Восстановление", exercises: [{ n: "Прогулка", s: "—", r: "50–60 мин", w: "Zone 1" }, { n: "Мобильность полная", s: "—", r: "20 мин", w: "ТБС" }] },
+        { day: "ВС", label: "Отдых", exercises: [{ n: "Полный отдых", s: "—", r: "—", w: "Суперкомпенсация" }] },
+      ],
+    };
+
+    const month3 = {
+      title: "М3", full: "Месяц 3", subtitle: "Интеграция", weeks: "Нед. 9–12",
+      color: "#8a6a3a",
+      days: [
+        { day: "ПН", label: "Интервалы + Тяга", exercises: [
+          { n: "Разминка", s: "—", r: "10–12 мин", w: "Протокол" },
+          { n: "Интервалы 90 сек Z3 / 90 сек шаг", s: "5–6", r: "Z3: 136–154", w: "Основной интервальный" },
+          { n: "Заминка 10 мин", s: "—", r: "—", w: "Критично" },
+          { n: "Подтягивания", s: "4–5", r: "7–10", w: "Макс объём" },
+          { n: "Австралийские с поворотом", s: "3", r: "10", w: "Продвинутая активация" },
+        ]},
+        { day: "ВТ", label: "Ноги + Стабильность", exercises: [
+          { n: "Ягодичный мост одноногий пауза 3 сек", s: "4", r: "10 / сторону", w: "Макс объём" },
+          { n: "Сплит-присед (углублять если ок)", s: "4", r: "10 / сторону", w: "Прогрессия" },
+          { n: "Step-up на стул", s: "3", r: "8 / сторону", w: "Контролируемая нагрузка" },
+        ]},
+        { day: "СР", label: "Длинный Z2 + Жим", exercises: [
+          { n: "Разминка", s: "—", r: "8 мин", w: "Протокол" },
+          { n: "Длинный бег Zone 2", s: "—", r: "32–42 мин", w: "VO2max рост" },
+          { n: "Заминка", s: "—", r: "8–10 мин", w: "Дольше" },
+          { n: "Отжимания ноги на возвышении", s: "3", r: "8–10", w: "Новый угол" },
+          { n: "Push-up plus + Алмазные", s: "3", r: "8 + 6", w: "Суперсет" },
+        ]},
+        { day: "ЧТ", label: "Кор Продвинутый", exercises: [
+          { n: "RKC планка", s: "4", r: "12–15 сек", w: "Макс напряжение" },
+          { n: "Hollow body ↔ arch rock", s: "3", r: "8 циклов", w: "Полный диапазон" },
+        ]},
+        { day: "ПТ", label: "Фартлек + Полное тело", exercises: [
+          { n: "Разминка 10 мин", s: "—", r: "—", w: "Протокол" },
+          { n: "Фартлек 28–35 мин", s: "—", r: "По ощущениям", w: "Интуиция к темпу" },
+          { n: "Заминка 8–10 мин", s: "—", r: "—", w: "Обязательно" },
+          { n: "Подтягивания + Австралийские + Отжимания", s: "3", r: "6 + 8 + 8", w: "Силовая выносливость" },
+        ]},
+        { day: "СБ", label: "Восстановление", exercises: [{ n: "Прогулка/лёгкий бег", s: "—", r: "35–40 мин", w: "Кровоток" }, { n: "Мобильность полная", s: "—", r: "25 мин", w: "Итог" }] },
+        { day: "ВС", label: "Отдых", exercises: [{ n: "Полный отдых", s: "—", r: "—", w: "Суперкомпенсация" }] },
+      ],
+    };
+
+    const MONTHS = [month1, month2, month3];
+
+    // ─── ХЕЛПЕРЫ ──────────────────────────────────────────
+    const pad = (n) => String(n).padStart(2, '0');
+    function parseLocalDate(str) { if (!str) return null; const [y, m, d] = str.split('-').map(Number); return new Date(y, m - 1, d, 12, 0, 0, 0); }
+    function formatISO(date) { return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`; }
+    function addDays(date, days) { const d = new Date(date); d.setDate(d.getDate() + days); return d; }
+    function mondayOfWeek(date) { const d = new Date(date); const day = d.getDay(); const diff = d.getDate() - day + (day === 0 ? -6 : 1); return new Date(d.getFullYear(), d.getMonth(), diff, 12, 0, 0, 0); }
+    function weekDiff(start, target) { return Math.floor((mondayOfWeek(target) - mondayOfWeek(start)) / (7 * 24 * 60 * 60 * 1000)) + 1; }
+    function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
+    function dateLabel(date) { return date.toLocaleDateString('ru-RU', { weekday: 'short', day: 'numeric', month: 'short' }); }
+    function safeJSONParse(raw, fallback) { try { return raw ? JSON.parse(raw) : fallback; } catch { return fallback; } }
+
+    const DAYS = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+    const TRAIN_ORDER = ['A', 'B', 'C'];
+
+    function calcReadiness(checkin) {
+      const sleep = Number(checkin.sleepHours || 0), hr = Number(checkin.restHR || 0), hrv = Number(checkin.hrv || 0), hip = Number(checkin.hipPain || 0), sh = Number(checkin.shoulderPain || 0), breath = checkin.breathing || 'ok';
+      const yellow = (sleep > 0 && sleep < 7) || (hr > 0 && hr >= 71) || (hrv > 0 && hrv < 55) || hip >= 3 || sh >= 3 || breath !== 'ok';
+      const red = (sleep > 0 && sleep < 6) || (hr > 0 && hr >= 76) || (hrv > 0 && hrv < 40) || hip >= 5 || sh >= 5 || breath === 'bad';
+      if (red) return 'red'; if (yellow) return 'yellow'; return 'green';
+    }
+
+    function detectRecoveryDebt(recent) {
+      const days = recent.slice(0, 3); if (!days.length) return false; let points = 0;
+      days.forEach(d => { if (!d) return; const sleep = Number(d.sleepHours || 0), hrv = Number(d.hrv || 0), hr = Number(d.restHR || 0), hip = Number(d.hipPain || 0), sh = Number(d.shoulderPain || 0), breath = d.breathing || 'ok'; if (sleep > 0 && sleep < 6.5) points += 2; else if (sleep > 0 && sleep < 7) points += 1; if (hrv > 0 && hrv < 40) points += 2; else if (hrv > 0 && hrv < 55) points += 1; if (hr > 0 && hr >= 76) points += 2; else if (hr > 0 && hr >= 71) points += 1; if (hip >= 3 || sh >= 3) points += 1; if (hip >= 5 || sh >= 5) points += 2; if (breath === 'mild') points += 1; if (breath === 'bad') points += 2; });
+      return points >= 4;
+    }
+
+    function getWorkoutType(date, trainDays) {
+      const dow = date.getDay(); const sorted = trainDays.slice().sort((a, b) => a - b); const idx = sorted.indexOf(dow);
+      return idx < 0 ? null : TRAIN_ORDER[idx % 3];
+    }
+
+    function getMonthAndDayIndex(weekNumber, trainType) {
+      const monthIndex = weekNumber <= 4 ? 0 : weekNumber <= 8 ? 1 : 2;
+      const month = MONTHS[monthIndex];
+      let dayIndex;
+      if (trainType === 'A') dayIndex = 0;
+      else if (trainType === 'B') dayIndex = 2;
+      else dayIndex = 4;
+      return { month, dayIndex };
+    }
+
+    // ─── НОВЫЕ ФУНКЦИИ ФАЗЫ 1 ─────────────────────────────
+    function calculateRecoveryScore(checkin, allCheckins) {
+      const sleep = Number(checkin.sleepHours) || 8;
+      const hrv = Number(checkin.hrv) || 70;
+      const hr = Number(checkin.restHR) || 63;
+      const hip = Number(checkin.hipPain) || 0;
+      const sh = Number(checkin.shoulderPain) || 0;
+      const breath = checkin.breathing || 'ok';
+
+      // Средний HRV за последние 7 дней
+      const last7 = Object.values(allCheckins).filter(c => c.ts && c.hrv).sort((a,b) => b.ts - a.ts).slice(0,7);
+      let avgHrv = 70;
+      if (last7.length >= 3) {
+        avgHrv = last7.reduce((sum, c) => sum + Number(c.hrv), 0) / last7.length;
+      } else if (last7.length === 2) {
+        avgHrv = (Number(last7[0].hrv) + Number(last7[1].hrv)) / 2;
+      } else if (last7.length === 1) {
+        avgHrv = Number(last7[0].hrv);
+      }
+
+      let score = 100;
+
+      // HRV Score (50%)
+      if (hrv > 0) {
+        const ratio = hrv / (avgHrv || 70);
+        if (ratio > 1.1) score -= 0;
+        else if (ratio >= 0.9) score -= 10;
+        else if (ratio >= 0.7) score -= 25;
+        else score -= 40;
+      }
+
+      // Sleep Score (30%)
+      if (sleep > 0) {
+        if (sleep >= 8) score -= 0;
+        else if (sleep >= 7) score -= 10;
+        else if (sleep >= 6) score -= 25;
+        else score -= 40;
+      }
+
+      // Resting HR Score (20%)
+      if (hr > 0) {
+        if (hr <= 63) score -= 0;
+        else if (hr <= 70) score -= 10;
+        else if (hr <= 76) score -= 20;
+        else score -= 35;
+      }
+
+      // Штрафы за боль
+      if (hip >= 5 || sh >= 5) score -= 20;
+      else if (hip >= 3 || sh >= 3) score -= 10;
+
+      if (breath === 'bad') score -= 20;
+      else if (breath === 'mild') score -= 10;
+
+      return Math.max(0, Math.min(100, score));
+    }
+
+    function getWeeklySummary(sessions, checkins, today) {
+      const sevenDaysAgo = addDays(today, -6);
+      const start = formatISO(sevenDaysAgo);
+      const end = formatISO(today);
+      let completed = 0, totalSessions = 0, rpeSum = 0, rpeCount = 0;
+      let green = 0, yellow = 0, red = 0;
+
+      Object.entries(sessions).forEach(([key, s]) => {
+        const d = key.split('_')[0];
+        if (d >= start && d <= end && s.completed && s.type !== 'mobility' && s.type !== 'morning' && s.type !== 'evening') {
+          completed++;
+          if (s.readiness === 'green') green++;
+          else if (s.readiness === 'yellow') yellow++;
+          else if (s.readiness === 'red') red++;
+          if (s.rpe) { rpeSum += Number(s.rpe); rpeCount++; }
+        }
+      });
+
+      let dominantStatus = 'green';
+      if (red > green && red > yellow) dominantStatus = 'red';
+      else if (yellow > green) dominantStatus = 'yellow';
+
+      return {
+        completed,
+        avgRPE: rpeCount ? (rpeSum / rpeCount).toFixed(1) : null,
+        green, yellow, red,
+        dominantStatus
+      };
+    }
+
+    function adjustExercisesForMode(exercises, mode) {
+      if (mode === 'red' || mode === 'minimum') {
+        return exercises.filter(e => !e.isTest && e.n && (e.n.toLowerCase().includes('мобильн') || e.n.toLowerCase().includes('растяж') || e.n.toLowerCase().includes('дыхан'))).slice(0, 2);
+      }
+      if (mode === 'yellow') {
+        return exercises.map(e => {
+          if (e.isTest) return e;
+          const sets = parseInt(e.s);
+          if (isNaN(sets)) return e;
+          const newSets = sets > 1 ? sets - 1 : sets;
+          return { ...e, s: String(newSets) };
+        });
+      }
+      return exercises;
+    }
+
+    function getTestMultiplier(sessions, currentWeek) {
+      const testWeeks = [1, 3, 5, 7, 9, 11];
+      if (!testWeeks.includes(currentWeek - 1)) return 1.0;
+      const tests = Object.values(sessions)
+        .filter(s => s.testResults)
+        .sort((a, b) => b.date.localeCompare(a.date));
+      if (tests.length < 2) return 1.0;
+      const last = tests[0];
+      const prev = tests[1];
+      const pullUpDiff = (last.testResults.pullUps || 0) - (prev.testResults.pullUps || 0);
+      const pushUpDiff = (last.testResults.pushUps || 0) - (prev.testResults.pushUps || 0);
+      const plankDiff = (last.testResults.plankSec || 0) - (prev.testResults.plankSec || 0);
+      const avgDiff = (pullUpDiff + pushUpDiff + (plankDiff / 10)) / 3;
+      if (avgDiff >= 2) return 1.2;
+      if (avgDiff <= -2) return 0.8;
+      return 1.0;
+    }
+
+    function applyMultiplierToExercises(exercises, multiplier) {
+      if (multiplier === 1.0) return exercises;
+      return exercises.map(ex => {
+        if (!ex.r || ex.isTest) return ex;
+        const match = ex.r.match(/^(\d+)/);
+        if (match) {
+          const num = parseInt(match[1]);
+          const newNum = Math.round(num * multiplier);
+          const newR = ex.r.replace(/^\d+/, String(newNum));
+          return { ...ex, r: newR };
+        }
+        return ex;
+      });
+    }
+
+    function applyApreAdjustment(exercises, lastSession) {
+      if (!lastSession || !lastSession.rpe) return exercises;
+      const rpe = Number(lastSession.rpe);
+      if (isNaN(rpe)) return exercises;
+      return exercises.map(ex => {
+        if (!ex.r || ex.isTest) return ex;
+        const match = ex.r.match(/^(\d+)/);
+        if (!match) return ex;
+        const num = parseInt(match[1]);
+        let newNum = num;
+        if (rpe <= 4 && num > 3) newNum = num + 1;
+        else if (rpe >= 8 && num > 2) newNum = num - 1;
+        if (newNum !== num) {
+          const newR = ex.r.replace(/^\d+/, String(newNum));
+          return { ...ex, r: newR };
+        }
+        return ex;
+      });
+    }
+
+    function buildSessionFromMonth(month, dayIndex, readiness, debt, multiplier = 1.0, apreSession = null) {
+      const dayPlan = month.days[dayIndex];
+      if (!dayPlan) return null;
+      const mode = readiness === 'red' ? 'minimum' : (readiness === 'yellow' || debt ? 'yellow' : 'full');
+      let exercises = dayPlan.exercises;
+      exercises = applyMultiplierToExercises(exercises, multiplier);
+      if (apreSession && mode === 'full') {
+        exercises = applyApreAdjustment(exercises, apreSession);
+      }
+      exercises = adjustExercisesForMode(exercises, mode);
+      return { ...dayPlan, exercises, mode, monthColor: month.color };
+    }
+
+    // ─── UI ────────────────────────────────────────────────
+    function Pill({ tone='gray', children }) { return <span className={`pill ${tone}`}>{children}</span>; }
+    function Modal({ open, title, onClose, children }) {
+      if (!open) return null;
+      return (
+        <div className="modal-overlay" onClick={onClose}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="row center" style={{marginBottom:16}}>
+              <h2 style={{fontSize:20,fontWeight:700}}>{title}</h2>
+              <button onClick={onClose} className="chip" style={{fontSize:16,padding:'8px 14px'}}>✕</button>
+            </div>
+            {children}
+          </div>
+        </div>
+      );
+    }
+    function Collapsible({ title, defaultOpen=false, children }) {
+      const [open, setOpen] = useState(defaultOpen);
+      return (
+        <div style={{marginBottom:10}}>
+          <div className="collapsible-header" onClick={() => setOpen(!open)}>
+            <span className="section-title">{title}</span>
+            <span style={{color:'var(--text2)'}}>{open ? '▲' : '▼'}</span>
+          </div>
+          {open && <div className="collapsible-content">{children}</div>}
+        </div>
+      );
+    }
+
+    // ─── ПРИЛОЖЕНИЕ ───────────────────────────────────────
+    function App() {
+      const [tab, setTab] = useState('today');
+      const [showSettings, setShowSettings] = useState(false);
+      const [showReadiness, setShowReadiness] = useState(false);
+
+      const [startDate, setStartDate] = useState(() => localStorage.getItem('plan_start') || '');
+      const [trainDays, setTrainDays] = useState(() => safeJSONParse(localStorage.getItem('plan_days'), [1,3,5]));
+
+      const [now, setNow] = useState(Date.now());
+      useEffect(() => { const timer = setInterval(() => setNow(Date.now()), 60000); return () => clearInterval(timer); }, []);
+
+      const today = useMemo(() => { const d = new Date(now); return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 12, 0, 0, 0); }, [now]);
+      const todayISO = formatISO(today);
+      const tomorrow = addDays(today, 1);
+      const tomorrowISO = formatISO(tomorrow);
+
+      const [manualStatus, setManualStatus] = useState(() => localStorage.getItem(`status_${todayISO}`) || 'unknown');
+      useEffect(() => { setManualStatus(localStorage.getItem(`status_${todayISO}`) || 'unknown'); }, [todayISO]);
+
+      const [weight, setWeight] = useState(() => localStorage.getItem('body_weight') || '59');
+      const [restHR, setRestHR] = useState(() => localStorage.getItem('rest_hr') || '');
+      const [hrv, setHrv] = useState(() => localStorage.getItem('hrv_val') || '');
+      const [sleepHours, setSleepHours] = useState(() => localStorage.getItem('sleep_hrs') || '');
+      const [hipPain, setHipPain] = useState(() => localStorage.getItem('hip_pain') || '0');
+      const [shoulderPain, setShoulderPain] = useState(() => localStorage.getItem('shoulder_pain') || '0');
+      const [breathing, setBreathing] = useState(() => localStorage.getItem('breath') || 'ok');
+      const [notes, setNotes] = useState(() => localStorage.getItem('daily_notes') || '');
+
+      const [checkins, setCheckins] = useState(() => safeJSONParse(localStorage.getItem('checkins_v2'), {}));
+      const [sessions, setSessions] = useState(() => safeJSONParse(localStorage.getItem('sessions_v2'), {}));
+      const [rpe, setRpe] = useState('6');
+      const [sessionNote, setSessionNote] = useState('');
+      const [testPullUps, setTestPullUps] = useState('');
+      const [testPushUps, setTestPushUps] = useState('');
+      const [testPlank, setTestPlank] = useState('');
+
+      const start = useMemo(() => parseLocalDate(startDate), [startDate]);
+
+      useEffect(() => { if (startDate) localStorage.setItem('plan_start', startDate); }, [startDate]);
+      useEffect(() => { localStorage.setItem('plan_days', JSON.stringify(trainDays)); }, [trainDays]);
+      useEffect(() => { localStorage.setItem(`status_${todayISO}`, manualStatus); }, [manualStatus, todayISO]);
+      useEffect(() => { localStorage.setItem('body_weight', weight); }, [weight]);
+      useEffect(() => { localStorage.setItem('rest_hr', restHR); }, [restHR]);
+      useEffect(() => { localStorage.setItem('hrv_val', hrv); }, [hrv]);
+      useEffect(() => { localStorage.setItem('sleep_hrs', sleepHours); }, [sleepHours]);
+      useEffect(() => { localStorage.setItem('hip_pain', hipPain); }, [hipPain]);
+      useEffect(() => { localStorage.setItem('shoulder_pain', shoulderPain); }, [shoulderPain]);
+      useEffect(() => { localStorage.setItem('breath', breathing); }, [breathing]);
+      useEffect(() => { localStorage.setItem('daily_notes', notes); }, [notes]);
+      useEffect(() => { localStorage.setItem('checkins_v2', JSON.stringify(checkins)); }, [checkins]);
+      useEffect(() => { localStorage.setItem('sessions_v2', JSON.stringify(sessions)); }, [sessions]);
+
+      const debounceTimer = useRef(null);
+      useEffect(() => {
+        if (debounceTimer.current) clearTimeout(debounceTimer.current);
+        debounceTimer.current = setTimeout(() => {
+          setCheckins(prev => ({ ...prev, [todayISO]: { sleepHours, restHR, hrv, hipPain, shoulderPain, breathing, weight, notes, ts: Date.now() } }));
+        }, 2000);
+        return () => clearTimeout(debounceTimer.current);
+      }, [sleepHours, restHR, hrv, hipPain, shoulderPain, breathing, weight, notes, todayISO]);
+
+      const weekRaw = useMemo(() => start ? weekDiff(start, today) : null, [start, todayISO]);
+      const displayWeek = weekRaw ? clamp(weekRaw, 1, 12) : null;
+      const inPlan = weekRaw ? weekRaw >= 1 && weekRaw <= 12 : false;
+
+      const checkinToday = checkins[todayISO] || { sleepHours, restHR, hrv, hipPain, shoulderPain, breathing, weight, notes };
+      const autoReadiness = useMemo(() => calcReadiness(checkinToday), [sleepHours, restHR, hrv, hipPain, shoulderPain, breathing, todayISO]);
+      const readiness = manualStatus === 'unknown' ? autoReadiness : manualStatus;
+
+      const recoveryScore = useMemo(() => calculateRecoveryScore(checkinToday, checkins), [sleepHours, restHR, hrv, hipPain, shoulderPain, breathing, todayISO]);
+
+      const recentCheckins = useMemo(() => [0,1,2].map(i => checkins[formatISO(addDays(today, -i))] || null), [checkins, todayISO]);
+      const recoveryDebt = useMemo(() => detectRecoveryDebt(recentCheckins), [recentCheckins]);
+
+      const trainType = getWorkoutType(today, trainDays);
+      const { month: currentMonth, dayIndex } = useMemo(() => {
+        if (!displayWeek || !trainType) return { month: null, dayIndex: null };
+        return getMonthAndDayIndex(displayWeek, trainType);
+      }, [displayWeek, trainType]);
+
+      const weeklySummary = useMemo(() => getWeeklySummary(sessions, checkins, today), [sessions, checkins, todayISO]);
+
+      const weeklyMultiplier = useMemo(() => {
+        if (!inPlan || !trainType) return 1.0;
+        const todayDay = today.getDay();
+        if (todayDay !== 1) return 1.0; // применяем только в понедельник
+        const summary = weeklySummary;
+        if (summary.completed >= 3 && summary.dominantStatus === 'green' && summary.red === 0 && summary.yellow <= 1) {
+          return 1.1;
+        }
+        if (summary.red >= 2 || summary.yellow >= 3) {
+          return 0.9;
+        }
+        return 1.0;
+      }, [weeklySummary, todayISO, trainType, inPlan]);
+
+      const testMultiplier = useMemo(() => {
+        if (!start || !displayWeek) return 1.0;
+        return getTestMultiplier(sessions, displayWeek);
+      }, [sessions, displayWeek, start]);
+
+      const apreSession = useMemo(() => {
+        if (!trainType) return null;
+        const sameTypeSessions = Object.values(sessions)
+          .filter(s => s.type === trainType && s.completed)
+          .sort((a, b) => b.date.localeCompare(a.date));
+        return sameTypeSessions.length > 0 ? sameTypeSessions[0] : null;
+      }, [sessions, trainType]);
+
+      const finalMultiplier = weeklyMultiplier * testMultiplier;
+
+      const sessionPlan = useMemo(() => {
+        if (!currentMonth || dayIndex === null) return null;
+        let plan = buildSessionFromMonth(currentMonth, dayIndex, readiness, recoveryDebt, finalMultiplier, apreSession);
+        if (plan && trainType === 'C' && displayWeek % 2 !== 0 && readiness === 'green') {
+          plan = {
+            ...plan,
+            isTestDay: true,
+            exercises: [
+              ...plan.exercises,
+              { n: "Тест: подтягивания на максимум", s: "1", r: "макс", isTest: true, w: "Только 1 подход" },
+              { n: "Тест: отжимания на максимум", s: "1", r: "макс", isTest: true, w: "Чистые повторения" },
+              { n: "Тест: планка на максимум", s: "1", r: "макс (сек)", isTest: true, w: "Держать до отказа" }
+            ]
+          };
+        }
+        return plan;
+      }, [currentMonth, dayIndex, readiness, recoveryDebt, finalMultiplier, apreSession, trainType, displayWeek]);
+
+      const tomorrowWeekRaw = start ? weekDiff(start, tomorrow) : null;
+      const tomorrowWeek = tomorrowWeekRaw ? clamp(tomorrowWeekRaw, 1, 12) : null;
+      const tomorrowType = getWorkoutType(tomorrow, trainDays);
+      const tomorrowPlan = useMemo(() => {
+        if (!tomorrowWeek || !tomorrowType) return null;
+        const { month: m, dayIndex: di } = getMonthAndDayIndex(tomorrowWeek, tomorrowType);
+        return buildSessionFromMonth(m, di, 'green', false, 1.0, null);
+      }, [tomorrowWeek, tomorrowType]);
+
+      const keyToday = `${todayISO}_${trainType || 'rest'}`;
+      const keyTomorrow = `${tomorrowISO}_${tomorrowType || 'rest'}`;
+      const morningKey = `${todayISO}_morning`;
+      const eveningKey = `${todayISO}_evening`;
+      const sessionToday = sessions[keyToday] || null;
+      const sessionTomorrow = sessions[keyTomorrow] || null;
+      const morningDone = sessions[morningKey]?.completed || false;
+      const eveningDone = sessions[eveningKey]?.completed || false;
+
+      const phaseLabel = displayWeek ? (displayWeek <= 4 ? 'База' : displayWeek <= 8 ? 'Накопление' : displayWeek <= 11 ? 'Интеграция' : 'Консолидация') : '';
+      const weekLabel = displayWeek ? `Неделя ${displayWeek} · ${phaseLabel}` : 'Дата не задана';
+      const tone = readiness === 'green' ? 'green' : readiness === 'yellow' ? 'yellow' : 'red';
+
+      const monthStats = useMemo(() => {
+        const monthPrefix = todayISO.substring(0, 7);
+        let completed = 0, green = 0, yellow = 0, red = 0;
+        Object.entries(sessions).forEach(([key, session]) => {
+          if (key.startsWith(monthPrefix) && session.completed && session.type !== 'mobility' && session.type !== 'morning' && session.type !== 'evening') {
+            completed++;
+            if (session.readiness === 'green') green++;
+            else if (session.readiness === 'yellow') yellow++;
+            else if (session.readiness === 'red') red++;
+          }
+        });
+        return { completed, green, yellow, red };
+      }, [sessions, todayISO]);
+
+      const testHistory = useMemo(() => {
+        return Object.values(sessions)
+          .filter(s => s.testResults)
+          .sort((a, b) => b.date.localeCompare(a.date))
+          .slice(0, 3);
+      }, [sessions]);
+
+      const markSession = (completed) => {
+        const testResults = {};
+        if (sessionPlan?.isTestDay) {
+          const pull = Number(testPullUps);
+          const push = Number(testPushUps);
+          const plank = Number(testPlank);
+          if (Number.isInteger(pull) && pull > 0) testResults.pullUps = pull;
+          if (Number.isInteger(push) && push > 0) testResults.pushUps = push;
+          if (Number.isInteger(plank) && plank > 0) testResults.plankSec = plank;
+        }
+        const data = { date: todayISO, key: keyToday, type: trainType || 'rest', completed, readiness, rpe: Number(rpe || 0), hipPain: Number(hipPain || 0), shoulderPain: Number(shoulderPain || 0), notes: sessionNote, mode: sessionPlan?.mode || 'rest', updatedAt: Date.now() };
+        if (Object.keys(testResults).length) data.testResults = testResults;
+        setSessions(prev => ({ ...prev, [keyToday]: data }));
+      };
+
+      const markMorning = () => setSessions(prev => ({ ...prev, [morningKey]: { date: todayISO, key: morningKey, completed: true, type: 'morning', updatedAt: Date.now() } }));
+      const markEvening = () => setSessions(prev => ({ ...prev, [eveningKey]: { date: todayISO, key: eveningKey, completed: true, type: 'evening', updatedAt: Date.now() } }));
+
+      const toggleDay = (d) => setTrainDays(prev => {
+        const s = prev.slice().sort((a, b) => a - b);
+        if (s.includes(d)) return s.filter(x => x !== d);
+        if (s.length >= 3) return s;
+        return [...s, d].sort((a, b) => a - b);
+      });
+
+      const exportData = () => { const blob = new Blob([JSON.stringify({ plan:{ startDate, trainDays }, checkins, sessions, current:{ weight, restHR, hrv, sleepHours, hipPain, shoulderPain, breathing, notes, manualStatus } }, null, 2)], { type:'application/json' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `план_${todayISO}.json`; a.click(); URL.revokeObjectURL(url); };
+      const importData = (file) => { const reader = new FileReader(); reader.onload = () => { try { const data = JSON.parse(String(reader.result || '{}')); if (data?.plan) { if (data.plan.startDate) setStartDate(data.plan.startDate); if (data.plan.trainDays) setTrainDays(data.plan.trainDays); } if (data?.checkins) setCheckins(data.checkins); if (data?.sessions) setSessions(data.sessions); if (data?.current) { const c = data.current; setWeight(c.weight || '59'); setRestHR(c.restHR || ''); setHrv(c.hrv || ''); setSleepHours(c.sleepHours || ''); setHipPain(c.hipPain || '0'); setShoulderPain(c.shoulderPain || '0'); setBreathing(c.breathing || 'ok'); setNotes(c.notes || ''); setManualStatus(c.manualStatus || 'unknown'); } alert('Данные загружены'); } catch { alert('Ошибка чтения файла'); } }; reader.readAsText(file); };
+      const resetAll = () => { if (!confirm('Удалить все данные? Это необратимо.')) return; ['plan_start','plan_days','body_weight','rest_hr','hrv_val','sleep_hrs','hip_pain','shoulder_pain','breath','daily_notes','checkins_v2','sessions_v2'].forEach(k => localStorage.removeItem(k)); Object.keys(localStorage).filter(k => k.startsWith('status_')).forEach(k => localStorage.removeItem(k)); window.location.reload(); };
+
+      // Рендер
+      return (
+        <div>
+          <div className="row center" style={{marginBottom:14}}>
+            <div>
+              <h1 style={{fontSize:22,fontWeight:800}}>План тренировок</h1>
+              <div className="text-sm" style={{marginTop:2}}>{startDate ? `${dateLabel(today)} · ${weekLabel}` : '12 недель'}</div>
+            </div>
+            <button className="chip" onClick={() => setShowSettings(true)} style={{fontSize:18,padding:'10px 14px'}}>⚙️</button>
+          </div>
+
+          <div className="card">
+            <div className="row center" style={{flexWrap:'wrap',gap:8}}>
+              <Pill tone={tone}>{readiness==='green'?'🟢 Готов':readiness==='yellow'?'🟡 Осторожно':'🔴 Стоп'}</Pill>
+              <Pill tone="gray">{weekLabel}</Pill>
+              {recoveryDebt && <Pill tone="yellow">⚠️ Усталость</Pill>}
+            </div>
+            <div style={{marginTop:12,fontSize:15,fontWeight:600}}>
+              {!startDate ? 'Установите дату начала' : !inPlan ? 'План завершён' : readiness === 'red' ? 'Только ходьба и реабилитация' : !trainType ? 'День отдыха' : readiness === 'yellow' || recoveryDebt ? 'Облегчённый день' : `Сегодня: ${sessionPlan?.label || 'тренировка'}`}
+            </div>
+            {startDate && inPlan && (
+              <div style={{marginTop:8,fontSize:14,color: tone === 'green' ? '#86efac' : tone === 'yellow' ? '#fde047' : '#fca5a5'}}>
+                Recovery Score: {recoveryScore} / 100
+                {recoveryScore >= 80 ? ' — Отлично, можно работать!' : recoveryScore >= 50 ? ' — Умеренно, снизьте интенсивность.' : ' — Требуется отдых.'}
+              </div>
+            )}
+          </div>
+
+          <div className="card">
+            <div className="stat-grid">
+              <div className="stat-box"><div className={`stat-value ${tone==='green'?'badge-ok':tone==='yellow'?'badge-warn':'badge-bad'}`}>{sleepHours||'—'}</div><div className="stat-label">Сон, часов</div></div>
+              <div className="stat-box"><div className={`stat-value ${tone==='green'?'badge-ok':tone==='yellow'?'badge-warn':'badge-bad'}`}>{restHR||'—'}</div><div className="stat-label">Пульс в покое</div></div>
+              <div className="stat-box"><div className={`stat-value ${tone==='green'?'badge-ok':tone==='yellow'?'badge-warn':'badge-bad'}`}>{hrv||'—'}</div><div className="stat-label">HRV</div></div>
+              <div className="stat-box"><div className="stat-value badge-ok">{weight||'—'}</div><div className="stat-label">Вес, кг</div></div>
+            </div>
+          </div>
+
+          <div className="card">
+            <div className="row center" style={{marginBottom:8}}>
+              <div className="highlight">Ручной статус</div>
+              <Pill tone="gray">{todayISO}</Pill>
+            </div>
+            <div className="grid-3">
+              <button className={`chip ${manualStatus==='green'?'active':''}`} onClick={() => setManualStatus('green')}>🟢 Готов</button>
+              <button className={`chip ${manualStatus==='yellow'?'active':''}`} onClick={() => setManualStatus('yellow')}>🟡 Осторожно</button>
+              <button className={`chip ${manualStatus==='red'?'active':''}`} onClick={() => setManualStatus('red')}>🔴 Стоп</button>
+            </div>
+          </div>
+
+          <div className="tabbar">
+            {['today','rehab','log','info','nutrition'].map(t => (
+              <button key={t} className={`tab ${tab===t?'active':''}`} onClick={() => setTab(t)}>
+                {t==='today'?'Сегодня':t==='rehab'?'Реабил':t==='log'?'Дневник':t==='info'?'Справка':'Питание'}
+              </button>
+            ))}
+          </div>
+
+          {tab === 'today' && (
+            <div>
+              {!startDate && (
+                <div className="card" style={{textAlign:'center',padding:28}}>
+                  <div style={{fontSize:40,marginBottom:10}}>📅</div>
+                  <h2>Установите дату начала</h2>
+                  <button className="btn btn-accent" onClick={() => setShowSettings(true)}>Открыть настройки</button>
+                </div>
+              )}
+              {startDate && inPlan && trainType && readiness !== 'red' && sessionPlan && (
+                <>
+                  <div className="card" style={{borderLeft:'3px solid var(--accent)'}}>
+                    <div className="row center" style={{marginBottom:6}}>
+                      <h3 style={{fontSize:18}}>{sessionPlan.label}</h3>
+                      <Pill tone="blue">{trainType}</Pill>
+                    </div>
+                    <div className="text-sm">Режим: {sessionPlan.mode}</div>
+                  </div>
+                  <div className="card">
+                    <h3 style={{marginBottom:12,color:'#86efac'}}>💪 Упражнения</h3>
+                    {sessionPlan.exercises.map((ex, i) => (
+                      <div key={i} className="exercise">
+                        <div className="exercise-name">{ex.n}</div>
+                        <div className="exercise-detail">
+                          {ex.s && ex.s !== '—' ? `${ex.s} подх.` : ''}{ex.r ? ` · ${ex.r}` : ''}
+                        </div>
+                        {ex.c && <div className="exercise-note">{ex.c}</div>}
+                        {ex.w && <div className="text-xs" style={{color:'#6a8a50'}}>{ex.w}</div>}
+                      </div>
+                    ))}
+                  </div>
+                  {sessionPlan.isTestDay && (
+                    <div className="card">
+                      <h3 style={{marginBottom:8}}>📝 Результаты теста</h3>
+                      <div className="grid-3">
+                        <div><div className="text-xs">Подтягивания</div><input type="number" min="0" value={testPullUps} onChange={e=>setTestPullUps(e.target.value)} placeholder="0" /></div>
+                        <div><div className="text-xs">Отжимания</div><input type="number" min="0" value={testPushUps} onChange={e=>setTestPushUps(e.target.value)} placeholder="0" /></div>
+                        <div><div className="text-xs">Планка (сек)</div><input type="number" min="0" value={testPlank} onChange={e=>setTestPlank(e.target.value)} placeholder="0" /></div>
+                      </div>
+                    </div>
+                  )}
+                  <div className="card">
+                    <div className="row center" style={{marginBottom:10}}>
+                      <div><div className="highlight">Запись тренировки</div></div>
+                      <Pill tone={sessionToday?.completed?'green':'gray'}>{sessionToday?.completed?'✓ Выполнено':'Ожидает'}</Pill>
+                    </div>
+                    <div className="grid-2">
+                      <div><div className="text-xs">RPE (1–10)</div><select value={rpe} onChange={e=>setRpe(e.target.value)}>{Array.from({length:10},(_,i)=>i+1).map(n=><option key={n} value={String(n)}>{n}</option>)}</select></div>
+                      <div><div className="text-xs">Заметка</div><input value={sessionNote} onChange={e=>setSessionNote(e.target.value)} /></div>
+                    </div>
+                    <div className="grid-2" style={{marginTop:10}}>
+                      <button className="btn btn-green" onClick={() => markSession(true)}>Выполнено</button>
+                      <button className="btn" onClick={() => markSession(false)}>Сохранить</button>
+                    </div>
+                  </div>
+                </>
+              )}
+              {startDate && inPlan && (!trainType || readiness === 'red') && (
+                <div className="card">
+                  <div className="row center" style={{marginBottom:8}}>
+                    <h3>День без тренировки</h3>
+                    <Pill tone="gray">отдых</Pill>
+                  </div>
+                  <div className="text-sm">Выполните ежедневную мобильность.</div>
+                  <div className="row center" style={{marginTop:12}}>
+                    <div><div className="highlight">Реабилитация сделана</div></div>
+                    <div className={`toggle ${sessionToday?.completed?'on':''}`} onClick={() => markSession(!sessionToday?.completed)} />
+                  </div>
+                </div>
+              )}
+              {startDate && (
+                <div className="card">
+                  <div className="row center" style={{marginBottom:8}}>
+                    <h3>📅 Завтра</h3>
+                    <Pill tone={tomorrowType?'blue':'gray'}>{tomorrowType || 'отдых'}</Pill>
+                  </div>
+                  {tomorrowPlan ? (
+                    <>
+                      <div className="highlight">{tomorrowPlan.label}</div>
+                      <div className="text-sm">{tomorrowPlan.exercises.slice(0,2).map(e=>e.n).join(' · ')}</div>
+                    </>
+                  ) : <div className="text-sm">День отдыха или план завершён.</div>}
+                </div>
+              )}
+            </div>
+          )}
+
+          {tab === 'rehab' && (
+            <div>
+              <div className="card">
+                <h3>🌅 Утренняя активация (10–12 мин)</h3>
+                {MORNING_ROUTINE.map((ex, i) => (
+                  <div key={i} className="exercise">
+                    <div className="exercise-name">{ex.name}</div>
+                    <div className="exercise-detail">{ex.reps}</div>
+                    <div className="text-xs" style={{color:'#6a8a50'}}>{ex.why}</div>
+                  </div>
+                ))}
+                <div style={{marginTop:16}}>
+                  {morningDone ? <div className="pill green" style={{justifyContent:'center',padding:'12px'}}>✓ Утро сделано</div> : <button className="btn btn-accent" onClick={markMorning}>Утренняя мобильность сделана</button>}
+                </div>
+              </div>
+              <div className="card">
+                <h3>🌙 Вечернее расслабление + МФР (18–20 мин)</h3>
+                {EVENING_ROUTINE.map((ex, i) => (
+                  <div key={i} className="exercise">
+                    <div className="exercise-name">{ex.name}</div>
+                    <div className="exercise-detail">{ex.reps}</div>
+                    <div className="text-xs" style={{color:'#6a8a50'}}>{ex.why}</div>
+                  </div>
+                ))}
+                <div style={{marginTop:16}}>
+                  {eveningDone ? <div className="pill green" style={{justifyContent:'center',padding:'12px'}}>✓ Вечер сделан</div> : <button className="btn btn-accent" onClick={markEvening}>Вечерняя мобильность сделана</button>}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {tab === 'log' && (
+            <div>
+              <div className="card">
+                <h3>Ежедневный чек-ин</h3>
+                <div className="grid-2">
+                  <div><div className="text-xs">Вес, кг</div><input value={weight} onChange={e=>setWeight(e.target.value)} inputMode="decimal" /></div>
+                  <div><div className="text-xs">Пульс покоя</div><input value={restHR} onChange={e=>setRestHR(e.target.value)} inputMode="numeric" /></div>
+                  <div><div className="text-xs">HRV</div><input value={hrv} onChange={e=>setHrv(e.target.value)} inputMode="numeric" /></div>
+                  <div><div className="text-xs">Сон, часов</div><input value={sleepHours} onChange={e=>setSleepHours(e.target.value)} inputMode="decimal" /></div>
+                  <div><div className="text-xs">Бедро (0–10)</div><select value={hipPain} onChange={e=>setHipPain(e.target.value)}>{Array.from({length:11},(_,i)=>i).map(n=><option key={n} value={String(n)}>{n}</option>)}</select></div>
+                  <div><div className="text-xs">Плечо (0–10)</div><select value={shoulderPain} onChange={e=>setShoulderPain(e.target.value)}>{Array.from({length:11},(_,i)=>i).map(n=><option key={n} value={String(n)}>{n}</option>)}</select></div>
+                </div>
+                <div style={{marginTop:12}}>
+                  <div className="text-xs">Дыхание</div>
+                  <div className="grid-3">
+                    <button className={`chip ${breathing==='ok'?'active':''}`} onClick={()=>setBreathing('ok')}>Свободное</button>
+                    <button className={`chip ${breathing==='mild'?'active':''}`} onClick={()=>setBreathing('mild')}>Лёгкая тяжесть</button>
+                    <button className={`chip ${breathing==='bad'?'active':''}`} onClick={()=>setBreathing('bad')}>Тяжёлое</button>
+                  </div>
+                </div>
+                <div style={{marginTop:12}}><div className="text-xs">Заметки</div><textarea value={notes} onChange={e=>setNotes(e.target.value)} /></div>
+              </div>
+
+              <div className="card">
+                <h3>📊 Статистика за месяц</h3>
+                <div className="month-stats">
+                  <div className="month-stat-item"><div className="month-stat-value" style={{color:'var(--green)'}}>{monthStats.green}</div><div className="month-stat-label">зелёных</div></div>
+                  <div className="month-stat-item"><div className="month-stat-value" style={{color:'var(--yellow)'}}>{monthStats.yellow}</div><div className="month-stat-label">жёлтых</div></div>
+                  <div className="month-stat-item"><div className="month-stat-value" style={{color:'var(--red)'}}>{monthStats.red}</div><div className="month-stat-label">красных</div></div>
+                </div>
+                <div className="text-xs" style={{textAlign:'center'}}>Выполненных тренировок: {monthStats.completed}</div>
+              </div>
+
+              <div className="card">
+                <h3>📋 Сводка за последние 7 дней</h3>
+                <div className="text-sm">Выполнено тренировок: {weeklySummary.completed}</div>
+                <div className="text-sm">Средний RPE: {weeklySummary.avgRPE || '—'}</div>
+                <div className="text-sm" style={{color: weeklySummary.dominantStatus === 'red' ? '#fca5a5' : weeklySummary.dominantStatus === 'yellow' ? '#fde047' : '#86efac'}}>Доминирующий статус: {weeklySummary.dominantStatus === 'green' ? '🟢' : weeklySummary.dominantStatus === 'yellow' ? '🟡' : '🔴'}</div>
+              </div>
+
+              <div className="card">
+                <h3>🧪 Тестовая динамика</h3>
+                {testHistory.length === 0 ? <div className="text-sm">Нет данных тестов.</div> :
+                  testHistory.map((s, i) => (
+                    <div key={i} className="exercise">
+                      <div className="row center">
+                        <div className="highlight">{s.date}{i===0 ? ' (последний)' : ''}{i===testHistory.length-1 && testHistory.length===1 ? ' (базовый замер)' : ''}</div>
+                      </div>
+                      <div className="text-sm">Подтягивания: {s.testResults.pullUps || '—'} · Отжимания: {s.testResults.pushUps || '—'} · Планка: {s.testResults.plankSec || '—'} сек</div>
+                    </div>
+                  ))
+                }
+              </div>
+
+              <div className="card">
+                <h3>Данные</h3>
+                <button className="btn btn-accent" style={{marginBottom:8}} onClick={exportData}>Экспорт JSON</button>
+                <label className="btn" style={{marginBottom:8,textAlign:'center',display:'block',cursor:'pointer'}}>Импорт JSON<input type="file" accept="application/json" style={{display:'none'}} onChange={e=>e.target.files?.[0] && importData(e.target.files[0])} /></label>
+                <button className="btn btn-red" onClick={resetAll}>Сбросить все данные</button>
+              </div>
+
+              <div className="card">
+                <h3>Последние записи</h3>
+                {Object.entries(sessions).sort((a,b)=>b[1].updatedAt-a[1].updatedAt).slice(0,8).map(([k,s]) => (
+                  <div key={k} className="exercise">
+                    <div className="row center"><div className="highlight">{k.split('_')[0]}</div><Pill tone={s.completed?'green':'gray'}>{s.completed?'✓':'—'}</Pill></div>
+                    <div className="text-sm">{s.type} · RPE {s.rpe || '—'}</div>
+                    {s.notes && <div className="text-xs">{s.notes}</div>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {tab === 'info' && (
+            <div>
+              <button className="btn" style={{marginBottom:10}} onClick={() => setShowReadiness(true)}>🟢🟡🔴 Правила готовности</button>
+              <Collapsible title="📊 Пульсовые зоны">
+                {ZONES.map((z, i) => (
+                  <div key={i} className="exercise">
+                    <div className="row center"><div className="exercise-name" style={{color:z.color}}>{z.zone} – {z.name}</div><Pill tone="blue">{z.bpm}</Pill></div>
+                    <div className="text-sm">{z.desc}</div>
+                    <div className="text-xs" style={{color:'#a5b4fc'}}>{z.use}</div>
+                  </div>
+                ))}
+              </Collapsible>
+              <Collapsible title="📉 HRV-гайд">
+                {HRV_GUIDE.map((h, i) => (
+                  <div key={i} className="exercise">
+                    <div className="row center"><div className="highlight">{h.range}</div><Pill tone={h.label==='Красный'?'red':h.label==='Жёлтый'?'yellow':h.label==='Синий'?'blue':'green'}>{h.label}</Pill></div>
+                    <div className="text-sm">{h.action}</div>
+                    <div className="text-xs">{h.why}</div>
+                  </div>
+                ))}
+              </Collapsible>
+              <Collapsible title="⚠️ Ограничения" defaultOpen={true}>
+                <div className="text-sm" style={{color:'#fca5a5'}}>🚫 Гипермобильное плечо: никаких широких подтягиваний, жима из-за головы.</div>
+                <div className="text-sm" style={{color:'#fca5a5'}}>🚫 Левое бедро: никаких болгарских приседаний, прыжков.</div>
+                <div className="text-sm" style={{color:'#fde047'}}>⚠️ Астма: разминка ≥8 мин, заминка ≥7 мин.</div>
+              </Collapsible>
+            </div>
+          )}
+
+          {tab === 'nutrition' && (
+            <div>
+              <div className="card">
+                <h3>🍽 Ежедневный ориентир</h3>
+                {NUTRITION.map((n, i) => (
+                  <div key={i} className="exercise">
+                    <div className="row center"><div className="highlight">{n.label}</div><div className="text-sm" style={{fontWeight:700,color:'#b0d060'}}>{n.val}</div></div>
+                    <div className="text-xs">{n.note}</div>
+                  </div>
+                ))}
+              </div>
+              <div className="card-inner">
+                <div className="highlight">Простой дневной план:</div>
+                <div className="text-sm">🥚 5–6 яиц (42–51 г белка)</div>
+                <div className="text-sm">🧀 200г творога (34 г белка)</div>
+                <div className="text-sm">🥛 500 мл кефира (15 г белка)</div>
+                <div className="text-sm">🍖 150г мяса/птицы (30–45 г белка)</div>
+                <div className="text-sm" style={{color:'#b0c050'}}>Итого: ~130–145 г белка</div>
+              </div>
+            </div>
+          )}
+
+          <Modal open={showSettings} title="Настройки" onClose={() => setShowSettings(false)}>
+            <div style={{marginBottom:16}}>
+              <div className="text-xs">Дата начала</div>
+              <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} />
+            </div>
+            <div style={{marginBottom:16}}>
+              <div className="text-xs">Дни тренировок (макс. 3)</div>
+              <div className="grid-4">
+                {[1,2,3,4,5,6,0].map(d => <button key={d} className={`chip ${trainDays.includes(d)?'active':''}`} onClick={() => toggleDay(d)} disabled={!trainDays.includes(d) && trainDays.length>=3}>{DAYS[d]}</button>)}
+              </div>
+              <div className="text-xs">A = первый, B = второй, C = третий</div>
+            </div>
+            <button className="btn btn-accent" onClick={() => setShowSettings(false)}>Готово</button>
+          </Modal>
+
+          <Modal open={showReadiness} title="Правила готовности" onClose={() => setShowReadiness(false)}>
+            <div className="card-inner" style={{borderLeft:'3px solid var(--green)'}}><h3>🟢 Зелёный</h3><div className="text-sm">Сон ≥7 ч · пульс в норме · боль 0–2/10</div><div className="highlight">→ Полный план</div></div>
+            <div className="card-inner" style={{borderLeft:'3px solid var(--yellow)'}}><h3>🟡 Жёлтый</h3><div className="text-sm">Сон 6–7 ч · пульс повышен · боль 3–4/10</div><div className="highlight">→ Объём −30%, без Z3</div></div>
+            <div className="card-inner" style={{borderLeft:'3px solid var(--red)'}}><h3>🔴 Красный</h3><div className="text-sm">Сон &lt;6 ч · боль ≥5/10 · астма</div><div className="highlight">→ Только ходьба и реабилитация</div></div>
+          </Modal>
+        </div>
+      );
+    }
+
+    const root = document.getElementById('root');
+    if (ReactDOM.createRoot) ReactDOM.createRoot(root).render(<App />);
+    else ReactDOM.render(<App />, root);
+  </script>
+</body>
+</html>

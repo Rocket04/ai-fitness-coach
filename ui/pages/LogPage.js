@@ -1,6 +1,6 @@
 import React from 'react';
-import Pill from '../components/Pill';
-import MiniChart from '../components/MiniChart';
+import Pill from '../components/Pill.js';
+import MiniChart from '../components/MiniChart.js';
 
 /**
  * Страница лога.

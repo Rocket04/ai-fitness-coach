@@ -1,7 +1,7 @@
 import React from 'react';
-import Pill from '../components/Pill';
-import Collapsible from '../components/Collapsible';
-import { ZONES, HRV_GUIDE } from '../../config/constants.js';
+import Pill from '../components/Pill.js';
+import Collapsible from '../components/Collapsible.js';
+import { ZONES, HRV_GUIDE } from '../../js/config/constants.js';
 
 /**
  * Страница информации.

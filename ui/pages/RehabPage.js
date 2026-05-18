@@ -1,5 +1,5 @@
 import React from 'react';
-import Collapsible from '../components/Collapsible';
+import Collapsible from '../components/Collapsible.js';
 
 /**
  * Страница реабилитации.
