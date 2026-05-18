@@ -6,11 +6,33 @@ import { DAYS } from './config/constants.js';
 import Modal from './ui/components/Modal.js';
 
 const TodayPage = lazy(() => import('./ui/pages/TodayPage.js'));
-const RehabPage = lazy(() => import('./ui/pages/RehabPage.js'));
 const LogPage = lazy(() => import('./ui/pages/LogPage.js'));
-const InfoPage = lazy(() => import('./ui/pages/InfoPage.js'));
-const NutritionPage = lazy(() => import('./ui/pages/NutritionPage.js'));
 const AnalyticsPage = lazy(() => import('./ui/pages/AnalyticsPage.js'));
+const ProfilePage = lazy(() => import('./ui/pages/ProfilePage.js'));
+
+function BottomNav({ activeTab, setActiveTab }) {
+  const tabs = [
+    { idx: 0, label: 'Сегодня', icon: '\uD83C\uDFC3\uFE0F' },
+    { idx: 1, label: 'Дневник', icon: '\uD83D\uDCDD' },
+    { idx: 2, label: 'Аналитика', icon: '\uD83D\uDCCA' },
+    { idx: 3, label: 'Профиль', icon: '\uD83D\uDC64' },
+  ];
+
+  return React.createElement(
+    'nav',
+    { className: 'bottom-nav' },
+    tabs.map(t =>
+      React.createElement('button', {
+        key: t.idx,
+        className: `bottom-nav__item${activeTab === t.idx ? ' active' : ''}`,
+        onClick: () => setActiveTab(t.idx),
+      },
+        React.createElement('span', { className: 'bottom-nav__icon' }, t.icon),
+        React.createElement('span', { className: 'bottom-nav__label' }, t.label)
+      )
+    )
+  );
+}
 
 function AppContent() {
   const state = useContext(AppStateContext);
@@ -29,54 +51,32 @@ function AppContent() {
     return React.createElement('div', { className: 'card' }, 'Загрузка...');
   }
 
+  const pages = [
+    React.createElement(TodayPage, { key: 'today' }),
+    React.createElement(LogPage, { key: 'log' }),
+    React.createElement(AnalyticsPage, { key: 'analytics' }),
+    React.createElement(ProfilePage, { key: 'profile' }),
+  ];
+
   return React.createElement(
     React.Fragment,
     null,
-    // Tab bar
+    // Main content area
     React.createElement(
       'div',
-      { className: 'tabbar' },
-      React.createElement('button', {
-        className: activeTab === 0 ? 'tab active' : 'tab',
-        onClick: () => setActiveTab(0),
-      }, '\uD83C\uDFC3\uFE0F Сегодня'),
-      React.createElement('button', {
-        className: activeTab === 1 ? 'tab active' : 'tab',
-        onClick: () => setActiveTab(1),
-      }, '\uD83E\uDDD8\u200D\u2642\uFE0F Реабил'),
-      React.createElement('button', {
-        className: activeTab === 2 ? 'tab active' : 'tab',
-        onClick: () => setActiveTab(2),
-      }, '\uD83D\uDCDD Дневник'),
-      React.createElement('button', {
-        className: activeTab === 3 ? 'tab active' : 'tab',
-        onClick: () => setActiveTab(3),
-      }, '\uD83D\uDCD6 Справка'),
-      React.createElement('button', {
-        className: activeTab === 4 ? 'tab active' : 'tab',
-        onClick: () => setActiveTab(4),
-      }, '\uD83C\uDF7D\uFE0F Питание'),
-      React.createElement('button', {
-        className: activeTab === 5 ? 'tab active' : 'tab',
-        onClick: () => setActiveTab(5),
-      }, '\uD83D\uDCCA Аналитика'),
-      React.createElement('button', {
-        className: 'tab tab-settings',
-        onClick: openSettings,
-        title: 'Настройки',
-      }, '\u2699\uFE0F')
+      { className: 'app-content' },
+      React.createElement(
+        Suspense,
+        { fallback: React.createElement('div', { className: 'card' }, 'Загрузка...') },
+        React.createElement(
+          'div',
+          { className: `page-wrapper page-${activeTab}` },
+          pages[activeTab]
+        )
+      )
     ),
-    // Pages — no prop-drilling, each page reads from context
-    React.createElement(
-      Suspense,
-      { fallback: React.createElement('div', { className: 'card' }, 'Загрузка...') },
-      activeTab === 0 && React.createElement(TodayPage, null),
-      activeTab === 1 && React.createElement(RehabPage, null),
-      activeTab === 2 && React.createElement(LogPage, null),
-      activeTab === 3 && React.createElement(InfoPage, null),
-      activeTab === 4 && React.createElement(NutritionPage, null),
-      activeTab === 5 && React.createElement(AnalyticsPage, null)
-    ),
+    // Bottom navigation
+    React.createElement(BottomNav, { activeTab, setActiveTab }),
     // ── Settings modal ──
     showSettings && React.createElement(Modal, {
       isOpen: true,
