@@ -1,5 +1,0 @@
-{
-  "entry": ["js/app.js"],
-  "project": ["js/**/*.js"],
-  "ignore": ["js/ui/components/ExerciseCard.js", "js/ui/components/MiniChart.js", "js/ui/components/ReadinessRing.js", "js/ui/components/RecoveryBar.js", "js/ui/components/SVGRing.js", "js/ui/components/TomorrowPreview.js"]
-}

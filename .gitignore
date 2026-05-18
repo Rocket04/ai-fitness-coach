@@ -4,3 +4,8 @@ node_modules/
 nul
 *.log
 .DS_Store
+.env
+knip.json
+package.json
+.aider.chat.history.md
+.aider.input.history
