@@ -1,10 +1,6 @@
 // js/core/helpers.js
 // Чистые утилиты для работы с датами и форматированием
 
-export function pad(n) {
-  return String(n).padStart(2, '0');
-}
-
 /**
  * Парсит ISO-строку "YYYY-MM-DD" в Date с полднём (12:00).
  * @param {string|null} str
@@ -22,7 +18,7 @@ export function parseLocalDate(str) {
  * @returns {string}
  */
 export function formatISO(date) {
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
 
 /**
@@ -61,6 +57,15 @@ export function weekDiff(start, target) {
 }
 
 /**
+ * Локализованная метка даты для отображения (например "пн, 6 янв.").
+ * @param {Date} date
+ * @returns {string}
+ */
+export function dateLabel(date) {
+  return date.toLocaleDateString('ru-RU', { weekday: 'short', day: 'numeric', month: 'short' });
+}
+
+/**
  * Ограничивает число в диапазоне [min, max].
  * @param {number} n
  * @param {number} min
@@ -69,15 +74,6 @@ export function weekDiff(start, target) {
  */
 export function clamp(n, min, max) {
   return Math.max(min, Math.min(max, n));
-}
-
-/**
- * Локализованная метка даты для отображения (например "пн, 6 янв.").
- * @param {Date} date
- * @returns {string}
- */
-export function dateLabel(date) {
-  return date.toLocaleDateString('ru-RU', { weekday: 'short', day: 'numeric', month: 'short' });
 }
 
 /**

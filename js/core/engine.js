@@ -1,7 +1,6 @@
 // js/core/engine.js
 // Бизнес-логика фитнес-трекера — чистые функции без побочных эффектов
 
-import ACHIEVEMENTS from '../config/achievements.js';
 import { MONTHS, TRAIN_ORDER } from '../config/constants.js';
 import { formatISO, addDays, parseLocalDate } from './helpers.js';
 
@@ -734,22 +733,4 @@ export function getApreExplanation(mode, readiness, debt, multiplier = 1.0, apre
   }
 
   return reasons;
-}
-
-/**
- * Проверяет достижения и возвращает ключи вновь разблокированных.
- * @param {Array<Object>} sessions
- * @param {Array<Object>} checkins
- * @returns {string[]}
- */
-export function checkAchievements(sessions, checkins) {
-  const newlyUnlocked = [];
-
-  for (const achievement of ACHIEVEMENTS) {
-    if (achievement.test && achievement.test(sessions, checkins)) {
-      newlyUnlocked.push(achievement.key);
-    }
-  }
-
-  return newlyUnlocked;
 }

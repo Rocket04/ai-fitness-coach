@@ -89,11 +89,10 @@ export async function deleteSession(key) {
 
 /**
  * Возвращает одну сессию по ключу.
- * Возвращает одну сессию по ключу.
  * @param {string} key — "YYYY-MM-DD_type"
  * @returns {Promise<Object|null>}
  */
-export async function getSessionByKey(key) {
+async function getSessionByKeyInternal(key) {
   try {
     return (await db.sessions.get(key)) ?? null;
   } catch (err) {
@@ -110,94 +109,6 @@ export async function getAllSessions() {
     return await db.sessions.toArray();
   } catch (err) {
     throw new Error(`Ошибка при получении всех сессий: ${err.message}`, { cause: err });
-  }
-}
-
-/**
- * Возвращает сессии в диапазоне дат (включительно).
- * @param {string} fromISO — YYYY-MM-DD
- * @param {string} toISO   — YYYY-MM-DD
- * @returns {Promise<Array<Object>>}
- */
-export async function getSessionsInDateRange(fromISO, toISO) {
-  try {
-    return await db.sessions
-      .where('date')
-      .between(fromISO, toISO, true, true)
-      .toArray();
-  } catch (err) {
-    throw new Error(`Ошибка при получении сессий за ${fromISO}..${toISO}: ${err.message}`, { cause: err });
-  }
-}
-
-/**
- * Возвращает все сессии за указанный месяц.
- * @param {string} prefix — "YYYY-MM"
- * @returns {Promise<Array<Object>>}
- */
-export async function getSessionsByMonth(prefix) {
-  try {
-    const [yearStr, monthStr] = prefix.split('-');
-    const year = Number(yearStr);
-    const month = Number(monthStr) - 1;
-    const start = new Date(Date.UTC(year, month, 1)).toISOString().slice(0, 10);
-    const end = new Date(Date.UTC(year, month + 1, 0)).toISOString().slice(0, 10);
-    return await db.sessions
-      .where('date')
-      .between(start, end, true, true)
-      .toArray();
-  } catch (err) {
-    throw new Error(`Ошибка при получении сессий за месяц: ${err.message}`, { cause: err });
-  }
-}
-
-/**
- * Возвращает последние `limit` сессий, отсортированные по дате (убывание).
- * @param {number} limit
- * @returns {Promise<Array<Object>>}
- */
-export async function getLastSessions(limit) {
-  try {
-    return await db.sessions
-      .orderBy('date')
-      .reverse()
-      .limit(limit)
-      .toArray();
-  } catch (err) {
-    throw new Error(`Ошибка при получении последних сессий: ${err.message}`, { cause: err });
-  }
-}
-
-/**
- * Возвращает все сессии указанного типа.
- * @param {string} type — 'A'|'B'|'C'|'rest'|'morning'|'evening'
- * @returns {Promise<Array<Object>>}
- */
-export async function getSessionsByType(type) {
-  try {
-    return await db.sessions
-      .where('type')
-      .equals(type)
-      .toArray();
-  } catch (err) {
-    throw new Error(`Ошибка при получении сессий по типу ${type}: ${err.message}`, { cause: err });
-  }
-}
-
-/**
- * Возвращает последние `limit` сессий, содержащих testResults.
- * @param {number} [limit=10]
- * @returns {Promise<Array<Object>>}
- */
-export async function getSessionsWithTests(limit = 10) {
-  try {
-    const results = await db.sessions
-      .filter(s => s.testResults != null)
-      .toArray();
-    results.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-    return results.slice(0, limit);
-  } catch (err) {
-    throw new Error(`Ошибка при получении сессий с тестами: ${err.message}`, { cause: err });
   }
 }
 
@@ -371,65 +282,6 @@ export async function saveManualStatus(date, status) {
  */
 export async function getManualStatus(date) {
   return await getSetting(`status_${date}`);
-}
-
-/**
- * Удаляет ручной статус для даты (сбрасывает на 'unknown').
- * @param {string} date
- * @returns {Promise<void>}
- */
-export async function removeManualStatus(date) {
-  try {
-    await db.settings.delete(`status_${date}`);
-  } catch (err) {
-    throw new Error(`Ошибка при удалении статуса для ${date}: ${err.message}`, { cause: err });
-  }
-}
-
-/* =================================================================
- * ДОСТИЖЕНИЯ
- * ================================================================= */
-
-/**
- * Сохраняет новое достижение.
- * @param {string} achievementKey
- * @returns {Promise<number>} id созданной записи.
- */
-export async function saveAchievement(achievementKey) {
-  try {
-    if (achievementKey === undefined) {
-      throw new Error('Для достижения обязательно поле achievementKey');
-    }
-    return await db.achievements.add({ achievementKey, earnedAt: Date.now() });
-  } catch (err) {
-    throw new Error(`Ошибка при сохранении достижения: ${err.message}`, { cause: err });
-  }
-}
-
-/**
- * Возвращает все достижения.
- * @returns {Promise<Array<Object>>}
- */
-export async function getAchievements() {
-  try {
-    return await db.achievements.toArray();
-  } catch (err) {
-    throw new Error(`Ошибка при получении достижений: ${err.message}`, { cause: err });
-  }
-}
-
-/**
- * Проверяет, получено ли достижение с указанным ключом.
- * @param {string} key — achievementKey
- * @returns {Promise<boolean>}
- */
-export async function hasAchievement(key) {
-  try {
-    const count = await db.achievements.where('achievementKey').equals(key).count();
-    return count > 0;
-  } catch (err) {
-    throw new Error(`Ошибка при проверке достижения ${key}: ${err.message}`, { cause: err });
-  }
 }
 
 /* =================================================================

@@ -213,5 +213,3 @@ const month3 = {
 };
 
 export const MONTHS = [month1, month2, month3];
-
-export default MONTHS;
