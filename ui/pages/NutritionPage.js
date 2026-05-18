@@ -1,13 +1,11 @@
 import React from 'react';
+import { NUTRITION } from '../../config/constants.js';
 
 /**
  * Страница питания.
- * @param {{
- *   NUTRITION: Array<{label:string, value:string|number, note?:string}>
- * }} props
  * @returns {JSX.Element}
  */
-export default function NutritionPage({ NUTRITION }) {
+export default function NutritionPage() {
   return React.createElement(
     React.Fragment,
     null,
