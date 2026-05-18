@@ -100,11 +100,11 @@ export default function TodayPage() {
     testPullUps, testPushUps, testPlank,
     trainingDone, weekLabel, tomorrowPlan, tomorrowType,
     morningDone, eveningDone, apreReasons,
-    trendData7, lastCheckin,
+    durationMinutes, lastCheckin,
   } = state;
 
   const {
-    setRpe, setSessionNote, setTestPullUps, setTestPushUps, setTestPlank,
+    setRpe, setSessionNote, setDurationMinutes, setTestPullUps, setTestPushUps, setTestPlank,
     handleManualOverrideChange, handleToggleTraining,
     handleMarkMorning, handleMarkEvening,
   } = dispatch;
@@ -230,6 +230,17 @@ export default function TodayPage() {
         React.createElement('span', { style: { color: 'var(--green)', fontWeight: 500 } }, 'лёгкая'),
         React.createElement('span', { style: { color: 'var(--yellow)', fontWeight: 500 } }, 'умеренная'),
         React.createElement('span', { style: { color: 'var(--red)', fontWeight: 500 } }, 'высокая')
+      ),
+      React.createElement('div', { style: { marginBottom: '0.875rem' } },
+        React.createElement('label', { style: { fontSize: '0.85rem', marginBottom: '0.25rem', display: 'block', fontWeight: 500 } }, 'Длительность (мин)'),
+        React.createElement('input', {
+          type: 'number',
+          min: 0,
+          max: 300,
+          value: durationMinutes,
+          onChange: e => setDurationMinutes(Number(e.target.value)),
+          style: { width: '100%', padding: '0.375rem 0.5rem', fontSize: '0.9rem' },
+        })
       ),
       React.createElement('div', { style: { marginBottom: '0.875rem' } },
         React.createElement('label', { style: { fontSize: '0.85rem', marginBottom: '0.25rem', display: 'block', fontWeight: 500 } }, 'Заметки'),

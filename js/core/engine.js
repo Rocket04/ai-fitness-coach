@@ -142,6 +142,17 @@ export function detectRecoveryDebt(recentCheckins) {
 }
 
 /**
+ * Рассчитывает тренировочную нагрузку сессии по методу Фостера (2001).
+ * sessionLoad = rpe × durationMinutes.
+ * @param {number} rpe — субъективная интенсивность 0–10
+ * @param {number} [durationMinutes=45] — длительность в минутах
+ * @returns {number}
+ */
+export function calculateSessionLoad(rpe, durationMinutes = 45) {
+  return Math.round(Number(rpe || 0) * Math.max(0, Number(durationMinutes) || 45));
+}
+
+/**
  * Recovery Score 0–100 на основе HRV, сна, пульса и субъективных метрик.
  * Взвешенная z-score модель: HRV 40%, сон 30%, пульс 10%, субъективные 20%.
  * @param {Object} checkin — текущий чек-ин

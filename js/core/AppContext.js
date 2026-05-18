@@ -24,6 +24,7 @@ import {
   getEffectiveReadiness,
   detectRecoveryDebt,
   calculateRecoveryScore,
+  calculateSessionLoad,
   getWeeklySummary,
   getMonthStats,
   getWorkoutType,
@@ -79,6 +80,7 @@ export function AppProvider({ children }) {
   // ── Session form ──
   const [rpe, setRpe] = useState(0);
   const [sessionNote, setSessionNote] = useState('');
+  const [durationMinutes, setDurationMinutes] = useState(45);
   const [testPullUps, setTestPullUps] = useState(0);
   const [testPushUps, setTestPushUps] = useState(0);
   const [testPlank, setTestPlank] = useState(0);
@@ -472,6 +474,7 @@ export function AppProvider({ children }) {
       setSessions(prev => prev.filter(s => s.key !== key));
       showToast('Тренировка отменена');
     } else {
+      const sessionLoad = calculateSessionLoad(rpe, durationMinutes);
       const session = {
         key,
         date: todayISO,
@@ -479,6 +482,8 @@ export function AppProvider({ children }) {
         completed: true,
         readiness: autoReadiness,
         rpe,
+        durationMinutes,
+        sessionLoad,
         hipPain,
         shoulderPain,
         notes: sessionNote,
@@ -490,9 +495,10 @@ export function AppProvider({ children }) {
       setSessions(prev => [...prev.filter(s => s.key !== key), session]);
       setRpe(0);
       setSessionNote('');
+      setDurationMinutes(45);
       showToast('Тренировка сохранена');
     }
-  }, [todayISO, trainType, sessions, autoReadiness, rpe, hipPain, shoulderPain,
+  }, [todayISO, trainType, sessions, autoReadiness, rpe, durationMinutes, hipPain, shoulderPain,
     sessionNote, testPullUps, testPushUps, testPlank, sessionPlan, showToast]);
 
   const handleExportData = useCallback(async () => {
@@ -559,7 +565,7 @@ export function AppProvider({ children }) {
     weight, restHR, hrv, sleepHours, hipPain, shoulderPain, breathing, notes,
     muscleSoreness, energy, mood, sleepQuality, stress,
     // Session form
-    rpe, sessionNote, testPullUps, testPushUps, testPlank,
+    rpe, sessionNote, durationMinutes, testPullUps, testPushUps, testPlank,
     // UI
     activeTab, showReadiness, manualOverride,
     showSettings, editStartDate, editTrainDays, toast,
@@ -580,7 +586,7 @@ export function AppProvider({ children }) {
     sessions, checkins, dataLoaded, startDate, trainDays,
     weight, restHR, hrv, sleepHours, hipPain, shoulderPain, breathing, notes,
     muscleSoreness, energy, mood, sleepQuality, stress,
-    rpe, sessionNote, testPullUps, testPushUps, testPlank,
+    rpe, sessionNote, durationMinutes, testPullUps, testPushUps, testPlank,
     activeTab, showReadiness, manualOverride,
     showSettings, editStartDate, editTrainDays, toast,
     todayISO, todayDate, tomorrowDate,
@@ -599,7 +605,7 @@ export function AppProvider({ children }) {
     setHipPain, setShoulderPain, setBreathing, setNotes,
     setMuscleSoreness, setEnergy, setMood, setSleepQuality, setStress,
     // Session setters
-    setRpe, setSessionNote, setTestPullUps, setTestPushUps, setTestPlank,
+    setRpe, setSessionNote, setDurationMinutes, setTestPullUps, setTestPushUps, setTestPlank,
     // UI setters
     setActiveTab, setShowReadiness, setShowSettings,
     setEditStartDate, setEditTrainDays,

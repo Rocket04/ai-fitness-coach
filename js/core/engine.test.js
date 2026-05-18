@@ -5,7 +5,7 @@
 const assert = require('assert');
 
 (async function run() {
-  const { calculateRecoveryScore, calcReadiness, detectRecoveryDebt, getWorkoutType } = await import('./engine.js');
+  const { calculateRecoveryScore, calcReadiness, detectRecoveryDebt, getWorkoutType, calculateSessionLoad } = await import('./engine.js');
 
   let passed = 0;
   let failed = 0;
@@ -277,6 +277,23 @@ const assert = require('assert');
     assert.strictEqual(getWorkoutType(new Date('2025-01-15'), days), 'C');
     assert.strictEqual(getWorkoutType(new Date('2025-01-16'), days), 'A');
     assert.strictEqual(getWorkoutType(new Date('2025-01-17'), days), 'B');
+  });
+
+  // ════════════════════════════════════════════════════════════
+  // calculateSessionLoad
+  // ════════════════════════════════════════════════════════════
+  console.log('\ncalculateSessionLoad');
+
+  test('rpe 8 × 45 мин = 360', () => {
+    assert.strictEqual(calculateSessionLoad(8, 45), 360);
+  });
+
+  test('default duration = 45 мин', () => {
+    assert.strictEqual(calculateSessionLoad(5), 225);
+  });
+
+  test('обрабатывает 0 rpe', () => {
+    assert.strictEqual(calculateSessionLoad(0, 60), 0);
   });
 
   // ════════════════════════════════════════════════════════════

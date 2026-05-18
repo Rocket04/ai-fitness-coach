@@ -127,6 +127,23 @@ export default function CoachAdvice() {
   const concrete = useMemo(() => {
     const items = [];
 
+    // Последняя нагрузка
+    const lastTraining = [...(sessions || [])]
+      .filter(s => s.completed && s.type !== 'morning' && s.type !== 'evening')
+      .sort((a, b) => (b.date || '').localeCompare(a.date || ''))[0];
+    if (lastTraining && typeof lastTraining.sessionLoad === 'number') {
+      items.push({
+        icon: '\uD83D\uDCAA',
+        text: `Последняя нагрузка: ${lastTraining.sessionLoad} а.е.`,
+      });
+      if (lastTraining.sessionLoad > 400) {
+        items.push({
+          icon: '\u26A0\uFE0F',
+          text: 'Рекомендуется снизить нагрузку',
+        });
+      }
+    }
+
     if (apreReasons && apreReasons.length > 0) {
       for (const r of apreReasons) {
         items.push({ icon: '\uD83C\uDFAF', text: r });
