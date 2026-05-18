@@ -1,0 +1,305 @@
+/* ==========================================================================
+   Today Page Redesign - Whoop Inspired
+   ========================================================================== */
+
+/* --- Root Variables & Base Styles --- */
+:root {
+    --bg-main: #0a0a0a;
+    --bg-card: #141414;
+    --border-color: #2a2a2a;
+    --text-primary: #f0f0f0;
+    --text-secondary: #a0a0a0;
+    --accent-green: #00ff87;
+    --accent-yellow: #f5d142;
+    --accent-red: #ff4d4d;
+    --spacing-sm: 12px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+    --border-radius-md: 14px;
+    --border-radius-lg: 18px;
+    --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+.today-page-container {
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    font-family: var(--font-family);
+    padding: var(--spacing-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* --- Hero Section & Recovery Ring --- */
+.hero-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+}
+
+.recovery-ring-container {
+    position: relative;
+    width: 180px;
+    height: 180px;
+    cursor: pointer;
+}
+
+.recovery-ring-svg {
+    transform: rotate(-90deg);
+    width: 100%;
+    height: 100%;
+}
+
+.recovery-ring-circle {
+    fill: none;
+    stroke-width: 12;
+    transition: stroke-dashoffset 0.8s ease-out, stroke 0.5s ease;
+}
+
+.recovery-ring-circle.background {
+    stroke: var(--border-color);
+}
+
+.recovery-ring-circle.progress {
+    stroke-dasharray: 478; /* Circumference: 2 * pi * 76 */
+    stroke-dashoffset: 478; /* Start empty */
+    animation: fill-ring 0.8s ease-out forwards;
+    stroke-linecap: round;
+}
+
+/* Color Variants */
+.recovery-ring-circle.high { stroke: var(--accent-green); }
+.recovery-ring-circle.medium { stroke: var(--accent-yellow); }
+.recovery-ring-circle.low { stroke: var(--accent-red); }
+
+@keyframes fill-ring {
+    to {
+        /* The final value will be set via inline style in JS */
+    }
+}
+
+.recovery-score-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.recovery-score-value {
+    font-size: 3rem;
+    font-weight: 700;
+    line-height: 1.1;
+}
+
+.recovery-score-label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* --- Status Chips & Hints --- */
+.status-hint-container {
+    text-align: center;
+    margin-top: -8px; /* Pull it closer to the ring */
+}
+
+.status-chip {
+    display: inline-block;
+    padding: 6px 14px;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.trends-hint {
+    display: block;
+    margin-top: 8px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    opacity: 0.7;
+}
+
+/* --- Sparklines --- */
+.sparklines-section {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--spacing-md);
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: max-height 0.5s ease-in-out, opacity 0.5s ease-in-out, margin-top 0.5s ease;
+}
+
+.sparklines-section.visible {
+    max-height: 100px;
+    opacity: 1;
+    margin-top: var(--spacing-sm);
+}
+
+.sparkline-card {
+    background-color: var(--bg-card);
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-sm);
+    text-align: center;
+}
+
+.sparkline-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+}
+
+.sparkline-svg path {
+    fill: none;
+    stroke: var(--text-secondary);
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* --- Override --- */
+.override-container {
+    text-align: center;
+    margin-top: var(--spacing-sm);
+}
+
+.override-select {
+    background-color: var(--bg-card);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 0.85rem;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+/* --- Exercise Cards --- */
+.exercise-card {
+    background: var(--bg-card);
+    border-radius: var(--border-radius-lg);
+    border: 1px solid var(--border-color);
+    margin-bottom: var(--spacing-md);
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInSlideUp 0.5s ease-out forwards;
+}
+
+.exercise-card:nth-child(2) { animation-delay: 0.1s; }
+.exercise-card:nth-child(3) { animation-delay: 0.2s; }
+
+@keyframes fadeInSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    padding: var(--spacing-md);
+    cursor: pointer;
+}
+
+.card-icon {
+    margin-right: var(--spacing-md);
+    width: 32px;
+    height: 32px;
+}
+
+.card-title-group {
+    flex-grow: 1;
+}
+
+.card-title {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.apre-badge {
+    background-color: var(--border-color);
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 3px 8px;
+    border-radius: 6px;
+    display: inline-block;
+    margin-top: 4px;
+}
+
+.chevron-icon {
+    transition: transform 0.4s ease;
+}
+
+.card.expanded .chevron-icon {
+    transform: rotate(180deg);
+}
+
+.card-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.5s ease-in-out, padding 0.5s ease-in-out;
+    padding: 0 var(--spacing-md);
+    color: var(--text-secondary);
+}
+
+.card.expanded .card-content {
+    max-height: 500px; /* Adjust as needed */
+    padding: 0 var(--spacing-md) var(--spacing-md);
+}
+
+/* --- Tomorrow's Plan --- */
+.tomorrow-plan {
+    background-color: var(--bg-card);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-lg);
+    text-align: center;
+}
+
+.tomorrow-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: var(--spacing-md);
+}
+
+.plan-buttons-group {
+    display: flex;
+    gap: var(--spacing-md);
+}
+
+.plan-button {
+    flex: 1;
+    background-color: var(--border-color);
+    color: var(--text-primary);
+    border: none;
+    border-radius: var(--border-radius-md);
+    padding: 14px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.plan-button:hover {
+    transform: scale(1.03);
+    background-color: #3a3a3a;
+}
