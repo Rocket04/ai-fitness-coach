@@ -1,4 +1,5 @@
 import React from 'react';
+import { MORNING_ROUTINE, EVENING_ROUTINE } from '../../config/constants.js';
 
 function RoutineList({ title, routines, done, onMarkDone, color, icon }) {
   const items = routines.map((item, i) =>
@@ -52,7 +53,7 @@ function RoutineList({ title, routines, done, onMarkDone, color, icon }) {
   );
 }
 
-export default function RehabPage({ morningDone, eveningDone, markMorning, markEvening, MORNING_ROUTINE, EVENING_ROUTINE }) {
+export default function RehabPage({ morningDone, eveningDone, markMorning, markEvening }) {
   return React.createElement(
     'div',
     { className: 'page-enter' },
