@@ -348,3 +348,195 @@ body {
   flex: 1;
   border-radius: var(--radius-sm) var(--radius-sm) 0 0;
 }
+
+/* --- Premium UI Components --- */
+
+/* Hero Ring */
+.hero-ring-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+.hero-ring {
+  position: relative;
+  width: 160px;
+  height: 160px;
+}
+.hero-ring-bg {
+  fill: none;
+  stroke: var(--surface2);
+  stroke-width: 12;
+}
+.hero-ring-fg {
+  fill: none;
+  stroke-width: 12;
+  stroke-linecap: round;
+  transform: rotate(-90deg);
+  transform-origin: 50% 50%;
+  transition: stroke-dashoffset 0.5s ease;
+}
+.hero-ring-score {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+.hero-ring-label-text {
+  font-size: 0.875rem;
+  color: var(--text2);
+  text-align: center;
+}
+.hero-readiness-badge {
+  margin-top: 0.25rem;
+}
+.hero-ring-hint {
+  font-size: 0.75rem;
+  color: var(--text2);
+  text-align: center;
+}
+.hero-manual-override {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+/* Recovery Bar */
+.recovery-bar-wrapper {
+  margin: 0.75rem 0;
+}
+.recovery-bar-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--text2);
+  margin-bottom: 0.25rem;
+}
+
+/* Exercise Card */
+.exercise-card {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 0.75rem;
+  overflow: hidden;
+}
+.exercise-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+}
+.exercise-card-toggle {
+  font-size: 1.25rem;
+  background: none;
+  border: none;
+  color: var(--text2);
+  cursor: pointer;
+}
+.exercise-apre-badges {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0 1rem 0.5rem;
+}
+.exercise-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.exercise-item {
+  padding: 0.5rem 1rem;
+  border-top: 1px solid var(--border);
+}
+
+/* Tomorrow Preview */
+.tomorrow-card {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+.tomorrow-card-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.routine-card {
+  background-color: var(--surface2);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem;
+}
+.routine-buttons {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+/* Weekly Sparklines */
+.weekly-sparklines {
+  margin-bottom: 1rem;
+}
+.sparklines-header {
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+.sparklines-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 0.75rem;
+}
+.sparkline-item {
+  background-color: var(--surface2);
+  border-radius: var(--radius-sm);
+  padding: 0.5rem;
+  text-align: center;
+}
+
+/* RPE Card */
+.rpe-card {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+.rpe-card-value {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+.rpe-card-desc {
+  font-size: 0.875rem;
+  color: var(--text2);
+  margin-bottom: 0.75rem;
+}
+.rpe-slider-wrap {
+  margin-bottom: 0.5rem;
+}
+.rpe-zone-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--text2);
+  margin-bottom: 0.75rem;
+}
+.rpe-save-btn {
+  width: 100%;
+  margin-bottom: 0.75rem;
+}
+.rpe-notes {
+  margin-top: 0.5rem;
+}
+.rpe-notes-label {
+  font-size: 0.875rem;
+  color: var(--text2);
+  margin-bottom: 0.25rem;
+}
