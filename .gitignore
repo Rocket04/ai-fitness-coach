@@ -1,6 +1,6 @@
-.aider*
-.env
-nul 
-.qoder/ 
-nul 
-.qoder/ 
+node_modules/
+.qoder/
+.aider/
+nul
+*.log
+.DS_Store

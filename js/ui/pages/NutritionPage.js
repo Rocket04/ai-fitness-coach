@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useContext } from 'react';
+import { NUTRITION } from '../../config/constants.js';
+import { AppStateContext } from '../../core/AppContext.js';
 
-export default function NutritionPage({
-  NUTRITION, checkin, recoveryScore, readiness,
-  trainType, sessionPlan,
-}) {
+export default function NutritionPage() {
+  const state = useContext(AppStateContext);
+  const { lastCheckin: checkin, recoveryScore, readiness, trainType, sessionPlan } = state;
+
   // Build personalized tips
   const tips = [];
 
