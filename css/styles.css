@@ -540,3 +540,329 @@ body {
   color: var(--text2);
   margin-bottom: 0.25rem;
 }
+
+/* ==========================================================================
+   Gemini Premium Today Page Styles (Whoop Inspired)
+   ========================================================================== */
+
+/* --- Today Page Container --- */
+.today-page {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* --- Hero Section & Recovery Ring --- */
+.hero-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.hero-ring-container {
+  position: relative;
+  width: 180px;
+  height: 180px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.hero-ring {
+  position: relative;
+  width: 180px;
+  height: 180px;
+}
+
+.hero-ring-bg {
+  fill: none;
+  stroke: var(--border);
+  stroke-width: 12;
+}
+
+.hero-ring-fg {
+  fill: none;
+  stroke-width: 12;
+  stroke-dasharray: 478;
+  stroke-dashoffset: 478;
+  animation: fill-ring 0.8s ease-out forwards;
+  stroke-linecap: round;
+  transform: rotate(-90deg);
+  transform-origin: 50% 50%;
+  transition: stroke-dashoffset 0.8s ease-out, stroke 0.5s ease;
+}
+
+/* Color Variants for ring */
+.hero-ring-fg.high { stroke: var(--green); }
+.hero-ring-fg.medium { stroke: var(--yellow); }
+.hero-ring-fg.low { stroke: var(--red); }
+
+@keyframes fill-ring {
+  to {
+    /* The final stroke-dashoffset value is set via inline style in JS */
+  }
+}
+
+.hero-ring-score {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.hero-ring-label-text {
+  font-size: 0.9rem;
+  color: var(--text2);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-align: center;
+}
+
+/* --- Status Chips & Hints --- */
+.status-hint-container {
+  text-align: center;
+  margin-top: -8px;
+}
+
+.hero-readiness-badge .pill {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.hero-ring-hint {
+  display: block;
+  margin-top: 8px;
+  font-size: 0.8rem;
+  color: var(--text2);
+  opacity: 0.7;
+  text-align: center;
+}
+
+/* --- Sparklines --- */
+.weekly-sparklines {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-height 0.5s ease-in-out, opacity 0.5s ease-in-out, margin-top 0.5s ease;
+  margin-bottom: 0;
+}
+
+.weekly-sparklines.visible {
+  max-height: 100px;
+  opacity: 1;
+  margin-top: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.sparkline-item {
+  background-color: var(--surface);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem;
+  text-align: center;
+}
+
+.sparkline-label {
+  font-size: 0.75rem;
+  color: var(--text2);
+  margin-bottom: 4px;
+}
+
+.sparkline-svg path {
+  fill: none;
+  stroke: var(--text2);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* --- Override --- */
+.hero-manual-override {
+  text-align: center;
+  margin-top: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.override-select {
+  background-color: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+/* --- Exercise Cards --- */
+.exercise-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  margin-bottom: 1rem;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeInSlideUp 0.5s ease-out forwards;
+}
+
+.exercise-card:nth-child(2) { animation-delay: 0.1s; }
+.exercise-card:nth-child(3) { animation-delay: 0.2s; }
+.exercise-card:nth-child(4) { animation-delay: 0.3s; }
+.exercise-card:nth-child(5) { animation-delay: 0.4s; }
+
+@keyframes fadeInSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.exercise-card-header {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  cursor: pointer;
+  justify-content: space-between;
+}
+
+.card-icon {
+  margin-right: 1rem;
+  width: 32px;
+  height: 32px;
+}
+
+.card-title-group {
+  flex-grow: 1;
+}
+
+.card-title {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.apre-badge {
+  background-color: var(--border);
+  color: var(--text2);
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: 6px;
+  display: inline-block;
+  margin-top: 4px;
+}
+
+.chevron-icon {
+  transition: transform 0.4s ease;
+}
+
+.exercise-card.expanded .chevron-icon {
+  transform: rotate(180deg);
+}
+
+.exercise-list {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.5s ease-in-out, padding 0.5s ease-in-out;
+  padding: 0 1rem;
+  list-style: none;
+  margin: 0;
+  color: var(--text2);
+}
+
+.exercise-card.expanded .exercise-list {
+  max-height: 500px;
+  padding: 0 1rem 1rem;
+}
+
+.exercise-item {
+  padding: 0.5rem 0;
+  border-top: 1px solid var(--border);
+}
+
+.exercise-item:first-child {
+  border-top: none;
+}
+
+/* --- Tomorrow's Plan --- */
+.tomorrow-card {
+  background-color: var(--surface);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  text-align: center;
+  border: 1px solid var(--border);
+  margin-bottom: 1rem;
+}
+
+.tomorrow-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.routine-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.plan-button {
+  flex: 1;
+  background-color: var(--border);
+  color: var(--text);
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.plan-button:hover {
+  transform: scale(1.03);
+  background-color: #3a3a3a;
+}
+
+/* --- Recovery Bar (Gemini enhanced) --- */
+.recovery-bar-wrapper {
+  margin: 0.75rem 0;
+}
+
+.recovery-bar-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--text2);
+  margin-bottom: 0.25rem;
+}
