@@ -96,11 +96,11 @@ export default function TodayPage() {
 
   const {
     sessionPlan, trainType, readiness, autoReadiness, manualOverride,
-    recoveryScore, coachAdvice, rpe, sessionNote,
+    recoveryScore, rpe, sessionNote,
     testPullUps, testPushUps, testPlank,
     trainingDone, weekLabel, tomorrowPlan, tomorrowType,
     morningDone, eveningDone, apreReasons,
-    trendData7,
+    trendData7, lastCheckin,
   } = state;
 
   const {
@@ -168,6 +168,7 @@ export default function TodayPage() {
     React.createElement(ReadinessIndicator, {
       readiness, autoReadiness, manualOverride,
       onManualOverrideChange: handleManualOverrideChange,
+      lastCheckin, recoveryScore,
     }),
     React.createElement(RecoveryBar, { score: recoveryScore }),
 
@@ -242,7 +243,7 @@ export default function TodayPage() {
     ),
 
     // ── Coach Advice ──
-    React.createElement(CoachAdvice, { advice: coachAdvice }),
+    React.createElement(CoachAdvice),
 
     // ── Quick Actions: Morning/Evening Rehab ──
     React.createElement('div', { className: 'card card--quick-actions' },
@@ -256,9 +257,6 @@ export default function TodayPage() {
     // ── Tomorrow Preview ──
     React.createElement(QuickStats, {
       tomorrowType, tomorrowPlan,
-      morningDone: false, eveningDone: false,
-      onMarkMorning: handleMarkMorning,
-      onMarkEvening: handleMarkEvening,
     })
   );
 }

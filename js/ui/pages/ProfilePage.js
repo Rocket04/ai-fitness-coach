@@ -1,7 +1,7 @@
 // js/ui/pages/ProfilePage.js
 import React, { useContext, useState } from 'react';
 import { AppStateContext, AppDispatchContext } from '../../core/AppContext.js';
-import { ZONES, HRV_GUIDE, NUTRITION, MORNING_ROUTINE, EVENING_ROUTINE } from '../../config/constants.js';
+import { ZONES, HRV_GUIDE, NUTRITION, MORNING_ROUTINE, EVENING_ROUTINE, DAYS } from '../../config/constants.js';
 import Modal from '../components/Modal.js';
 
 function findHrvRange(hrv, guide) {
@@ -50,11 +50,14 @@ export default function ProfilePage() {
 
   const {
     showSettings, editStartDate, editTrainDays,
+    lastCheckin, recoveryScore, readiness,
+  } = state;
+
+  const {
     setShowSettings, setEditStartDate, setEditTrainDays,
     toggleDay, handleSaveSettings,
     handleExportData, handleImportData, handleResetAll,
-    lastCheckin, recoveryScore, readiness,
-  } = state;
+  } = dispatch;
 
   const [showRehab, setShowRehab] = useState(false);
   const [showInfo, setShowInfo] = useState(false);

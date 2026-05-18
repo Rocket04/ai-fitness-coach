@@ -5,8 +5,19 @@ import React from 'react';
 
 const READINESS_LABELS = { green: 'Зелёный', yellow: 'Жёлтый', red: 'Красный' };
 
-export function ReadinessIndicator({ readiness, autoReadiness, manualOverride, onManualOverrideChange }) {
+export function ReadinessIndicator({ readiness, autoReadiness, manualOverride, onManualOverrideChange, lastCheckin, recoveryScore }) {
   const isOverridden = manualOverride && manualOverride !== 'unknown';
+
+  const hrvValue = lastCheckin?.hrv ? `${lastCheckin.hrv} мс` : '\u2014';
+  const recoveryValue = typeof recoveryScore === 'number' ? `${recoveryScore}%` : '\u2014';
+  const subjectiveValue = (() => {
+    if (!lastCheckin) return '\u2014';
+    const mood = Number(lastCheckin.mood);
+    const stress = Number(lastCheckin.stress);
+    if (!mood && !stress) return '\u2014';
+    const avg = Math.round((mood || 0) + (stress || 0)) / 2;
+    return `${avg}/5`;
+  })();
   const ringColor = readiness === 'green' ? 'var(--green)' : readiness === 'yellow' ? 'var(--yellow)' : 'var(--red)';
   const circumference = 2 * Math.PI * 36;
 
@@ -55,7 +66,7 @@ export function ReadinessIndicator({ readiness, autoReadiness, manualOverride, o
           textAnchor: 'middle',
           dominantBaseline: 'central',
           fill: ringColor,
-          fontSize: '14',
+          fontSize: '10',
           fontWeight: '700',
         }, READINESS_LABELS[readiness] || readiness),
         React.createElement('text', {
@@ -81,9 +92,9 @@ export function ReadinessIndicator({ readiness, autoReadiness, manualOverride, o
     React.createElement(
       'div',
       { className: 'balance-row', style: { justifyContent: 'center' } },
-      React.createElement('span', { className: `balance-chip ${readiness === 'green' ? 'green' : readiness === 'yellow' ? 'yellow' : 'red'}` }, '● HRV'),
-      React.createElement('span', { className: `balance-chip ${readiness === 'green' ? 'green' : readiness === 'yellow' ? 'yellow' : 'red'}` }, '● Восст.'),
-      React.createElement('span', { className: `balance-chip ${readiness === 'red' ? 'red' : readiness === 'yellow' ? 'yellow' : 'green'}` }, '● Субъект.')
+      React.createElement('span', { className: `balance-chip ${readiness === 'green' ? 'green' : readiness === 'yellow' ? 'yellow' : 'red'}` }, `\u25CF HRV ${hrvValue}`),
+      React.createElement('span', { className: `balance-chip ${readiness === 'green' ? 'green' : readiness === 'yellow' ? 'yellow' : 'red'}` }, `\u25CF Восст. ${recoveryValue}`),
+      React.createElement('span', { className: `balance-chip ${readiness === 'red' ? 'red' : readiness === 'yellow' ? 'yellow' : 'green'}` }, `\u25CF Субъект. ${subjectiveValue}`)
     ),
     // Manual override buttons
     React.createElement(

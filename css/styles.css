@@ -1238,6 +1238,81 @@ body {
 }
 
 /* ═══════════════════════════════════════════
+   COACH ADVICE / NUTRITION TIPS
+   ═══════════════════════════════════════════ */
+.coach-advice-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.coach-advice-card h4 {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.coach-advice-item {
+  font-size: 0.85rem;
+  color: var(--text2);
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.coach-advice-item:last-child {
+  border-bottom: none;
+}
+
+/* ═══════════════════════════════════════════
+   TOAST NOTIFICATION
+   ═══════════════════════════════════════════ */
+.toast {
+  position: fixed;
+  bottom: 84px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #fff;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  animation: toastIn 0.25s ease-out;
+  max-width: 90vw;
+  white-space: nowrap;
+}
+
+.toast.success {
+  background: rgba(79, 124, 68, 0.2);
+  border-color: var(--green);
+  color: var(--green);
+}
+
+.toast.error {
+  background: rgba(180, 60, 60, 0.2);
+  border-color: var(--red);
+  color: var(--red);
+}
+
+.toast-icon {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(12px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* ═══════════════════════════════════════════
    RESPONSIVE
    ═══════════════════════════════════════════ */
 @media (min-width: 768px) {
