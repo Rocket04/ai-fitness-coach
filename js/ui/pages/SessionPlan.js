@@ -11,7 +11,7 @@ function ExerciseCard({ ex }) {
       className: `exercise ${ex.isTest ? 'exercise-test' : ''}`,
     },
     React.createElement('div', { className: 'exercise-name' },
-      ex.isTest && React.createElement('span', { style: { color: 'var(--yellow)', marginRight: '0.25rem', fontWeight: 700 } }, '🔬 '),
+      ex.isTest && React.createElement('span', { style: { color: 'var(--yellow)', marginRight: 'var(--spacing-xs)', fontWeight: 700 } }, '🔬 '),
       ex.n
     ),
     React.createElement('div', { className: 'exercise-detail' }, `${setsReps}${ex.r}`),
@@ -41,7 +41,7 @@ export default function SessionPlan({ sessionPlan, trainType, weekLabel, apreRea
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            marginBottom: '0.5rem',
+            marginBottom: 'var(--spacing-sm)',
           }
         },
         React.createElement(
@@ -68,7 +68,7 @@ export default function SessionPlan({ sessionPlan, trainType, weekLabel, apreRea
         ? React.createElement(
             'div',
             { style: { textAlign: 'center', padding: '2rem 0', color: 'var(--text3)' } },
-            React.createElement('div', { style: { fontSize: '2rem', marginBottom: '0.5rem' } }, '🏔️'),
+            React.createElement('div', { style: { fontSize: '2rem', marginBottom: 'var(--spacing-sm)' } }, '🏔️'),
             React.createElement('div', { style: { fontSize: '0.9rem' } }, 'Сегодня отдых')
           )
         : React.createElement(
@@ -76,7 +76,7 @@ export default function SessionPlan({ sessionPlan, trainType, weekLabel, apreRea
             null,
             React.createElement(
               'h3',
-              { style: { margin: '0 0 0.75rem 0', fontSize: '1.05rem' } },
+              { style: { margin: '0 0 var(--spacing-sm) 0', fontSize: '1.05rem' } },
               sessionPlan.label
             ),
             sessionPlan.exercises && sessionPlan.exercises.map((ex, i) =>

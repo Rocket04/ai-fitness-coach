@@ -23,20 +23,19 @@ import {
   calcReadiness,
   getEffectiveReadiness,
   detectRecoveryDebt,
-  calculateRecoveryScore,
-  calculateSessionLoad,
-  getWeeklySummary,
-  getMonthStats,
+} from './readiness.js';
+import { calculateRecoveryScore } from './recoveryScore.js';
+import { calculateSessionLoad } from './sessionLoad.js';
+import { getWeeklySummary, getMonthStats } from './stats.js';
+import {
   getWorkoutType,
   getMonthAndDayIndex,
-  getWeeklyMultiplier,
-  getTestMultiplier,
   buildSessionFromMonth,
   getLastSessionByType,
   maybeAddTestExercises,
-  getCoachAdvice,
-  getApreExplanation,
-} from './engine.js';
+} from './planning.js';
+import { getWeeklyMultiplier, getTestMultiplier } from './loadAdjustments.js';
+import { getCoachAdvice, getApreExplanation } from './advice.js';
 import {
   getTrendData,
   getRpeTrend,

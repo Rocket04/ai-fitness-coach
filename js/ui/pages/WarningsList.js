@@ -47,15 +47,15 @@ export default function WarningsList({ overtrainingWarning, trendWarnings }) {
     !warning && warnings.map((w, i) =>
       React.createElement(
         'div',
-        { key: i, style: { marginBottom: i < warnings.length - 1 ? '0.75rem' : 0 } },
+        { key: i, style: { marginBottom: i < warnings.length - 1 ? 'var(--spacing-sm)' : 0 } },
         React.createElement(
           'p',
-          { style: { margin: '0 0 0.25rem 0', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text)' } },
+          { style: { margin: '0 0 var(--spacing-xs) 0', fontSize: 'var(--font-size-body)', fontWeight: 600, color: 'var(--text)' } },
           w.message
         ),
         React.createElement(
           'p',
-          { className: 'warning-recommendation', style: { marginBottom: '0.25rem' } },
+          { className: 'warning-recommendation', style: { marginBottom: 'var(--spacing-xs)' } },
           '💡 ', w.recommendation
         ),
         React.createElement(

@@ -23,7 +23,7 @@ export default function LogPage() {
     React.createElement(
       'div',
       { className: 'card' },
-      React.createElement('h4', { style: { margin: '0 0 0.75rem 0', fontSize: '0.9rem' } }, 'Статистика недели'),
+      React.createElement('h4', { style: { margin: '0 0 var(--spacing-sm) 0', fontSize: 'var(--font-size-body)' } }, 'Статистика недели'),
       React.createElement(
         'div',
         { className: 'stat-grid' },
@@ -51,7 +51,7 @@ export default function LogPage() {
     React.createElement(
       'div',
       { className: 'card' },
-      React.createElement('h4', { style: { margin: '0 0 0.75rem 0', fontSize: '0.9rem' } }, 'Статистика месяца'),
+      React.createElement('h4', { style: { margin: '0 0 var(--spacing-sm) 0', fontSize: 'var(--font-size-body)' } }, 'Статистика месяца'),
       React.createElement(
         'div',
         { className: 'month-stats' },

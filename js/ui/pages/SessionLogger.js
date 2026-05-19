@@ -3,6 +3,7 @@
 
 import React, { useState, useRef, useContext } from 'react';
 import { AppStateContext, AppDispatchContext } from '../../core/AppContext.js';
+import * as CollapsiblePrimitive from '@radix-ui/react-collapsible';
 
 /* ---------- sub-components ---------- */
 
@@ -10,7 +11,7 @@ function ReadinessPill({ status }) {
   const map = { green: '🟢', yellow: '🟡', red: '🔴' };
   return React.createElement(
     'span',
-    { className: `pill ${status}`, style: { fontSize: '0.7rem', padding: '0.15rem 0.5rem' } },
+    { className: `pill ${status}`, style: { fontSize: 'var(--font-size-caption)', padding: '0.15rem 0.5rem' } },
     map[status] || '⚪'
   );
 }
@@ -29,7 +30,7 @@ function SessionRow({ session }) {
     session.readiness && React.createElement(ReadinessPill, { status: session.readiness }),
     React.createElement(
       'span',
-      { style: { minWidth: '2.5rem', textAlign: 'right', fontWeight: 600, fontFamily: 'var(--font-mono)', fontSize: '0.8rem' } },
+      { style: { minWidth: '2.5rem', textAlign: 'right', fontWeight: 600, fontFamily: 'var(--font-mono)', fontSize: 'var(--font-size-caption)' } },
       session.rpe ? `RPE ${session.rpe}` : '—'
     )
   );
@@ -60,96 +61,88 @@ export default function SessionLogger() {
 
     /* ═══════════════════ SESSION HISTORY ═══════════════════ */
     React.createElement(
-      'div',
-      { className: 'collapsible' },
+      CollapsiblePrimitive.Root,
+      { className: 'collapsible', open: showSessions, onOpenChange: (open) => setShowSessions(open) },
       React.createElement(
-        'div',
-        {
-          className: 'collapsible-header',
-          onClick: () => setShowSessions(!showSessions),
-        },
+        CollapsiblePrimitive.Trigger,
+        { className: 'collapsible-header' },
         React.createElement('span', null, 'История тренировок'),
         React.createElement(
           'span',
-          { style: { display: 'flex', alignItems: 'center', gap: '0.375rem' } },
+          { style: { display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)' } },
           React.createElement('span', { className: 'count-badge' }, trainSessions.length),
-          React.createElement('span', { style: { fontSize: '0.75rem', color: 'var(--text3)' } }, showSessions ? '▲' : '▼')
+          React.createElement('span', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text3)' } }, showSessions ? '▲' : '▼')
         )
       ),
-      showSessions &&
-        React.createElement(
-          'div',
-          { className: 'collapsible-content' },
-          trainSessions.length === 0
-            ? React.createElement(
-                'div',
-                { className: 'empty-state', style: { padding: '1.5rem 1rem' } },
-                React.createElement('div', { className: 'empty-state-text' }, 'Тренировок пока нет')
-              )
-            : trainSessions.map(s =>
-                React.createElement(SessionRow, { key: s.key || s.date + s.type, session: s })
-              )
-        )
+      React.createElement(
+        CollapsiblePrimitive.Content,
+        { className: 'collapsible-content' },
+        trainSessions.length === 0
+          ? React.createElement(
+              'div',
+              { className: 'empty-state', style: { padding: '1.5rem 1rem' } },
+              React.createElement('div', { className: 'empty-state-text' }, 'Тренировок пока нет')
+            )
+          : trainSessions.map(s =>
+              React.createElement(SessionRow, { key: s.key || s.date + s.type, session: s })
+            )
+      )
     ),
 
     /* ═══════════════════ TEST HISTORY ═══════════════════ */
     React.createElement(
-      'div',
-      { className: 'collapsible' },
+      CollapsiblePrimitive.Root,
+      { className: 'collapsible', open: showTests, onOpenChange: (open) => setShowTests(open) },
       React.createElement(
-        'div',
-        {
-          className: 'collapsible-header',
-          onClick: () => setShowTests(!showTests),
-        },
+        CollapsiblePrimitive.Trigger,
+        { className: 'collapsible-header' },
         React.createElement('span', null, 'Результаты тестов'),
         React.createElement(
           'span',
-          { style: { display: 'flex', alignItems: 'center', gap: '0.375rem' } },
+          { style: { display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)' } },
           React.createElement('span', { className: 'count-badge' }, testSessions.length),
-          React.createElement('span', { style: { fontSize: '0.75rem', color: 'var(--text3)' } }, showTests ? '▲' : '▼')
+          React.createElement('span', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text3)' } }, showTests ? '▲' : '▼')
         )
       ),
-      showTests &&
-        React.createElement(
-          'div',
-          { className: 'collapsible-content' },
-          testSessions.length === 0
-            ? React.createElement(
+      React.createElement(
+        CollapsiblePrimitive.Content,
+        { className: 'collapsible-content' },
+        testSessions.length === 0
+          ? React.createElement(
+              'div',
+              { className: 'empty-state', style: { padding: '1.5rem 1rem' } },
+              React.createElement('div', { className: 'empty-state-text' }, 'Тестов пока нет')
+            )
+          : testSessions.map((s, i) => {
+              const tr = s.testResults || {};
+              return React.createElement(
                 'div',
-                { className: 'empty-state', style: { padding: '1.5rem 1rem' } },
-                React.createElement('div', { className: 'empty-state-text' }, 'Тестов пока нет')
-              )
-            : testSessions.map((s, i) => {
-                const tr = s.testResults || {};
-                return React.createElement(
+                {
+                  key: s.date || i,
+                  style: {
+                    padding: 'var(--spacing-sm) 0',
+                    borderBottom: i < testSessions.length - 1 ? '1px solid var(--border)' : 'none',
+                    fontSize: 'var(--font-size-body)',
+                  }
+                },
+                React.createElement(
                   'div',
-                  {
-                    key: s.date || i,
-                    style: {
-                      padding: '0.625rem 0',
-                      borderBottom: i < testSessions.length - 1 ? '1px solid var(--border)' : 'none',
-                      fontSize: '0.875rem',
-                    }
-                  },
+                  { style: { display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--spacing-xs)' } },
+                  React.createElement('strong', null, s.date),
                   React.createElement(
-                    'div',
-                    { style: { display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' } },
-                    React.createElement('strong', null, s.date),
-                    React.createElement(
-                      'span',
-                      { className: 'text-sm', style: { color: 'var(--text2)' } },
-                      `Тип ${s.type || '—'}`
-                    )
-                  ),
-                  React.createElement(
-                    'div',
-                    { style: { color: 'var(--text2)', fontSize: '0.85rem', fontFamily: 'var(--font-mono)' } },
-                    `Подт.: ${tr.pullUps ?? '—'}  |  Отж.: ${tr.pushUps ?? '—'}  |  Планка: ${tr.plankSec ?? '—'}с`
+                    'span',
+                    { className: 'text-sm', style: { color: 'var(--text2)' } },
+                    `Тип ${s.type || '—'}`
                   )
-                );
-              })
-        )
+                ),
+                React.createElement(
+                  'div',
+                  { style: { color: 'var(--text2)', fontSize: 'var(--font-size-body)', fontFamily: 'var(--font-mono)' } },
+                  `Подт.: ${tr.pullUps ?? '—'}  |  Отж.: ${tr.pushUps ?? '—'}  |  Планка: ${tr.plankSec ?? '—'}с`
+                )
+              );
+            })
+      )
     ),
 
     /* ═══════════════════ EXPORT / IMPORT / RESET ═══════════════════ */
@@ -158,7 +151,7 @@ export default function SessionLogger() {
       { className: 'card' },
       React.createElement(
         'div',
-        { style: { display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center' } },
+        { style: { display: 'flex', gap: 'var(--spacing-sm)', flexWrap: 'wrap', justifyContent: 'center' } },
         React.createElement(
           'button',
           {

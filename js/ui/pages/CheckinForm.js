@@ -4,6 +4,7 @@
 import React, { useState, useContext } from 'react';
 import { AppStateContext, AppDispatchContext } from '../../core/AppContext.js';
 import ScaleSelector from '../components/ScaleSelector.js';
+import * as CollapsiblePrimitive from '@radix-ui/react-collapsible';
 
 /* ---------- labels ---------- */
 const SORENESS_LABELS = { 1: 'Нет', 2: 'Слабая', 3: 'Умеренная', 4: 'Сильная', 5: 'Очень сильная' };
@@ -30,28 +31,24 @@ export default function CheckinForm() {
   } = dispatch;
 
   return React.createElement(
-    'div',
-    { className: 'collapsible' },
+    CollapsiblePrimitive.Root,
+    { className: 'collapsible', open: showCheckin, onOpenChange: (open) => setShowCheckin(open) },
     React.createElement(
-      'div',
-      {
-        className: 'collapsible-header',
-        onClick: () => setShowCheckin(!showCheckin),
-      },
+      CollapsiblePrimitive.Trigger,
+      { className: 'collapsible-header' },
       React.createElement('span', null, 'Ежедневный чек-ин'),
-      React.createElement('span', { style: { fontSize: '0.75rem', color: 'var(--text3)' } }, showCheckin ? '▲' : '▼')
+      React.createElement('span', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text3)' } }, showCheckin ? '▲' : '▼')
     ),
-    showCheckin &&
-      React.createElement(
-        'div',
-        { className: 'collapsible-content' },
+    React.createElement(
+      CollapsiblePrimitive.Content,
+      { className: 'collapsible-content' },
         // Row 1: Sleep + HR + HRV
         React.createElement(
           'div',
-          { className: 'grid-3', style: { marginBottom: '0.75rem', gap: '0.5rem' } },
+          { className: 'grid-3', style: { marginBottom: 'var(--spacing-sm)', gap: 'var(--spacing-sm)' } },
           React.createElement(
             'label',
-            { style: { display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.82rem', fontWeight: 500 } },
+            { style: { display: 'flex', flexDirection: 'column', gap: 'var(--spacing-xs)', fontSize: 'var(--font-size-body)', fontWeight: 500 } },
             'Сон (ч)',
             React.createElement('input', {
               type: 'number',
@@ -62,7 +59,7 @@ export default function CheckinForm() {
           ),
           React.createElement(
             'label',
-            { style: { display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.82rem', fontWeight: 500 } },
+            { style: { display: 'flex', flexDirection: 'column', gap: 'var(--spacing-xs)', fontSize: 'var(--font-size-body)', fontWeight: 500 } },
             'ЧСС покоя',
             React.createElement('input', {
               type: 'number',
@@ -73,7 +70,7 @@ export default function CheckinForm() {
           ),
           React.createElement(
             'label',
-            { style: { display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.82rem', fontWeight: 500 } },
+            { style: { display: 'flex', flexDirection: 'column', gap: 'var(--spacing-xs)', fontSize: 'var(--font-size-body)', fontWeight: 500 } },
             'HRV',
             React.createElement('input', {
               type: 'number',
@@ -86,10 +83,10 @@ export default function CheckinForm() {
         // Row 2: Pain + Weight
         React.createElement(
           'div',
-          { className: 'grid-3', style: { marginBottom: '0.75rem', gap: '0.5rem' } },
+          { className: 'grid-3', style: { marginBottom: 'var(--spacing-sm)', gap: 'var(--spacing-sm)' } },
           React.createElement(
             'label',
-            { style: { display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.82rem', fontWeight: 500 } },
+            { style: { display: 'flex', flexDirection: 'column', gap: 'var(--spacing-xs)', fontSize: 'var(--font-size-body)', fontWeight: 500 } },
             'Боль бедро (0-10)',
             React.createElement('input', {
               type: 'number',
@@ -100,7 +97,7 @@ export default function CheckinForm() {
           ),
           React.createElement(
             'label',
-            { style: { display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.82rem', fontWeight: 500 } },
+            { style: { display: 'flex', flexDirection: 'column', gap: 'var(--spacing-xs)', fontSize: 'var(--font-size-body)', fontWeight: 500 } },
             'Боль плечо (0-10)',
             React.createElement('input', {
               type: 'number',
@@ -111,7 +108,7 @@ export default function CheckinForm() {
           ),
           React.createElement(
             'label',
-            { style: { display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.82rem', fontWeight: 500 } },
+            { style: { display: 'flex', flexDirection: 'column', gap: 'var(--spacing-xs)', fontSize: 'var(--font-size-body)', fontWeight: 500 } },
             'Вес (кг)',
             React.createElement('input', {
               type: 'number',
@@ -124,14 +121,14 @@ export default function CheckinForm() {
         // Divider
         React.createElement('div', { className: 'divider' }),
         // Subjective header
-        React.createElement('div', { style: { fontSize: '0.78rem', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600, marginBottom: '0.625rem' } }, 'Субъективные метрики'),
+        React.createElement('div', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600, marginBottom: 'var(--spacing-sm)' } }, 'Субъективные метрики'),
         // Row 3: Soreness, Energy, Mood
         React.createElement(
           'div',
-          { className: 'grid-3', style: { marginBottom: '0.75rem', gap: '0.5rem' } },
+          { className: 'grid-3', style: { marginBottom: 'var(--spacing-sm)', gap: 'var(--spacing-sm)' } },
           React.createElement(
             'label',
-            { style: { display: 'flex', flexDirection: 'column', gap: '0.2rem', fontSize: '0.78rem', fontWeight: 500 } },
+            { style: { display: 'flex', flexDirection: 'column', gap: 'var(--spacing-xs)', fontSize: 'var(--font-size-caption)', fontWeight: 500 } },
             'Болезненность',
             React.createElement(ScaleSelector, {
               value: muscleSoreness,
@@ -141,7 +138,7 @@ export default function CheckinForm() {
           ),
           React.createElement(
             'label',
-            { style: { display: 'flex', flexDirection: 'column', gap: '0.2rem', fontSize: '0.78rem', fontWeight: 500 } },
+            { style: { display: 'flex', flexDirection: 'column', gap: 'var(--spacing-xs)', fontSize: 'var(--font-size-caption)', fontWeight: 500 } },
             'Энергия',
             React.createElement(ScaleSelector, {
               value: energy,
@@ -151,7 +148,7 @@ export default function CheckinForm() {
           ),
           React.createElement(
             'label',
-            { style: { display: 'flex', flexDirection: 'column', gap: '0.2rem', fontSize: '0.78rem', fontWeight: 500 } },
+            { style: { display: 'flex', flexDirection: 'column', gap: 'var(--spacing-xs)', fontSize: 'var(--font-size-caption)', fontWeight: 500 } },
             'Настроение',
             React.createElement(ScaleSelector, {
               value: mood,
@@ -163,10 +160,10 @@ export default function CheckinForm() {
         // Row 4: Sleep Quality, Stress, Breathing
         React.createElement(
           'div',
-          { className: 'grid-3', style: { marginBottom: '0.75rem', gap: '0.5rem' } },
+          { className: 'grid-3', style: { marginBottom: 'var(--spacing-sm)', gap: 'var(--spacing-sm)' } },
           React.createElement(
             'label',
-            { style: { display: 'flex', flexDirection: 'column', gap: '0.2rem', fontSize: '0.78rem', fontWeight: 500 } },
+            { style: { display: 'flex', flexDirection: 'column', gap: 'var(--spacing-xs)', fontSize: 'var(--font-size-caption)', fontWeight: 500 } },
             'Качество сна',
             React.createElement(ScaleSelector, {
               value: sleepQuality,
@@ -176,7 +173,7 @@ export default function CheckinForm() {
           ),
           React.createElement(
             'label',
-            { style: { display: 'flex', flexDirection: 'column', gap: '0.2rem', fontSize: '0.78rem', fontWeight: 500 } },
+            { style: { display: 'flex', flexDirection: 'column', gap: 'var(--spacing-xs)', fontSize: 'var(--font-size-caption)', fontWeight: 500 } },
             'Стресс',
             React.createElement(ScaleSelector, {
               value: stress,
@@ -186,12 +183,12 @@ export default function CheckinForm() {
           ),
           React.createElement(
             'label',
-            { style: { display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.78rem', fontWeight: 500 } },
+            { style: { display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: 'var(--font-size-caption)', fontWeight: 500 } },
             'Дыхание',
             React.createElement('select', {
               value: breathing,
               onChange: e => setBreathing(e.target.value),
-              style: { fontSize: '0.82rem', minHeight: '36px' },
+              style: { fontSize: 'var(--font-size-body)', minHeight: '36px' },
             },
               React.createElement('option', { value: 'good' }, 'Хорошо'),
               React.createElement('option', { value: 'mild' }, 'Лёгкий дискомфорт'),
@@ -202,10 +199,10 @@ export default function CheckinForm() {
         // Notes
         React.createElement(
           'div',
-          { style: { marginBottom: '0.75rem' } },
+          { style: { marginBottom: 'var(--spacing-sm)' } },
           React.createElement(
             'label',
-            { style: { display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.82rem', fontWeight: 500 } },
+            { style: { display: 'flex', flexDirection: 'column', gap: 'var(--spacing-xs)', fontSize: 'var(--font-size-body)', fontWeight: 500 } },
             'Заметки',
             React.createElement('textarea', {
               value: notes,
@@ -226,5 +223,5 @@ export default function CheckinForm() {
           'Сохранить чек-ин'
         )
       )
-  );
+    );
 }

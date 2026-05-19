@@ -14,12 +14,12 @@ function RoutineList({ title, routines, done, onMarkDone, color, icon }) {
         { style: { flex: 1 } },
         React.createElement(
           'div',
-          { style: { fontWeight: 600, fontSize: '0.9rem' } },
+          { style: { fontWeight: 600, fontSize: 'var(--font-size-body)' } },
           item.name
         ),
         React.createElement(
           'div',
-          { className: 'text-sm', style: { color: 'var(--text2)', marginTop: '0.125rem' } },
+          { className: 'text-sm', style: { color: 'var(--text2)', marginTop: 'var(--spacing-xs)' } },
           `${item.reps} — ${item.why}`
         )
       )
@@ -36,7 +36,7 @@ function RoutineList({ title, routines, done, onMarkDone, color, icon }) {
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          marginBottom: '0.75rem',
+          marginBottom: 'var(--spacing-sm)',
         }
       },
       React.createElement('h3', { style: { margin: 0, fontSize: '1.05rem' } }, `${icon} ${title}`),

@@ -4,6 +4,7 @@
 import React, { useState, useContext, useMemo } from 'react';
 import { AppStateContext } from '../../core/AppContext.js';
 import { detectNegativeTrends } from '../../core/analytics.js';
+import Collapsible from '../components/Collapsible.js';
 
 export default function CoachAdvice() {
   const [open, setOpen] = useState(true);
@@ -132,16 +133,14 @@ export default function CoachAdvice() {
       .filter(s => s.completed && s.type !== 'morning' && s.type !== 'evening')
       .sort((a, b) => (b.date || '').localeCompare(a.date || ''))[0];
     if (lastTraining && typeof lastTraining.sessionLoad === 'number') {
-      items.push({
+      const loadItem = {
         icon: '\uD83D\uDCAA',
-        text: `Последняя нагрузка: ${lastTraining.sessionLoad} а.е.`,
-      });
+        text: `Последняя нагрузка: ${lastTraining.sessionLoad} у.е.`,
+      };
       if (lastTraining.sessionLoad > 400) {
-        items.push({
-          icon: '\u26A0\uFE0F',
-          text: 'Рекомендуется снизить нагрузку',
-        });
+        loadItem.subtext = 'высокая нагрузка';
       }
+      items.push(loadItem);
     }
 
     if (apreReasons && apreReasons.length > 0) {
@@ -196,101 +195,97 @@ export default function CoachAdvice() {
   const toggle = () => setOpen(o => !o);
 
   return React.createElement(
-    'div',
-    { className: `collapsible${open ? ' open' : ''}` },
-    React.createElement(
-      'button',
-      { className: 'collapsible__header', onClick: toggle },
-      React.createElement('span', { className: 'collapsible__title' }, '\uD83E\uDDE0 \u0421\u043E\u0432\u0435\u0442\u044B \u0442\u0440\u0435\u043D\u0435\u0440\u0430'),
-      React.createElement(
-        'span',
-        { className: 'collapsible__summary' },
-        `${predictive.length + personalized.length + concrete.length} \u0441\u043E\u0432\u0435\u0442\u043E\u0432`
-      ),
-      React.createElement('span', { className: 'collapsible__chevron' }, open ? '\u25B2' : '\u25BC')
-    ),
-    open && React.createElement(
+    Collapsible,
+    {
+      open,
+      onToggle: toggle,
+      title: '\uD83E\uDDE0 \u0421\u043E\u0432\u0435\u0442\u044B \u0442\u0440\u0435\u043D\u0435\u0440\u0430',
+      summary: `${predictive.length + personalized.length + concrete.length} \u0441\u043E\u0432\u0435\u0442\u043E\u0432`,
+      contentStyle: { display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)' },
+    },
+
+    // 1. \u041F\u0440\u0435\u0434\u0438\u043A\u0442\u0438\u0432\u043D\u044B\u0435
+    predictive.length > 0 && React.createElement(
       'div',
-      { className: 'collapsible__body', style: { display: 'flex', flexDirection: 'column', gap: '0.75rem' } },
-
-      // 1. \u041F\u0440\u0435\u0434\u0438\u043A\u0442\u0438\u0432\u043D\u044B\u0435
-      predictive.length > 0 && React.createElement(
-        'div',
-        null,
-        React.createElement(
-          'h5',
-          { style: { margin: '0 0 0.4rem', color: 'var(--yellow)', fontSize: '0.85rem' } },
-          '\uD83D\uDD2E \u041F\u0440\u0435\u0434\u0438\u043A\u0442\u0438\u0432\u043D\u044B\u0435 \u043F\u0440\u0435\u0434\u0443\u043F\u0440\u0435\u0436\u0434\u0435\u043D\u0438\u044F'
-        ),
-        ...predictive.map((w, i) => React.createElement(
-          'div',
-          {
-            key: `p-${i}`,
-            className: 'coach-advice-item',
-            style: { borderLeft: `3px solid var(--${w.color})`, paddingLeft: '0.5rem', marginBottom: '0.5rem' },
-          },
-          React.createElement('strong', null, `${w.icon} ${w.title}`),
-          React.createElement(
-            'div',
-            { style: { fontSize: '0.82rem', color: 'var(--text2)' } },
-            w.text
-          ),
-          w.action && React.createElement(
-            'div',
-            { style: { fontSize: '0.8rem', color: 'var(--green)', marginTop: '0.2rem' } },
-            `\u2192 ${w.action}`
-          )
-        ))
+      null,
+      React.createElement(
+        'h5',
+        { style: { margin: '0 0 var(--spacing-xs)', color: 'var(--yellow)', fontSize: 'var(--font-size-body)' } },
+        '\uD83D\uDD2E \u041F\u0440\u0435\u0434\u0438\u043A\u0442\u0438\u0432\u043D\u044B\u0435 \u043F\u0440\u0435\u0434\u0443\u043F\u0440\u0435\u0436\u0434\u0435\u043D\u0438\u044F'
       ),
-
-      // 2. \u041F\u0435\u0440\u0441\u043E\u043D\u0430\u043B\u0438\u0437\u0438\u0440\u043E\u0432\u0430\u043D\u043D\u044B\u0435
-      personalized.length > 0 && React.createElement(
+      ...predictive.map((w, i) => React.createElement(
         'div',
-        null,
+        {
+          key: `p-${i}`,
+          className: 'coach-advice-item',
+          style: { borderLeft: `3px solid var(--${w.color})`, paddingLeft: 'var(--spacing-sm)', marginBottom: 'var(--spacing-sm)' },
+        },
+        React.createElement('strong', null, `${w.icon} ${w.title}`),
         React.createElement(
-          'h5',
-          { style: { margin: '0.75rem 0 0.4rem', color: 'var(--blue)', fontSize: '0.85rem' } },
-          '\uD83D\uDCCA \u041F\u0435\u0440\u0441\u043E\u043D\u0430\u043B\u0438\u0437\u0438\u0440\u043E\u0432\u0430\u043D\u043D\u044B\u0435 \u0441\u043E\u0432\u0435\u0442\u044B'
-        ),
-        ...personalized.map((t, i) => React.createElement(
           'div',
-          {
-            key: `t-${i}`,
-            className: 'coach-advice-item',
-            style: { borderLeft: '3px solid var(--blue)', paddingLeft: '0.5rem', marginBottom: '0.5rem' },
-          },
-          React.createElement('strong', null, `${t.icon} ${t.title}`),
-          React.createElement(
-            'div',
-            { style: { fontSize: '0.82rem', color: 'var(--text2)' } },
-            t.text
-          )
-        ))
+          { style: { fontSize: 'var(--font-size-body)', color: 'var(--text2)' } },
+          w.text
+        ),
+        w.action && React.createElement(
+          'div',
+          { style: { fontSize: 'var(--font-size-caption)', color: 'var(--green)', marginTop: 'var(--spacing-xs)' } },
+          `\u2192 ${w.action}`
+        )
+      ))
+    ),
+
+    // 2. \u041F\u0435\u0440\u0441\u043E\u043D\u0430\u043B\u0438\u0437\u0438\u0440\u043E\u0432\u0430\u043D\u043D\u044B\u0435
+    personalized.length > 0 && React.createElement(
+      'div',
+      null,
+      React.createElement(
+        'h5',
+        { style: { margin: 'var(--spacing-sm) 0 var(--spacing-xs)', color: 'var(--blue)', fontSize: 'var(--font-size-body)' } },
+        '\uD83D\uDCCA \u041F\u0435\u0440\u0441\u043E\u043D\u0430\u043B\u0438\u0437\u0438\u0440\u043E\u0432\u0430\u043D\u043D\u044B\u0435 \u0441\u043E\u0432\u0435\u0442\u044B'
       ),
-
-      // 3. \u041A\u043E\u043D\u043A\u0440\u0435\u0442\u043D\u044B\u0435
-      concrete.length > 0 && React.createElement(
+      ...personalized.map((t, i) => React.createElement(
         'div',
-        null,
+        {
+          key: `t-${i}`,
+          className: 'coach-advice-item',
+          style: { borderLeft: '3px solid var(--blue)', paddingLeft: 'var(--spacing-sm)', marginBottom: 'var(--spacing-sm)' },
+        },
+        React.createElement('strong', null, `${t.icon} ${t.title}`),
         React.createElement(
-          'h5',
-          { style: { margin: '0.75rem 0 0.4rem', color: 'var(--green)', fontSize: '0.85rem' } },
-          '\uD83C\uDFAF \u041A\u043E\u043D\u043A\u0440\u0435\u0442\u043D\u044B\u0435 \u0440\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0430\u0446\u0438\u0438'
-        ),
-        ...concrete.map((r, i) => React.createElement(
           'div',
-          {
-            key: `r-${i}`,
-            className: 'coach-advice-item',
-            style: { borderLeft: '3px solid var(--green)', paddingLeft: '0.5rem', marginBottom: '0.5rem' },
-          },
-          React.createElement(
-            'div',
-            { style: { fontSize: '0.82rem', color: 'var(--text)' } },
-            `${r.icon} ${r.text}`
+          { style: { fontSize: 'var(--font-size-body)', color: 'var(--text2)' } },
+          t.text
+        )
+      ))
+    ),
+
+    // 3. \u041A\u043E\u043D\u043A\u0440\u0435\u0442\u043D\u044B\u0435
+    concrete.length > 0 && React.createElement(
+      'div',
+      null,
+      React.createElement(
+        'h5',
+        { style: { margin: 'var(--spacing-sm) 0 var(--spacing-xs)', color: 'var(--green)', fontSize: 'var(--font-size-body)' } },
+        '\uD83C\uDFAF \u041A\u043E\u043D\u043A\u0440\u0435\u0442\u043D\u044B\u0435 \u0440\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0430\u0446\u0438\u0438'
+      ),
+      ...concrete.map((r, i) => React.createElement(
+        'div',
+        {
+          key: `r-${i}`,
+          className: 'coach-advice-item',
+          style: { borderLeft: '3px solid var(--green)', paddingLeft: 'var(--spacing-sm)', marginBottom: 'var(--spacing-sm)' },
+        },
+        React.createElement(
+          'div',
+          { style: { fontSize: 'var(--font-size-body)', color: 'var(--text)' } },
+          `${r.icon} ${r.text}`,
+          r.subtext && React.createElement(
+            'span',
+            { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text2)', marginLeft: 'var(--spacing-xs)' } },
+            r.subtext
           )
-        ))
-      )
+        )
+      ))
     )
   );
 }

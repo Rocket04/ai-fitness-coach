@@ -52,7 +52,7 @@ export default function SVGRing({ value = 75, size = 88, strokeWidth = 4, color,
       textAnchor: 'middle',
       dominantBaseline: 'central',
       fill: color,
-      fontSize: '14',
+      fontSize: 'var(--font-size-body)',
       fontWeight: '700',
     }, label),
     // Sublabel
@@ -62,7 +62,7 @@ export default function SVGRing({ value = 75, size = 88, strokeWidth = 4, color,
       textAnchor: 'middle',
       dominantBaseline: 'central',
       fill: 'var(--text3)',
-      fontSize: '8',
+      fontSize: 'var(--font-size-caption)',
       fontWeight: '500',
     }, sublabel)
   );

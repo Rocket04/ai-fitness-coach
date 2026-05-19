@@ -1,11 +1,12 @@
-// js/core/engine.test.js
 // Юнит-тесты для чистых функций engine.js
-// Запуск: node js/core/engine.test.js
 
 const assert = require('assert');
 
 (async function run() {
-  const { calculateRecoveryScore, calcReadiness, detectRecoveryDebt, getWorkoutType, calculateSessionLoad } = await import('./engine.js');
+    const { calculateRecoveryScore } = await import('./recoveryScore.js');
+  const { calcReadiness, detectRecoveryDebt } = await import('./readiness.js');
+  const { getWorkoutType } = await import('./planning.js');
+  const { calculateSessionLoad } = await import('./sessionLoad.js');
 
   let passed = 0;
   let failed = 0;

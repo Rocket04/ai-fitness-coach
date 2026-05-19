@@ -4,6 +4,7 @@
 import React, { useState, useContext } from 'react';
 import { AppStateContext, AppDispatchContext } from '../../core/AppContext.js';
 import { ZONES, HRV_GUIDE } from '../../config/constants.js';
+import * as CollapsiblePrimitive from '@radix-ui/react-collapsible';
 
 /* ---------- helpers ---------- */
 
@@ -44,24 +45,24 @@ function ZoneCard({ zone, isRecommended }) {
     },
     React.createElement(
       'div',
-      { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.375rem' } },
-      React.createElement('strong', { style: { fontSize: '0.95rem' } }, `${zone.zone} — ${zone.name}`),
+      { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-xs)' } },
+      React.createElement('strong', { style: { fontSize: 'var(--font-size-body)' } }, `${zone.zone} — ${zone.name}`),
       React.createElement('span', { className: 'badge', style: { backgroundColor: zone.color, color: '#fff', border: 'none' } }, zone.bpm)
     ),
     React.createElement(
       'div',
-      { style: { fontSize: '0.82rem', color: 'var(--text2)', marginBottom: '0.375rem' } },
+      { style: { fontSize: 'var(--font-size-body)', color: 'var(--text2)', marginBottom: 'var(--spacing-xs)' } },
       `Темп: ${zone.pace}`
     ),
-    React.createElement('p', { style: { fontSize: '0.85rem', margin: '0.25rem 0', color: 'var(--text)' } }, zone.desc),
+    React.createElement('p', { style: { fontSize: 'var(--font-size-body)', margin: 'var(--spacing-xs) 0', color: 'var(--text)' } }, zone.desc),
     React.createElement(
       'p',
-      { style: { fontSize: '0.82rem', color: 'var(--accent)', margin: '0.25rem 0', fontWeight: 500 } },
+      { style: { fontSize: 'var(--font-size-body)', color: 'var(--accent)', margin: 'var(--spacing-xs) 0', fontWeight: 500 } },
       zone.use
     ),
     isRecommended && React.createElement(
       'p',
-      { style: { fontSize: '0.75rem', color: zone.color, marginTop: '0.375rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.25rem' } },
+      { style: { fontSize: 'var(--font-size-caption)', color: zone.color, marginTop: 'var(--spacing-xs)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)' } },
       '⭐ Рекомендована для сегодняшней тренировки'
     )
   );
@@ -81,8 +82,8 @@ function HrvCard({ item, isActive }) {
     },
     React.createElement(
       'div',
-      { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.375rem' } },
-      React.createElement('strong', { style: { fontSize: '0.9rem' } }, item.range),
+      { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-xs)' } },
+      React.createElement('strong', { style: { fontSize: 'var(--font-size-body)' } }, item.range),
       React.createElement(
         'span',
         {
@@ -96,15 +97,15 @@ function HrvCard({ item, isActive }) {
         item.label
       )
     ),
-    React.createElement('p', { style: { fontSize: '0.85rem', margin: '0.25rem 0', color: 'var(--text)' } }, item.action),
+    React.createElement('p', { style: { fontSize: 'var(--font-size-body)', margin: 'var(--spacing-xs) 0', color: 'var(--text)' } }, item.action),
     React.createElement(
       'p',
-      { style: { fontSize: '0.8rem', color: 'var(--text2)', margin: '0.25rem 0' } },
+      { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text2)', margin: 'var(--spacing-xs) 0' } },
       item.why
     ),
     isActive && React.createElement(
       'p',
-      { style: { fontSize: '0.75rem', color: item.color, marginTop: '0.375rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.25rem' } },
+      { style: { fontSize: 'var(--font-size-caption)', color: item.color, marginTop: 'var(--spacing-xs)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)' } },
       '⭐ Ваш текущий показатель'
     )
   );
@@ -152,13 +153,13 @@ export default function InfoPage() {
       { className: 'card', style: { border: `1px solid ${readinessColor}`, backgroundColor: 'var(--surface2)' } },
       React.createElement(
         'h4',
-        { style: { margin: '0 0 0.75rem 0', fontSize: '0.85rem', color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.04em' } },
+        { style: { margin: '0 0 0.75rem 0', fontSize: 'var(--font-size-body)', color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.04em' } },
         'Персональные показатели'
       ),
       // HRV
       hrv > 0 && React.createElement(
         'div',
-        { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', fontSize: '0.85rem' } },
+        { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-sm)', fontSize: 'var(--font-size-body)' } },
         React.createElement('span', { style: { color: 'var(--text2)' } }, 'HRV'),
         React.createElement(
           'span',
@@ -174,7 +175,7 @@ export default function InfoPage() {
       // Rest HR
       restHr > 0 && React.createElement(
         'div',
-        { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', fontSize: '0.85rem' } },
+        { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-sm)', fontSize: 'var(--font-size-body)' } },
         React.createElement('span', { style: { color: 'var(--text2)' } }, 'ЧСС покоя'),
         React.createElement(
           'span',
@@ -197,7 +198,7 @@ export default function InfoPage() {
       // Recovery Score
       typeof recoveryScore === 'number' && recoveryScore > 0 && React.createElement(
         'div',
-        { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', fontSize: '0.85rem' } },
+        { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-sm)', fontSize: 'var(--font-size-body)' } },
         React.createElement('span', { style: { color: 'var(--text2)' } }, 'Recovery Score'),
         React.createElement(
           'strong',
@@ -208,18 +209,18 @@ export default function InfoPage() {
       // Readiness
       React.createElement(
         'div',
-        { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', fontSize: '0.85rem' } },
+        { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-sm)', fontSize: 'var(--font-size-body)' } },
         React.createElement('span', { style: { color: 'var(--text2)' } }, 'Готовность'),
         React.createElement(
           'span',
-          { className: `pill ${readiness}`, style: { fontSize: '0.72rem', padding: '0.15rem 0.6rem' } },
+          { className: `pill ${readiness}`, style: { fontSize: 'var(--font-size-caption)', padding: '0.15rem 0.6rem' } },
           { green: 'Зелёный', yellow: 'Жёлтый', red: 'Красный' }[readiness] || readiness
         )
       ),
       // Today's recommended zone
       trainType && sessionPlan && React.createElement(
         'div',
-        { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem' } },
+        { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 'var(--font-size-body)' } },
         React.createElement('span', { style: { color: 'var(--text2)' } }, 'Рекомендованная зона'),
         React.createElement(
           'strong',
@@ -231,62 +232,55 @@ export default function InfoPage() {
 
     // Readiness explanation (collapsible)
     React.createElement(
-      'div',
-      { className: 'collapsible' },
+      CollapsiblePrimitive.Root,
+      { className: 'collapsible', open: showReadiness, onOpenChange: (open) => setShowReadiness(open) },
       React.createElement(
-        'div',
-        {
-          className: 'collapsible-header',
-          onClick: () => setShowReadiness(!showReadiness),
-        },
+        CollapsiblePrimitive.Trigger,
+        { className: 'collapsible-header' },
         React.createElement('span', null, 'Расшифровка готовности'),
-        React.createElement('span', { style: { fontSize: '0.75rem', color: 'var(--text3)' } }, showReadiness ? '▲' : '▼')
+        React.createElement('span', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text3)' } }, showReadiness ? '▲' : '▼')
       ),
-      showReadiness &&
+      React.createElement(
+        CollapsiblePrimitive.Content,
+        { className: 'collapsible-content' },
         React.createElement(
           'div',
-          { className: 'collapsible-content' },
-          React.createElement(
-            'div',
-            { style: { marginBottom: '0.75rem', display: 'flex', alignItems: 'flex-start', gap: '0.5rem' } },
-            React.createElement('span', { className: 'pill green', style: { flexShrink: 0 } }, 'Зелёный'),
-            React.createElement('span', { style: { fontSize: '0.85rem', color: 'var(--text2)' } }, '— все показатели в норме, полный план')
-          ),
-          React.createElement(
-            'div',
-            { style: { marginBottom: '0.75rem', display: 'flex', alignItems: 'flex-start', gap: '0.5rem' } },
-            React.createElement('span', { className: 'pill yellow', style: { flexShrink: 0 } }, 'Жёлтый'),
-            React.createElement('span', { style: { fontSize: '0.85rem', color: 'var(--text2)' } }, '— один из показателей ниже нормы: -1 подход в упражнениях')
-          ),
-          React.createElement(
-            'div',
-            { style: { marginBottom: '0.75rem', display: 'flex', alignItems: 'flex-start', gap: '0.5rem' } },
-            React.createElement('span', { className: 'pill red', style: { flexShrink: 0 } }, 'Красный'),
-            React.createElement('span', { style: { fontSize: '0.85rem', color: 'var(--text2)' } }, '— критические показатели: только мобильность/растяжка/дыхание')
-          ),
-          React.createElement(
-            'div',
-            { style: { fontSize: '0.8rem', color: 'var(--text3)', marginTop: '0.75rem', padding: '0.625rem', backgroundColor: 'var(--surface2)', borderRadius: 'var(--radius-sm)' } },
-            'Пороги: сон < 6ч или ЧСС ≥ 76 или HRV < 40 или боль ≥ 5 → красный. Сон < 7ч или ЧСС ≥ 71 или HRV < 55 или боль ≥ 3 → жёлтый.'
-          )
+          { style: { marginBottom: 'var(--spacing-sm)', display: 'flex', alignItems: 'flex-start', gap: 'var(--spacing-sm)' } },
+          React.createElement('span', { className: 'pill green', style: { flexShrink: 0 } }, 'Зелёный'),
+          React.createElement('span', { style: { fontSize: 'var(--font-size-body)', color: 'var(--text2)' } }, '— все показатели в норме, полный план')
+        ),
+        React.createElement(
+          'div',
+          { style: { marginBottom: 'var(--spacing-sm)', display: 'flex', alignItems: 'flex-start', gap: 'var(--spacing-sm)' } },
+          React.createElement('span', { className: 'pill yellow', style: { flexShrink: 0 } }, 'Жёлтый'),
+          React.createElement('span', { style: { fontSize: 'var(--font-size-body)', color: 'var(--text2)' } }, '— один из показателей ниже нормы: -1 подход в упражнениях')
+        ),
+        React.createElement(
+          'div',
+          { style: { marginBottom: 'var(--spacing-sm)', display: 'flex', alignItems: 'flex-start', gap: 'var(--spacing-sm)' } },
+          React.createElement('span', { className: 'pill red', style: { flexShrink: 0 } }, 'Красный'),
+          React.createElement('span', { style: { fontSize: 'var(--font-size-body)', color: 'var(--text2)' } }, '— критические показатели: только мобильность/растяжка/дыхание')
+        ),
+        React.createElement(
+          'div',
+          { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text3)', marginTop: 'var(--spacing-sm)', padding: '0.625rem', backgroundColor: 'var(--surface2)', borderRadius: 'var(--radius-sm)' } },
+          'Пороги: сон < 6ч или ЧСС ≥ 76 или HRV < 40 или боль ≥ 5 → красный. Сон < 7ч или ЧСС ≥ 71 или HRV < 55 или боль ≥ 3 → жёлтый.'
         )
+      )
     ),
 
     // HRV guide
     React.createElement(
-      'div',
-      { className: 'collapsible' },
+      CollapsiblePrimitive.Root,
+      { className: 'collapsible', open: showHrv, onOpenChange: (open) => setShowHrv(open) },
       React.createElement(
-        'div',
-        {
-          className: 'collapsible-header',
-          onClick: () => setShowHrv(!showHrv),
-        },
+        CollapsiblePrimitive.Trigger,
+        { className: 'collapsible-header' },
         React.createElement('span', null, 'HRV-гайд'),
-        React.createElement('span', { style: { fontSize: '0.75rem', color: 'var(--text3)' } }, showHrv ? '▲' : '▼')
+        React.createElement('span', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text3)' } }, showHrv ? '▲' : '▼')
       ),
-      showHrv && React.createElement(
-        'div',
+      React.createElement(
+        CollapsiblePrimitive.Content,
         { className: 'collapsible-content' },
         HRV_GUIDE.map((item, i) => React.createElement(HrvCard, {
           key: i,
@@ -298,19 +292,16 @@ export default function InfoPage() {
 
     // Zones
     React.createElement(
-      'div',
-      { className: 'collapsible', style: { marginBottom: 0 } },
+      CollapsiblePrimitive.Root,
+      { className: 'collapsible', style: { marginBottom: 0 }, open: showZones, onOpenChange: (open) => setShowZones(open) },
       React.createElement(
-        'div',
-        {
-          className: 'collapsible-header',
-          onClick: () => setShowZones(!showZones),
-        },
+        CollapsiblePrimitive.Trigger,
+        { className: 'collapsible-header' },
         React.createElement('span', null, 'Пульсовые зоны'),
-        React.createElement('span', { style: { fontSize: '0.75rem', color: 'var(--text3)' } }, showZones ? '▲' : '▼')
+        React.createElement('span', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text3)' } }, showZones ? '▲' : '▼')
       ),
-      showZones && React.createElement(
-        'div',
+      React.createElement(
+        CollapsiblePrimitive.Content,
         { className: 'collapsible-content' },
         ZONES.map((zone, i) => React.createElement(ZoneCard, {
           key: i,

@@ -9,6 +9,7 @@ const TodayPage = lazy(() => import('./ui/pages/TodayPage.js'));
 const LogPage = lazy(() => import('./ui/pages/LogPage.js'));
 const AnalyticsPage = lazy(() => import('./ui/pages/AnalyticsPage.js'));
 const ProfilePage = lazy(() => import('./ui/pages/ProfilePage.js'));
+const MethodologyPage = lazy(() => import('./ui/pages/MethodologyPage.js'));
 
 function BottomNav({ activeTab, setActiveTab }) {
   const tabs = [
@@ -52,10 +53,11 @@ function AppContent() {
   }
 
   const pages = [
-    React.createElement(TodayPage, { key: 'today' }),
-    React.createElement(LogPage, { key: 'log' }),
-    React.createElement(AnalyticsPage, { key: 'analytics' }),
-    React.createElement(ProfilePage, { key: 'profile' }),
+    { component: TodayPage, key: 'today' },
+    { component: LogPage, key: 'log' },
+    { component: AnalyticsPage, key: 'analytics' },
+    { component: ProfilePage, key: 'profile' },
+    { component: MethodologyPage, key: 'methodology' },
   ];
 
   return React.createElement(
@@ -70,8 +72,18 @@ function AppContent() {
         { fallback: React.createElement('div', { className: 'card' }, 'Загрузка...') },
         React.createElement(
           'div',
-          { className: `page-wrapper page-${activeTab}` },
-          pages[activeTab]
+          { className: 'pages-container' },
+          pages.map((p, i) =>
+            React.createElement(
+              'div',
+              {
+                key: p.key,
+                className: `page-wrapper page-${i}${activeTab === i ? ' page-active' : ''}`,
+                hidden: activeTab !== i,
+              },
+              React.createElement(p.component)
+            )
+          )
         )
       )
     ),

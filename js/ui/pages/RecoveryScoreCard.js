@@ -1,12 +1,14 @@
 // js/ui/pages/RecoveryScoreCard.js
 // SVG кольцо готовности + индикатор восстановления
 
-import React from 'react';
+import React, { useContext } from 'react';
+import { AppDispatchContext } from '../../core/AppContext.js';
 
 const READINESS_LABELS = { green: 'Зелёный', yellow: 'Жёлтый', red: 'Красный' };
 
 export function ReadinessIndicator({ readiness, autoReadiness, manualOverride, onManualOverrideChange, lastCheckin, recoveryScore }) {
-  const [showSubjTooltip, setShowSubjTooltip] = React.useState(false);
+  const dispatch = useContext(AppDispatchContext);
+  const { setActiveTab } = dispatch || {};
   const isOverridden = manualOverride && manualOverride !== 'unknown';
 
   const hrvValue = lastCheckin?.hrv ? `${lastCheckin.hrv} мс` : '\u2014';
@@ -28,7 +30,7 @@ export function ReadinessIndicator({ readiness, autoReadiness, manualOverride, o
     // Ring + status display
     React.createElement(
       'div',
-      { style: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem' } },
+      { style: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'var(--spacing-md)' } },
       // SVG ring
       React.createElement(
         'svg',
@@ -103,14 +105,16 @@ export function ReadinessIndicator({ readiness, autoReadiness, manualOverride, o
           React.createElement(
             'button',
             {
-              onClick: () => setShowSubjTooltip(v => !v),
+              onClick: () => {
+                if (setActiveTab) { window.location.hash = 'subjective-thresholds'; setActiveTab(4); }
+              },
               style: {
-                background: 'none',
+                background: 'var(--background)',
                 border: 'none',
                 cursor: 'pointer',
                 color: 'inherit',
-                fontSize: '0.7rem',
-                padding: '0 0 0 0.2rem',
+                fontSize: 'var(--font-size-caption)',
+                padding: '0 var(--spacing-xs)',
                 lineHeight: 1,
                 opacity: 0.7,
               },
@@ -119,40 +123,19 @@ export function ReadinessIndicator({ readiness, autoReadiness, manualOverride, o
             },
             '(?)'
           )
-        ),
-        showSubjTooltip && React.createElement(
-          'div',
-          {
-            style: {
-              position: 'absolute',
-              top: '100%',
-              left: '0',
-              marginTop: '0.35rem',
-              background: 'var(--surface2)',
-              border: '1px solid var(--surface3)',
-              borderRadius: '0.5rem',
-              padding: '0.5rem 0.75rem',
-              fontSize: '0.72rem',
-              color: 'var(--text2)',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-              zIndex: 10,
-              whiteSpace: 'nowrap',
-            },
-          },
-          'Пороги основаны на данных профессиональных спортсменов, могут требовать индивидуальной калибровки.'
         )
       )
     ),
     // Manual override buttons
     React.createElement(
       'div',
-      { style: { display: 'flex', gap: '0.375rem', justifyContent: 'center', marginTop: '0.75rem' } },
+      { style: { display: 'flex', gap: 'var(--spacing-xs)', justifyContent: 'center', marginTop: 'var(--spacing-sm)' } },
       React.createElement(
         'button',
         {
           className: `btn btn-sm ${manualOverride === 'unknown' ? 'btn-accent' : 'btn-outline'}`,
           onClick: () => onManualOverrideChange('unknown'),
-          style: { fontSize: '0.78rem' },
+          style: { fontSize: 'var(--font-size-caption)' },
         },
         'Авто'
       ),
@@ -164,7 +147,7 @@ export function ReadinessIndicator({ readiness, autoReadiness, manualOverride, o
             className: `btn btn-sm ${manualOverride === color ? 'btn-accent' : 'btn-outline'}`,
             onClick: () => onManualOverrideChange(color),
             style: {
-              fontSize: '0.78rem',
+              fontSize: 'var(--font-size-caption)',
               borderLeft: `3px solid var(--${color})`,
             },
           },
@@ -174,14 +157,15 @@ export function ReadinessIndicator({ readiness, autoReadiness, manualOverride, o
     ),
     React.createElement(
       'div',
-      { className: 'text-xs', style: { color: 'var(--text3)', marginTop: '0.35rem' } },
+      { className: 'text-xs', style: { color: 'var(--text3)', marginTop: 'var(--spacing-xs)' } },
       'Авто: ', READINESS_LABELS[autoReadiness] || autoReadiness
     )
   );
 }
 
 export function RecoveryBar({ score }) {
-  const [showTooltip, setShowTooltip] = React.useState(false);
+  const dispatch = useContext(AppDispatchContext);
+  const { setActiveTab } = dispatch || {};
   const color = score >= 80 ? 'var(--green)' : score >= 60 ? 'var(--yellow)' : 'var(--red)';
   return React.createElement(
     'div',
@@ -189,18 +173,20 @@ export function RecoveryBar({ score }) {
     React.createElement(
       'div',
       { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } },
-      React.createElement('span', { className: 'text-sm', style: { fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.35rem' } },
+      React.createElement('span', { className: 'text-sm', style: { fontWeight: 500, display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)' } },
         'Восстановление',
         React.createElement(
           'button',
           {
-            onClick: () => setShowTooltip(v => !v),
+            onClick: () => {
+              if (setActiveTab) { window.location.hash = 'recovery-score'; setActiveTab(4); }
+            },
             style: {
-              background: 'none',
+              background: 'var(--background)',
               border: 'none',
               cursor: 'pointer',
               color: 'var(--text3)',
-              fontSize: '0.85rem',
+              fontSize: 'var(--font-size-body)',
               padding: '0',
               lineHeight: 1,
             },
@@ -210,28 +196,7 @@ export function RecoveryBar({ score }) {
           '(?)'
         )
       ),
-      React.createElement('strong', { style: { color, fontSize: '1.1rem' } }, `${score}%`)
-    ),
-    showTooltip && React.createElement(
-      'div',
-      {
-        style: {
-          position: 'absolute',
-          bottom: '100%',
-          left: '0.5rem',
-          right: '0.5rem',
-          marginBottom: '0.5rem',
-          background: 'var(--surface2)',
-          border: '1px solid var(--surface3)',
-          borderRadius: '0.5rem',
-          padding: '0.5rem 0.75rem',
-          fontSize: '0.78rem',
-          color: 'var(--text2)',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-          zIndex: 10,
-        },
-      },
-      'Формула основана на исследованиях 2025-2026 гг., но не является клинически валидированной.'
+      React.createElement('strong', { style: { color, fontSize: '1.1rem' } }, `${score}%`),
     ),
     React.createElement(
       'div',

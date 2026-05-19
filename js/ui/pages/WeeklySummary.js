@@ -11,7 +11,7 @@ export default function WeeklySummary({ weeklySummary, monthStats }) {
     { className: 'card' },
     React.createElement(
       'h4',
-      { style: { margin: '0 0 0.75rem 0', fontSize: '0.85rem', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.03em' } },
+      { style: { margin: '0 0 var(--spacing-sm) 0', fontSize: 'var(--font-size-body)', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.03em' } },
       'Сводка за неделю'
     ),
     React.createElement(
@@ -54,7 +54,7 @@ export default function WeeklySummary({ weeklySummary, monthStats }) {
     ),
     monthStats && React.createElement(
       'div',
-      { style: { marginTop: '0.75rem', display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', color: 'var(--text3)' } },
+      { style: { marginTop: 'var(--spacing-sm)', display: 'flex', justifyContent: 'space-between', fontSize: 'var(--font-size-body)', color: 'var(--text3)' } },
       React.createElement('span', null, 'За месяц:'),
       React.createElement('span', null,
         monthStats.completed, ' тренировок (зел: ', monthStats.green,

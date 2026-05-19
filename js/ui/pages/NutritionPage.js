@@ -62,18 +62,18 @@ export default function NutritionPage() {
       },
       React.createElement(
         'td',
-        { style: { padding: '0.5rem 0.5rem', fontWeight: isHighlighted ? 700 : 400, fontSize: '0.85rem' } },
+        { style: { padding: 'var(--spacing-sm) var(--spacing-sm)', fontWeight: isHighlighted ? 700 : 400, fontSize: 'var(--font-size-body)' } },
         isHighlighted ? '\u2B50 ' : '',
         item.label
       ),
       React.createElement(
         'td',
-        { style: { padding: '0.5rem 0.5rem', fontSize: '0.85rem', fontFamily: 'var(--font-mono)' } },
+        { style: { padding: 'var(--spacing-sm) var(--spacing-sm)', fontSize: 'var(--font-size-body)', fontFamily: 'var(--font-mono)' } },
         item.val
       ),
       React.createElement(
         'td',
-        { style: { padding: '0.5rem 0.5rem', fontSize: '0.82rem', color: 'var(--text2)' } },
+        { style: { padding: 'var(--spacing-sm) var(--spacing-sm)', fontSize: 'var(--font-size-body)', color: 'var(--text2)' } },
         item.note
       )
     );
@@ -85,7 +85,7 @@ export default function NutritionPage() {
     React.createElement('h2', null, 'Питание'),
     React.createElement(
       'p',
-      { className: 'text-sm', style: { color: 'var(--text2)', marginBottom: '1rem' } },
+      { className: 'text-sm', style: { color: 'var(--text2)', marginBottom: 'var(--spacing-md)' } },
       'Рекомендации по питанию для набора массы'
     ),
 
@@ -116,9 +116,9 @@ export default function NutritionPage() {
           React.createElement(
             'tr',
             { style: { borderBottom: '1px solid var(--border)', textAlign: 'left' } },
-            React.createElement('th', { style: { padding: '0.75rem 0.5rem', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.03em', color: 'var(--text2)' } }, 'Параметр'),
-            React.createElement('th', { style: { padding: '0.75rem 0.5rem', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.03em', color: 'var(--text2)' } }, 'Значение'),
-            React.createElement('th', { style: { padding: '0.75rem 0.5rem', fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.03em', color: 'var(--text2)' } }, 'Примечание')
+            React.createElement('th', { style: { marginTop: 'var(--spacing-sm)', padding: '0.5rem', fontSize: 'var(--font-size-caption)', textTransform: 'uppercase', letterSpacing: '0.03em', color: 'var(--text2)' } }, 'Параметр'),
+            React.createElement('th', { style: { marginTop: 'var(--spacing-sm)', padding: '0.5rem', fontSize: 'var(--font-size-caption)', textTransform: 'uppercase', letterSpacing: '0.03em', color: 'var(--text2)' } }, 'Значение'),
+            React.createElement('th', { style: { marginTop: 'var(--spacing-sm)', padding: '0.5rem', fontSize: 'var(--font-size-caption)', textTransform: 'uppercase', letterSpacing: '0.03em', color: 'var(--text2)' } }, 'Примечание')
           )
         ),
         React.createElement('tbody', null, rows)
@@ -129,7 +129,7 @@ export default function NutritionPage() {
       { className: 'card' },
       React.createElement(
         'p',
-        { style: { fontSize: '0.85rem', color: 'var(--text2)', margin: 0, lineHeight: 1.6 } },
+        { style: { fontSize: 'var(--font-size-body)', color: 'var(--text2)', margin: 0, lineHeight: 1.6 } },
         '\u26A0\uFE0F При астме важно получать достаточно белка и магния. Дефицит магния усугубляет бронхоспазм.'
       )
     )

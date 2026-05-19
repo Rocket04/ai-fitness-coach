@@ -1,7 +1,7 @@
 // js/core/analytics.js
 // Предиктивная аналитика и детекция трендов — чистые функции без побочных эффектов
 
-import { calculateRecoveryScore } from './engine.js';
+import { calculateRecoveryScore } from './recoveryScore.js';
 import { parseLocalDate, formatISO, addDays } from './helpers.js';
 
 /**

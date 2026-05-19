@@ -19,7 +19,7 @@ export default function StatBox({ value, label, color, trend }) {
       value,
       trendArrow && React.createElement(
         'span',
-        { style: { marginLeft: '0.25rem', fontSize: '0.75em', color: trendColor } },
+        { style: { marginLeft: 'var(--spacing-xs)', fontSize: 'var(--font-size-caption)', color: trendColor } },
         trendArrow
       )
     ),

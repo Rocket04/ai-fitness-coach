@@ -1,21 +1,30 @@
 import React from 'react';
+import * as Dialog from '@radix-ui/react-dialog';
 
+/**
+ * Модальное окно на базе Radix Dialog.
+ * @param {{isOpen: boolean, title: string, onClose: () => void, children: React.ReactNode}} props
+ * @returns {JSX.Element|null}
+ */
 export default function Modal({ isOpen, onClose, title, children }) {
-  if (!isOpen) return null;
-
   return React.createElement(
-    'div',
-    { className: 'modal-overlay', onClick: onClose },
+    Dialog.Root,
+    { open: isOpen, onOpenChange: (open) => { if (!open) onClose(); } },
     React.createElement(
-      'div',
-      { className: 'modal', onClick: e => e.stopPropagation(), role: 'dialog', 'aria-modal': 'true' },
+      Dialog.Portal,
+      null,
+      React.createElement(Dialog.Overlay, { className: 'modal-overlay' }),
       React.createElement(
-        'button',
-        { className: 'modal-close', onClick: onClose, 'aria-label': 'Закрыть' },
-        '\u2715'
-      ),
-      title && React.createElement('h2', { className: 'modal-title' }, title),
-      React.createElement('div', { className: 'modal-content' }, children)
+        Dialog.Content,
+        { className: 'modal', onOpenAutoFocus: (e) => e.preventDefault() },
+        React.createElement(
+          Dialog.Close,
+          { className: 'modal-close', 'aria-label': 'Закрыть' },
+          '\u2715'
+        ),
+        title && React.createElement(Dialog.Title, { className: 'modal-title' }, title),
+        React.createElement('div', { className: 'modal-content' }, children)
+      )
     )
   );
 }

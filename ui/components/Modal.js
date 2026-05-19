@@ -1,28 +1,28 @@
 import React from 'react';
+import * as Dialog from '@radix-ui/react-dialog';
 
 /**
- * Модальное окно.
+ * Модальное окно на базе Radix Dialog.
  * @param {{open: boolean, title: string, onClose: () => void, children: React.ReactNode}} props
  * @returns {JSX.Element|null}
  */
 export default function Modal({ open, title, onClose, children }) {
-  if (!open) return null;
-
   return React.createElement(
-    React.Fragment,
-    null,
+    Dialog.Root,
+    { open, onOpenChange: (isOpen) => { if (!isOpen) onClose(); } },
     React.createElement(
-      'div',
-      { className: 'modal-overlay', onClick: onClose },
+      Dialog.Portal,
+      null,
+      React.createElement(Dialog.Overlay, { className: 'modal-overlay' }),
       React.createElement(
-        'div',
-        { className: 'modal', onClick: e => e.stopPropagation() },
-        React.createElement('h2', { className: 'modal-title' }, title),
+        Dialog.Content,
+        { className: 'modal', onOpenAutoFocus: (e) => e.preventDefault() },
         React.createElement(
-          'button',
-          { className: 'modal-close', onClick: onClose },
-          '×'
+          Dialog.Close,
+          { className: 'modal-close', 'aria-label': 'Закрыть' },
+          '\u2715'
         ),
+        title && React.createElement(Dialog.Title, { className: 'modal-title' }, title),
         React.createElement('div', { className: 'modal-content' }, children)
       )
     )

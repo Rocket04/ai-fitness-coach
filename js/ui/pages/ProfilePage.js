@@ -55,7 +55,7 @@ export default function ProfilePage() {
 
   const {
     setShowSettings, setEditStartDate, setEditTrainDays,
-    toggleDay, handleSaveSettings,
+    toggleDay, handleSaveSettings, setActiveTab,
     handleExportData, handleImportData, handleResetAll,
   } = dispatch;
 
@@ -87,7 +87,7 @@ export default function ProfilePage() {
           React.createElement('div', { className: 'stat-label' }, 'HRV'),
           activeHrvRange && React.createElement('span', {
             className: 'pill',
-            style: { backgroundColor: activeHrvRange.color, color: '#000', fontSize: '0.7rem', marginTop: '0.25rem' }
+            style: { backgroundColor: activeHrvRange.color, color: '#000', fontSize: 'var(--font-size-caption)', marginTop: 'var(--spacing-xs)' }
           }, activeHrvRange.label)
         ),
         restHr > 0 && React.createElement(
@@ -129,6 +129,15 @@ export default function ProfilePage() {
       }, 'Открыть справку')
     ),
 
+    // ── Methodology section ──
+    React.createElement(ProfileSection, { title: '\uD83E\uDDE0 Методология' },
+      React.createElement('p', null, 'Формулы Recovery Score, APRE, Session Load и научная база алгоритмов.'),
+      React.createElement('button', {
+        className: 'btn',
+        onClick: () => { window.location.hash = ''; setActiveTab(4); },
+      }, 'Открыть методологию')
+    ),
+
     // ── Nutrition section ──
     React.createElement(ProfileSection, { title: '\uD83C\uDF7D\uFE0F Питание' },
       React.createElement('p', null, 'Рекомендации по питанию для набора массы.'),
@@ -148,7 +157,7 @@ export default function ProfilePage() {
 
     // ── Data section ──
     React.createElement(ProfileSection, { title: '\uD83D\uDCBE Данные' },
-      React.createElement('div', { style: { display: 'flex', gap: '0.5rem', flexWrap: 'wrap' } },
+      React.createElement('div', { style: { display: 'flex', gap: 'var(--spacing-sm)', flexWrap: 'wrap' } },
         React.createElement('button', {
           className: 'btn',
           onClick: handleExportData,
@@ -179,8 +188,8 @@ export default function ProfilePage() {
       onClose: () => setShowSettings(false),
       title: 'Настройки',
     },
-      React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: '1rem' } },
-        React.createElement('label', { style: { display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.9rem', fontWeight: 500 } },
+      React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' } },
+        React.createElement('label', { style: { display: 'flex', flexDirection: 'column', gap: 'var(--spacing-xs)', fontSize: 'var(--font-size-body)', fontWeight: 500 } },
           React.createElement('span', null, 'Дата старта'),
           React.createElement('input', {
             type: 'date',
@@ -189,8 +198,8 @@ export default function ProfilePage() {
           })
         ),
         React.createElement('div', null,
-          React.createElement('span', { style: { display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 500 } }, 'Дни тренировок'),
-          React.createElement('div', { style: { display: 'flex', gap: '0.375rem', flexWrap: 'wrap' } },
+          React.createElement('span', { style: { display: 'block', marginBottom: 'var(--spacing-sm)', fontSize: 'var(--font-size-body)', fontWeight: 500 } }, 'Дни тренировок'),
+          React.createElement('div', { style: { display: 'flex', gap: 'var(--spacing-xs)', flexWrap: 'wrap' } },
             DAYS.map((day, i) =>
               React.createElement('button', {
                 key: i,
@@ -200,7 +209,7 @@ export default function ProfilePage() {
             )
           )
         ),
-        React.createElement('div', { style: { display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '0.5rem' } },
+        React.createElement('div', { style: { display: 'flex', gap: 'var(--spacing-sm)', justifyContent: 'flex-end', marginTop: 'var(--spacing-sm)' } },
           React.createElement('button', {
             className: 'btn',
             onClick: () => setShowSettings(false),
@@ -255,8 +264,8 @@ export default function ProfilePage() {
             style: { borderLeft: `3px solid ${zone.color}`, paddingLeft: '0.75rem', marginBottom: '0.75rem' }
           },
             React.createElement('strong', null, `${zone.zone} \u2014 ${zone.name}`),
-            React.createElement('div', { style: { fontSize: '0.8rem', color: 'var(--text2)' } }, zone.bpm),
-            React.createElement('div', { style: { fontSize: '0.85rem' } }, zone.desc)
+            React.createElement('div', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text2)' } }, zone.bpm),
+            React.createElement('div', { style: { fontSize: 'var(--font-size-body)' } }, zone.desc)
           )
         ),
         React.createElement('h4', null, 'HRV-гайд'),
@@ -272,12 +281,12 @@ export default function ProfilePage() {
           },
             React.createElement('strong', null, item.range),
             ` \u2014 ${item.label}`,
-            React.createElement('div', { style: { fontSize: '0.85rem' } }, item.action),
+            React.createElement('div', { style: { fontSize: 'var(--font-size-body)' } }, item.action),
             activeHrvRange === item && React.createElement('div', { style: { color: item.color, fontWeight: 600 } }, '\u2B50 Ваш текущий показатель')
           )
         ),
         React.createElement('h4', null, 'Расшифровка готовности'),
-        React.createElement('div', { style: { fontSize: '0.85rem' } },
+        React.createElement('div', { style: { fontSize: 'var(--font-size-body)' } },
           React.createElement('p', null, React.createElement('span', { className: 'pill green' }, 'Зелёный'), ' \u2014 все показатели в норме, полный план'),
           React.createElement('p', null, React.createElement('span', { className: 'pill yellow' }, 'Жёлтый'), ' \u2014 один из показателей ниже нормы: -1 подход'),
           React.createElement('p', null, React.createElement('span', { className: 'pill red' }, 'Красный'), ' \u2014 критические показатели: только мобильность/растяжка/дыхание')
@@ -295,25 +304,25 @@ export default function ProfilePage() {
         React.createElement('p', { style: { color: 'var(--text2)' } }, 'Рекомендации по питанию для набора массы'),
         React.createElement(
           'table',
-          { style: { width: '100%', borderCollapse: 'collapse', marginTop: '0.75rem' } },
+          { style: { width: '100%', borderCollapse: 'collapse', marginTop: 'var(--spacing-sm)' } },
           React.createElement('thead', null,
             React.createElement('tr', { style: { borderBottom: '1px solid var(--border)' } },
-              React.createElement('th', { style: { textAlign: 'left', padding: '0.5rem', fontSize: '0.8rem', color: 'var(--text2)' } }, 'Параметр'),
-              React.createElement('th', { style: { textAlign: 'left', padding: '0.5rem', fontSize: '0.8rem', color: 'var(--text2)' } }, 'Значение'),
-              React.createElement('th', { style: { textAlign: 'left', padding: '0.5rem', fontSize: '0.8rem', color: 'var(--text2)' } }, 'Примечание')
+              React.createElement('th', { style: { textAlign: 'left', padding: 'var(--spacing-sm)', fontSize: 'var(--font-size-caption)', color: 'var(--text2)' } }, 'Параметр'),
+              React.createElement('th', { style: { textAlign: 'left', padding: 'var(--spacing-sm)', fontSize: 'var(--font-size-caption)', color: 'var(--text2)' } }, 'Значение'),
+              React.createElement('th', { style: { textAlign: 'left', padding: 'var(--spacing-sm)', fontSize: 'var(--font-size-caption)', color: 'var(--text2)' } }, 'Примечание')
             )
           ),
           React.createElement('tbody', null,
             NUTRITION.map((item, i) =>
               React.createElement('tr', { key: i, style: { borderBottom: '1px solid var(--border)' } },
-                React.createElement('td', { style: { padding: '0.5rem', fontWeight: 500 } }, item.label),
-                React.createElement('td', { style: { padding: '0.5rem' } }, item.val),
-                React.createElement('td', { style: { padding: '0.5rem', color: 'var(--text2)', fontSize: '0.85rem' } }, item.note)
+                React.createElement('td', { style: { padding: 'var(--spacing-sm)', fontWeight: 500 } }, item.label),
+                React.createElement('td', { style: { padding: 'var(--spacing-sm)' } }, item.val),
+                React.createElement('td', { style: { padding: 'var(--spacing-sm)', color: 'var(--text2)', fontSize: 'var(--font-size-body)' } }, item.note)
               )
             )
           )
         ),
-        React.createElement('p', { style: { fontSize: '0.85rem', color: 'var(--text2)', marginTop: '0.75rem' } },
+        React.createElement('p', { style: { fontSize: 'var(--font-size-body)', color: 'var(--text2)', marginTop: 'var(--spacing-sm)' } },
           '\u26A0\uFE0F При астме важно получать достаточно белка и магния. Дефицит магния усугубляет бронхоспазм.'
         )
       )

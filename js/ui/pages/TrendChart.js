@@ -1,7 +1,7 @@
 // js/ui/pages/TrendChart.js
 // Переиспользуемый SVG-график трендов
 
-import React from 'react';
+import React, { useState } from 'react';
 
 /**
  * @param {{ data: Array, yKey: string, color: string, label?: string, unit?: string, height?: number }} props
@@ -10,7 +10,7 @@ export default function TrendChart({ data, yKey, color, label, unit = '', height
   if (!data || data.length < 2) {
     return React.createElement(
       'div',
-      { style: { textAlign: 'center', padding: '2rem', color: 'var(--text3)', fontSize: '0.85rem' } },
+      { style: { textAlign: 'center', padding: 'var(--spacing-lg)', color: 'var(--text3)', fontSize: 'var(--font-size-body)' } },
       'Недостаточно данных для графика'
     );
   }
@@ -22,7 +22,7 @@ export default function TrendChart({ data, yKey, color, label, unit = '', height
   if (points.length < 2) {
     return React.createElement(
       'div',
-      { style: { textAlign: 'center', padding: '2rem', color: 'var(--text3)', fontSize: '0.85rem' } },
+      { style: { textAlign: 'center', padding: 'var(--spacing-lg)', color: 'var(--text3)', fontSize: 'var(--font-size-body)' } },
       'Недостаточно данных для графика'
     );
   }
@@ -71,6 +71,9 @@ export default function TrendChart({ data, yKey, color, label, unit = '', height
   const trendColor = trend === 'up' ? 'var(--green)' : trend === 'down' ? 'var(--red)' : 'var(--text3)';
   const trendArrow = trend === 'up' ? '↑' : trend === 'down' ? '↓' : '→';
 
+  const [hoveredIndex, setHoveredIndex] = useState(null);
+  const baseline = values.reduce((a, b) => a + b, 0) / values.length;
+
   return React.createElement(
     'div',
     null,
@@ -91,86 +94,142 @@ export default function TrendChart({ data, yKey, color, label, unit = '', height
         trendArrow, ' ', lastVal.toFixed(0), unit
       )
     ),
-    // SVG
+    // Chart
     React.createElement(
       'div',
-      { style: { overflowX: 'auto', overflowY: 'hidden', WebkitOverflowScrolling: 'touch', marginTop: '0.375rem' } },
+      { style: { overflowX: 'auto', overflowY: 'hidden', WebkitOverflowScrolling: 'touch', marginTop: 'var(--spacing-xs)' } },
       React.createElement(
-        'svg',
-        {
-          width: chartW,
-          height: chartH,
-          viewBox: `0 0 ${chartW} ${chartH}`,
-          style: { display: 'block', minWidth: '260px' },
-        },
-        // Grid lines Y
-        refValues.map((v, i) =>
+        'div',
+        { style: { position: 'relative', display: 'inline-block' } },
+        React.createElement(
+          'svg',
+          {
+            width: chartW,
+            height: chartH,
+            viewBox: `0 0 ${chartW} ${chartH}`,
+            style: { display: 'block', minWidth: '260px' },
+          },
+          // Grid lines Y
+          refValues.map((v, i) =>
+            React.createElement('line', {
+              key: 'grid-' + i,
+              x1: pl,
+              y1: yScale(v),
+              x2: chartW - pr,
+              y2: yScale(v),
+              stroke: 'var(--border)',
+              strokeWidth: 1,
+              strokeDasharray: '3,3',
+            })
+          ),
+          // Baseline line
           React.createElement('line', {
-            key: 'grid-' + i,
             x1: pl,
-            y1: yScale(v),
+            y1: yScale(baseline),
             x2: chartW - pr,
-            y2: yScale(v),
-            stroke: 'var(--border)',
+            y2: yScale(baseline),
+            stroke: color,
             strokeWidth: 1,
-            strokeDasharray: '3,3',
-          })
-        ),
-        // Y labels
-        refValues.map((v, i) =>
-          React.createElement('text', {
-            key: 'ylabel-' + i,
-            x: pl - 6,
-            y: yScale(v) + 4,
-            textAnchor: 'end',
-            fill: 'var(--text3)',
-            fontSize: '10',
-            fontFamily: 'var(--font-mono)',
-          }, Math.round(v))
-        ),
-        // Area fill
-        React.createElement('path', {
-          d: areaD,
-          fill: color,
-          fillOpacity: 0.08,
-        }),
-        // Data line
-        React.createElement('path', {
-          d: lineD,
-          fill: 'none',
-          stroke: color,
-          strokeWidth: 2,
-          strokeLinejoin: 'round',
-          strokeLinecap: 'round',
-        }),
-        // Data points
-        points.map((p, i) =>
-          React.createElement('circle', {
-            key: 'dot-' + i,
-            cx: xScale(i),
-            cy: yScale(p.value),
-            r: 3,
-            fill: color,
-            stroke: 'var(--bg)',
-            strokeWidth: 1.5,
-          })
-        ),
-        // X labels
-        points
-          .filter((_, i) => i % labelInterval === 0 || i === points.length - 1)
-          .map((p, _i, filtered) => {
-            const i = points.indexOf(p);
-            const d = p.date ? p.date.slice(5) : '';
-            return React.createElement('text', {
-              key: 'xlabel-' + i,
-              x: xScale(i),
-              y: chartH - 6,
-              textAnchor: 'middle',
+            strokeDasharray: '4,4',
+            strokeOpacity: 0.4,
+          }),
+          // Y labels
+          refValues.map((v, i) =>
+            React.createElement('text', {
+              key: 'ylabel-' + i,
+              x: pl - 6,
+              y: yScale(v) + 4,
+              textAnchor: 'end',
               fill: 'var(--text3)',
-              fontSize: '9',
+              fontSize: '10',
               fontFamily: 'var(--font-mono)',
-            }, d);
-          })
+            }, Math.round(v))
+          ),
+          // Area fill
+          React.createElement('path', {
+            d: areaD,
+            fill: color,
+            fillOpacity: 0.08,
+          }),
+          // Data line
+          React.createElement('path', {
+            d: lineD,
+            fill: 'none',
+            stroke: color,
+            strokeWidth: 2,
+            strokeLinejoin: 'round',
+            strokeLinecap: 'round',
+          }),
+          // Data points
+          points.map((p, i) =>
+            React.createElement('circle', {
+              key: 'dot-' + i,
+              cx: xScale(i),
+              cy: yScale(p.value),
+              r: 3,
+              fill: color,
+              stroke: 'var(--bg)',
+              strokeWidth: 1.5,
+            })
+          ),
+          // Hit areas for tooltips
+          points.map((p, i) =>
+            React.createElement('circle', {
+              key: 'hit-' + i,
+              cx: xScale(i),
+              cy: yScale(p.value),
+              r: 12,
+              fill: 'transparent',
+              stroke: 'none',
+              style: { cursor: 'pointer' },
+              onMouseEnter: () => setHoveredIndex(i),
+              onMouseLeave: () => setHoveredIndex(null),
+              onTouchStart: (e) => { e.stopPropagation(); setHoveredIndex(i); },
+              onTouchEnd: () => setHoveredIndex(null),
+            })
+          ),
+          // X labels
+          points
+            .filter((_, i) => i % labelInterval === 0 || i === points.length - 1)
+            .map((p, _i, filtered) => {
+              const i = points.indexOf(p);
+              const d = p.date ? p.date.slice(5) : '';
+              return React.createElement('text', {
+                key: 'xlabel-' + i,
+                x: xScale(i),
+                y: chartH - 6,
+                textAnchor: 'middle',
+                fill: 'var(--text3)',
+                fontSize: '9',
+                fontFamily: 'var(--font-mono)',
+              }, d);
+            })
+        ),
+        // Tooltip
+        hoveredIndex !== null && React.createElement(
+          'div',
+          {
+            style: {
+              position: 'absolute',
+              left: xScale(hoveredIndex),
+              top: yScale(points[hoveredIndex].value) - 8,
+              transform: 'translate(-50%, -100%)',
+              backgroundColor: 'var(--surface)',
+              color: 'var(--text)',
+              padding: 'var(--spacing-xs) var(--spacing-sm)',
+              borderRadius: 'var(--radius-sm)',
+              fontSize: 'var(--font-size-caption)',
+              fontFamily: 'var(--font-mono)',
+              border: '1px solid var(--border)',
+              pointerEvents: 'none',
+              whiteSpace: 'nowrap',
+              zIndex: 10,
+              boxShadow: 'var(--shadow-card)',
+            }
+          },
+          React.createElement('div', { style: { fontWeight: 600 } }, points[hoveredIndex].date ? points[hoveredIndex].date.slice(5) : ''),
+          React.createElement('div', null, Math.round(points[hoveredIndex].value), ' ', unit)
+        )
       )
     )
   );

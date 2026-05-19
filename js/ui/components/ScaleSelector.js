@@ -11,10 +11,10 @@ export default function ScaleSelector({ value, onChange, labels, max = 5 }) {
 
   return React.createElement(
     'div',
-    { style: { display: 'flex', flexDirection: 'column', gap: '0.15rem' } },
+    { style: { display: 'flex', flexDirection: 'column', gap: 'var(--spacing-xs)' } },
     React.createElement(
       'div',
-      { style: { display: 'flex', gap: '0.2rem' } },
+      { style: { display: 'flex', gap: 'var(--spacing-xs)' } },
       options.map(v =>
         React.createElement('button', {
           key: v,
@@ -25,7 +25,7 @@ export default function ScaleSelector({ value, onChange, labels, max = 5 }) {
     ),
     React.createElement(
       'div',
-      { style: { fontSize: '0.68rem', color: 'var(--text3)', minHeight: '1em', paddingLeft: '0.125rem' } },
+      { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text3)', minHeight: '1em', paddingLeft: 'var(--spacing-xs)' } },
       value > 0 && labels ? (labels[value] || '') : '—'
     )
   );

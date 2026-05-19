@@ -33,7 +33,7 @@ export default function AnalyticsPage() {
 
     React.createElement(
       'p',
-      { className: 'text-sm', style: { color: 'var(--text2)', marginBottom: '1rem' } },
+      { className: 'text-sm', style: { color: 'var(--text2)', marginBottom: 'var(--spacing-md)' } },
       'Динамика показателей восстановления и прогноз риска перетренированности'
     ),
 
@@ -49,9 +49,9 @@ export default function AnalyticsPage() {
       {
         style: {
           display: 'flex',
-          gap: '0.375rem',
+          gap: 'var(--spacing-xs)',
           justifyContent: 'flex-end',
-          marginBottom: '0.75rem',
+          marginBottom: 'var(--spacing-sm)',
         }
       },
       [7, 30].map(d =>
@@ -62,7 +62,7 @@ export default function AnalyticsPage() {
             onClick: () => setTrendDays(d),
             style: {
               padding: '0.3rem 0.75rem',
-              fontSize: '0.8rem',
+              fontSize: 'var(--font-size-caption)',
               minHeight: '32px',
               backgroundColor: trendDays === d ? 'var(--accent)' : 'var(--surface2)',
               color: trendDays === d ? '#fff' : 'var(--text2)',
@@ -154,7 +154,7 @@ export default function AnalyticsPage() {
         { className: 'card' },
         React.createElement(
           'h4',
-          { style: { margin: '0 0 0.75rem 0', fontSize: '0.85rem', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.03em' } },
+          { style: { margin: '0 0 var(--spacing-sm) 0', fontSize: 'var(--font-size-body)', color: 'var(--text2)', textTransform: 'uppercase', letterSpacing: '0.03em' } },
           'Среднее за неделю'
         ),
         React.createElement(
@@ -188,14 +188,14 @@ export default function AnalyticsPage() {
                 return React.createElement(
                   'tr',
                   { key: i },
-                  React.createElement('td', { style: { fontFamily: 'var(--font-mono)', fontSize: '0.8rem' } }, `с ${date}`),
+                  React.createElement('td', { style: { fontFamily: 'var(--font-mono)', fontSize: 'var(--font-size-caption)' } }, `с ${date}`),
                   React.createElement(
                     'td',
                     { style: { textAlign: 'center', fontWeight: 600 } },
                     w.avgRecoveryScore,
                     i > 0 && React.createElement(
                       'span',
-                      { className: deltaClass, style: { marginLeft: '0.25rem', fontSize: '0.75rem' } },
+                      { className: deltaClass, style: { marginLeft: 'var(--spacing-xs)', fontSize: 'var(--font-size-caption)' } },
                       `${deltaSign}${scoreDelta}`
                     )
                   ),
