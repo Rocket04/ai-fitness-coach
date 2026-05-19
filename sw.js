@@ -8,17 +8,16 @@ if (workbox) {
   workbox.precaching.precacheAndRoute([
     { url: '/', revision: null },
     { url: '/index.html', revision: null },
-    { url: '/css/styles.css', revision: null },
-    { url: '/js/app.js', revision: null }
   ]);
 
-  // Стратегия NetworkFirst для наших файлов (HTML, CSS, JS)
+  // Стратегия StaleWhileRevalidate для наших файлов (HTML, CSS, JS)
+  // Сначала показываем из кэша, потом обновляем в фоне — работает офлайн
   workbox.routing.registerRoute(
     ({ url }) => url.origin === self.location.origin &&
                  (url.pathname.endsWith('.html') ||
                   url.pathname.endsWith('.css') ||
                   url.pathname.endsWith('.js')),
-    new workbox.strategies.NetworkFirst({
+    new workbox.strategies.StaleWhileRevalidate({
       cacheName: 'local-resources',
       plugins: [
         new workbox.expiration.ExpirationPlugin({
@@ -70,7 +69,16 @@ if (workbox) {
 
   // Обработчик активации
   self.addEventListener('activate', (event) => {
-    event.waitUntil(self.clients.claim());
+    const currentCaches = ['local-resources', 'cdn-resources', 'assets-cache'];
+    event.waitUntil(
+      caches.keys().then(cacheNames =>
+        Promise.all(
+          cacheNames
+            .filter(name => !currentCaches.includes(name))
+            .map(name => caches.delete(name))
+        )
+      ).then(() => self.clients.claim())
+    );
     console.log('СВ активирован, lets go!');
   });
 } else {

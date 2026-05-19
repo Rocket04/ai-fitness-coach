@@ -2,20 +2,43 @@
 /* Единая дизайн-система: переменные для цветов, отступов, скруглений, теней и типографики */
 
 :root {
-  /* Colors */
+  /* ── Semantic color scale ──────────────────────────────────── */
   --color-bg: #0a0a0a;
   --color-surface: #141414;
-  --color-surface-2: #1a1a1a;
-  --color-surface-3: #242424;
-  --color-border: #2a2a2a;
-  --color-text-primary: #f0f0f0;
-  --color-text-secondary: #a0a0a0;
-  --color-text-tertiary: #808080;
+  --color-surface-2: #1e1e1e;
+  --color-surface-3: #272727;
+  --color-border: #303030;
+  /* Text — improved contrast ratios */
+  --color-text-primary: #f2f2f2;    /* WCAG AAA on dark bg */
+  --color-text-secondary: #c8c8c8;  /* WCAG AA (was #c0c0c0, +5% brightness) */
+  --color-text-tertiary: #909090;   /* WCAG AA large text (was #808080) */
+  /* Accents */
   --color-accent-green: #4ade80;
   --color-accent-yellow: #facc15;
   --color-accent-red: #f87171;
   --color-accent-blue: #60a5fa;
   --color-accent-brand: #4f7c44;
+
+  /* ── Short-name aliases (used throughout styles.css) ─────── */
+  --bg: var(--color-bg);
+  --surface: var(--color-surface);
+  --surface2: var(--color-surface-2);
+  --surface3: var(--color-surface-3);
+  --border: var(--color-border);
+  --text1: var(--color-text-primary);
+  --text2: var(--color-text-secondary);
+  --text3: var(--color-text-tertiary);
+  --green: var(--color-accent-green);
+  --yellow: var(--color-accent-yellow);
+  --red: var(--color-accent-red);
+  --blue: var(--color-accent-blue);
+  --accent: var(--color-accent-brand);
+  --transition: var(--transition-normal);
+  --radius: var(--radius-md);
+  --font-mono: ui-monospace, 'SF Mono', Menlo, monospace;
+  --muted: var(--color-text-tertiary);
+  --text: var(--color-text-primary);
+  --font: var(--font-family-base);
 
   /* Spacing */
   --spacing-xs: 4px;
@@ -23,19 +46,63 @@
   --spacing-md: 16px;
   --spacing-lg: 24px;
   --spacing-xl: 32px;
+  --spacing-2xl: 48px;
 
   /* Radius */
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
+  --radius-xl: 20px;
 
-  /* Shadows */
-  --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.3);
-  --shadow-modal: 0 8px 24px rgba(0, 0, 0, 0.5);
+  /* Shadows (elevation hierarchy) */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.25);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --shadow-xl: 0 12px 32px rgba(0, 0, 0, 0.5);
 
   /* Typography */
+  --font-family-base: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-size-h1: 24px;
   --font-size-h2: 20px;
+  --font-size-h3: 18px;
   --font-size-body: 14px;
   --font-size-caption: 12px;
+  --font-size-small: 11px;
+
+  /* Font weights */
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* Line heights */
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+
+  /* Animations */
+  --animation-fast: 0.15s ease-out;
+  --animation-normal: 0.3s ease-out;
+  --animation-slow: 0.5s ease-in-out;
+
+  /* Transitions */
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.2s ease;
+  --transition-slow: 0.3s ease;
+
+  /* Z-index scale */
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-fixed: 300;
+  --z-modal-backdrop: 400;
+  --z-modal: 500;
+  --z-popover: 600;
+  --z-tooltip: 700;
+
+  /* Responsive breakpoints (for reference in media queries) */
+  --breakpoint-sm: 375px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
 }
