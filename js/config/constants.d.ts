@@ -77,3 +77,28 @@ export declare const MORNING_ROUTINE: RoutineEntry[];
 export declare const EVENING_ROUTINE: RoutineEntry[];
 export declare const NUTRITION: NutritionEntry[];
 export declare const MONTHS: TrainingMonth[];
+
+export interface ApreAdjustment {
+  maxReps: number;
+  set4: number;
+  nextWeek: number;
+}
+
+export interface ApreProtocol {
+  50: { reps: number };
+  75: { reps: number };
+  adjustments: ApreAdjustment[];
+}
+
+export interface ApreTables {
+  APRE_3: ApreProtocol;
+  APRE_6: ApreProtocol;
+  APRE_10: ApreProtocol;
+}
+
+export type ApreProtocolKey = 'APRE_3' | 'APRE_6' | 'APRE_10';
+export type ApreUnit = 'kg' | 'lbs';
+export type CalisthenicLevel = 1 | 2 | 3 | 4 | 5;
+
+export declare const APRE_TABLES: ApreTables;
+export declare const CALISTHENICS_PROGRESSIONS: Record<CalisthenicLevel, string>;

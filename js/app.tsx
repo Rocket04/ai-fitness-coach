@@ -1,11 +1,16 @@
 // js/app.tsx
-import { useEffect, lazy, Suspense } from 'react';
+import { useEffect, lazy, Suspense, useState } from 'react';
 import ReactDOM from 'react-dom/client';
+import { I18nextProvider, useTranslation } from 'react-i18next';
+import i18n from './i18n/index.js';
 import { useAppStore } from './stores/useAppStore.js';
 import { DAYS, DAYS_TO_DOW } from './config/constants.js';
 import Modal from './ui/components/Modal.jsx';
 import ErrorBoundary from './ui/components/ErrorBoundary.jsx';
 import { SkeletonCard } from './ui/components/Skeleton.jsx';
+import OnboardingWizard from './ui/components/OnboardingWizard.jsx';
+import GuidedTour from './ui/components/GuidedTour.jsx';
+import { isOnboardingCompleted } from './core/onboardingStorage.js';
 
 const TodayPage = lazy(() => import('./ui/pages/TodayPage.jsx'));
 const LogPage = lazy(() => import('./ui/pages/LogPage.jsx'));
@@ -19,11 +24,12 @@ interface BottomNavProps {
 }
 
 function BottomNav({ activeTab, setActiveTab }: BottomNavProps) {
+  const { t } = useTranslation();
   const tabs = [
-    { idx: 0, label: 'Сегодня', icon: '🏃️' },
-    { idx: 1, label: 'Дневник', icon: '📝' },
-    { idx: 2, label: 'Аналитика', icon: '📊' },
-    { idx: 3, label: 'Профиль', icon: '👤' },
+    { idx: 0, label: t('nav.today'), icon: '🏃️' },
+    { idx: 1, label: t('nav.log'), icon: '📝' },
+    { idx: 2, label: t('nav.analytics'), icon: '📊' },
+    { idx: 3, label: t('nav.profile'), icon: '👤' },
   ];
 
   return (
@@ -45,13 +51,28 @@ function BottomNav({ activeTab, setActiveTab }: BottomNavProps) {
 }
 
 function AppContent() {
+  const { t } = useTranslation();
   const {
     dataLoaded, toast, showSettings, editStartDate, editTrainDays, activeTab,
     setActiveTab, setShowSettings, setEditStartDate, toggleDay, handleSaveSettings,
-    initApp,
+    initApp, completeOnboarding,
   } = useAppStore();
 
+  // Onboarding state managed in localStorage (survives i18n remounts)
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
   useEffect(() => { initApp(); }, []);
+
+  // Check localStorage after data loads to determine if onboarding should show
+  useEffect(() => {
+    if (dataLoaded) {
+      // Only show onboarding if not already completed
+      const completed = isOnboardingCompleted();
+      if (!completed) {
+        setShowOnboarding(true);
+      }
+    }
+  }, [dataLoaded]);
 
   if (!dataLoaded) {
     return (
@@ -153,6 +174,19 @@ function AppContent() {
           {toast.message}
         </div>
       )}
+
+      {/* Onboarding Wizard for new users */}
+      <OnboardingWizard
+        isOpen={showOnboarding}
+        onComplete={(data) => {
+          completeOnboarding(data);
+          setShowOnboarding(false);
+        }}
+        onClose={() => setShowOnboarding(false)}
+      />
+
+      {/* Guided Tour */}
+      <GuidedTour t={t} />
     </>
   );
 }
@@ -160,7 +194,9 @@ function AppContent() {
 function App() {
   return (
     <ErrorBoundary>
-      <AppContent />
+      <I18nextProvider i18n={i18n}>
+        <AppContent />
+      </I18nextProvider>
     </ErrorBoundary>
   );
 }

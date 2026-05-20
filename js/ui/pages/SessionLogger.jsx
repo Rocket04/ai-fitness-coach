@@ -2,9 +2,10 @@
 // История тренировок + результаты тестов (collapsible sections)
 
 import React, { useState, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../../stores/useAppStore.js';
 import EmptyState from '../components/EmptyState.jsx';
-import * as CollapsiblePrimitive from '@radix-ui/react-collapsible';
+import { Collapsible as CollapsiblePrimitive } from '@base-ui/react/collapsible';
 
 /* ---------- sub-components ---------- */
 
@@ -40,6 +41,7 @@ function SessionRow({ session }) {
 /* ---------- main component ---------- */
 
 export default function SessionLogger() {
+  const { t } = useTranslation();
   const { sessions, testHistory, handleExportData, handleImportData, handleResetAll } = useAppStore();
 
   const [showSessions, setShowSessions] = useState(false);
@@ -64,7 +66,7 @@ export default function SessionLogger() {
       React.createElement(
         CollapsiblePrimitive.Trigger,
         { className: 'collapsible-header' },
-        React.createElement('span', null, 'История тренировок'),
+        React.createElement('span', null, t('session.workoutHistory')),
         React.createElement(
           'span',
           { className: 'flex items-center gap-xs' },
@@ -73,7 +75,7 @@ export default function SessionLogger() {
         )
       ),
       React.createElement(
-        CollapsiblePrimitive.Content,
+        CollapsiblePrimitive.Panel,
         { className: 'collapsible-content' },
         trainSessions.length === 0
           ? React.createElement(EmptyState, { icon: '🏋️', title: 'Тренировок пока нет', subtitle: 'Отметьте выполненную тренировку на главной' })
@@ -90,7 +92,7 @@ export default function SessionLogger() {
       React.createElement(
         CollapsiblePrimitive.Trigger,
         { className: 'collapsible-header' },
-        React.createElement('span', null, 'Результаты тестов'),
+        React.createElement('span', null, t('session.testResults')),
         React.createElement(
           'span',
           { className: 'flex items-center gap-xs' },
@@ -99,7 +101,7 @@ export default function SessionLogger() {
         )
       ),
       React.createElement(
-        CollapsiblePrimitive.Content,
+        CollapsiblePrimitive.Panel,
         { className: 'collapsible-content' },
         testSessions.length === 0
           ? React.createElement(EmptyState, { icon: '📊', title: 'Тестов пока нет', subtitle: 'Тесты проводятся в день C при зелёной готовности' })
@@ -148,7 +150,7 @@ export default function SessionLogger() {
             className: 'btn btn-sm flex-1 min-w-90',
             onClick: handleExportData,
           },
-          'Экспорт'
+          t('session.export')
         ),
         React.createElement(
           'button',
@@ -156,7 +158,7 @@ export default function SessionLogger() {
             className: 'btn btn-sm flex-1 min-w-90',
             onClick: () => fileInputRef.current && fileInputRef.current.click(),
           },
-          'Импорт'
+          t('session.import')
         ),
         React.createElement(
           'button',
@@ -164,7 +166,7 @@ export default function SessionLogger() {
             className: 'btn btn-sm btn-red flex-1 min-w-90',
             onClick: handleResetAll,
           },
-          'Сброс'
+          t('session.reset')
         ),
         React.createElement('input', {
           ref: fileInputRef,

@@ -17,6 +17,7 @@ import type {
   WeeklyAverage,
   TrendWarning,
   OvertrainingWarning,
+  ApreExerciseResult,
 } from '../core/types.js';
 import {
   init,
@@ -35,6 +36,7 @@ import {
   getManualStatus,
   saveManualStatus,
 } from '../core/storage.js';
+import { isOnboardingCompleted, markOnboardingCompleted } from '../core/onboardingStorage.js';
 import { calcReadiness, getEffectiveReadiness, detectRecoveryDebt } from '../core/readiness.js';
 import { calculateRecoveryScore } from '../core/recoveryScore.js';
 import { calculateSessionLoad } from '../core/sessionLoad.js';
@@ -55,6 +57,7 @@ import {
   getWeeklyAverages,
   getOvertrainingWarning,
 } from '../core/analytics.js';
+import { getAllCorrelations } from '../core/correlations.js';
 import { parseLocalDate, formatISO } from '../core/helpers.js';
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
@@ -106,7 +109,7 @@ function computeDerived(
   const { month, dayIndex } = getMonthAndDayIndex(weekNumber, trainType);
   const weeklySummary = getWeeklySummary(sessions, checkins, todayISO);
 
-  const weeklyMultiplier = getWeeklyMultiplier(weeklySummary, todayDate.getDay());
+  const weeklyMultiplier = getWeeklyMultiplier(weeklySummary, todayDate.getDay(), weekNumber);
   const testMult = getTestMultiplier(sessions, weekNumber);
   const totalMultiplier = weeklyMultiplier * testMult;
 
@@ -114,7 +117,7 @@ function computeDerived(
 
   let sessionPlan: SessionPlan | null = null;
   if (trainType && month) {
-    const plan = buildSessionFromMonth(month, dayIndex, readiness, recoveryDebt, totalMultiplier, apreSession);
+    const plan = buildSessionFromMonth(month, dayIndex, readiness, recoveryDebt, totalMultiplier, apreSession, weekNumber);
     sessionPlan = maybeAddTestExercises(plan, trainType, weekNumber, readiness);
   }
 
@@ -132,7 +135,7 @@ function computeDerived(
     }
     const tm = getMonthAndDayIndex(tw, tomorrowType);
     if (tm.month) {
-      tomorrowPlan = buildSessionFromMonth(tm.month, tm.dayIndex, readiness, recoveryDebt, 1.0, null);
+      tomorrowPlan = buildSessionFromMonth(tm.month, tm.dayIndex, readiness, recoveryDebt, 1.0, null, tw);
     }
   }
 
@@ -164,6 +167,7 @@ function computeDerived(
   const weeklyAverages = getWeeklyAverages(trendData30);
   const trendWarnings = detectNegativeTrends(trendData30);
   const overtrainingWarning = getOvertrainingWarning(trendData30, weeklyAverages, weeklySummary);
+  const correlations = getAllCorrelations(checkins);
 
   return {
     // Dates
@@ -204,6 +208,7 @@ function computeDerived(
     weeklyAverages,
     trendWarnings,
     overtrainingWarning,
+    correlations,
   };
 }
 
@@ -220,6 +225,7 @@ interface AppStore {
   startDate: string | null;
   trainDays: number[];
   showSettings: boolean;
+  showResetConfirm: boolean;
   editStartDate: string;
   editTrainDays: number[];
 
@@ -245,6 +251,8 @@ interface AppStore {
   testPullUps: number;
   testPushUps: number;
   testPlank: number;
+  /** Накопленные APRE-результаты текущей тренировки, ещё не сохранённые в Dexie */
+  pendingApreResults: ApreExerciseResult[];
 
   // ── UI ──
   activeTab: number;
@@ -286,6 +294,7 @@ interface AppStore {
   weeklyAverages: WeeklyAverage[];
   trendWarnings: TrendWarning[];
   overtrainingWarning: OvertrainingWarning | null;
+  correlations: import('../core/correlations.js').CorrelationResult[];
 
   // ── Actions ──
   initApp: () => Promise<void>;
@@ -311,6 +320,7 @@ interface AppStore {
   setActiveTab: (v: number) => void;
   setShowReadiness: (v: boolean) => void;
   setShowSettings: (v: boolean) => void;
+  setShowResetConfirm: (v: boolean) => void;
   setEditStartDate: (v: string) => void;
   setEditTrainDays: (v: number[]) => void;
   showToast: (message: string, type?: ToastType, duration?: number) => void;
@@ -322,9 +332,14 @@ interface AppStore {
   handleMarkMorning: () => Promise<void>;
   handleMarkEvening: () => Promise<void>;
   handleToggleTraining: () => Promise<void>;
+  updateApreResult: (result: ApreExerciseResult) => void;
   handleExportData: () => Promise<void>;
   handleImportData: (file: File) => Promise<void>;
-  handleResetAll: () => Promise<void>;
+  handleResetAll: () => void;
+  confirmResetData: () => Promise<void>;
+
+  // ── Onboarding ──
+  completeOnboarding: (data: { trainDays: number[]; checkin: Partial<Checkin> }) => Promise<void>;
 
   // ── Internal ──
   _recompute: () => void;
@@ -348,6 +363,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
   startDate: null,
   trainDays: [1, 3, 5],
   showSettings: false,
+  showResetConfirm: false,
   editStartDate: '',
   editTrainDays: [1, 3, 5],
 
@@ -373,6 +389,17 @@ export const useAppStore = create<AppStore>((set, get) => ({
   testPullUps: 0,
   testPushUps: 0,
   testPlank: 0,
+  pendingApreResults: [],
+
+  // ── updateApreResult ──
+  updateApreResult: (result: ApreExerciseResult) => {
+    const { pendingApreResults } = get();
+    const updated = [
+      ...pendingApreResults.filter(r => r.exerciseName !== result.exerciseName),
+      result,
+    ];
+    set({ pendingApreResults: updated });
+  },
 
   // UI
   activeTab: 0,
@@ -421,6 +448,10 @@ export const useAppStore = create<AppStore>((set, get) => ({
 
       const manualStatus = (ms || 'unknown') as ManualStatus;
       const derived = computeDerived(allSessions, allCheckins, sd, td, manualStatus, todayISO);
+
+      // Check if this is a new user (no checkins ever, no sessions)
+      const isNewUser = allCheckins.length === 0 && allSessions.length === 0;
+
       set({
         todayISO,
         sessions: allSessions,
@@ -478,6 +509,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
   setActiveTab: v => set({ activeTab: v }),
   setShowReadiness: v => set({ showReadiness: v }),
   setShowSettings: v => set({ showSettings: v }),
+  setShowResetConfirm: v => set({ showResetConfirm: v }),
   setEditStartDate: v => set({ editStartDate: v }),
   setEditTrainDays: v => set({ editTrainDays: v }),
 
@@ -613,13 +645,14 @@ export const useAppStore = create<AppStore>((set, get) => ({
         testResults: { pullUps: s.testPullUps, pushUps: s.testPushUps, plankSec: s.testPlank },
         mode: s.sessionPlan?.mode || 'full',
         updatedAt: Date.now(),
+        ...(s.pendingApreResults.length > 0 && { apreResults: s.pendingApreResults }),
       };
       await saveSession(session);
       newSessions = [...s.sessions.filter(sess => sess.key !== key), session];
       s.showToast('Тренировка сохранена');
     }
     const derived = computeDerived(newSessions, s.checkins, s.startDate, s.trainDays, s.manualOverride, s.todayISO);
-    set({ sessions: newSessions, rpe: 0, sessionNote: '', durationMinutes: 45, ...derived });
+    set({ sessions: newSessions, rpe: 0, sessionNote: '', durationMinutes: 45, pendingApreResults: [], ...derived });
   },
 
   handleExportData: async () => {
@@ -655,9 +688,12 @@ export const useAppStore = create<AppStore>((set, get) => ({
     }
   },
 
-  handleResetAll: async () => {
-    if (!window.confirm('Удалить все данные? Это действие нельзя отменить.')) return;
-    const { todayISO } = get();
+  handleResetAll: () => {
+    set({ showResetConfirm: true });
+  },
+
+  confirmResetData: async () => {
+    const { todayISO, showToast } = get();
     try {
       await clearAllData();
       await saveSettings({ startDate: todayISO, trainDays: [1, 3, 5] });
@@ -669,10 +705,73 @@ export const useAppStore = create<AppStore>((set, get) => ({
         sessionNote: '',
         startDate: todayISO,
         trainDays: [1, 3, 5],
+        showResetConfirm: false,
         ...derived,
       });
+      showToast('Все данные удалены');
     } catch (err) {
       console.error('Reset failed:', err);
+      showToast('Ошибка при сбросе данных', 'error');
+    }
+  },
+
+  // ── Onboarding ──
+  completeOnboarding: async data => {
+    const { todayISO, showToast } = get();
+    try {
+      // Save training days
+      await saveSettings({ startDate: todayISO, trainDays: data.trainDays });
+
+      // Save checkin if data provided
+      if (data.checkin && (data.checkin.weight || data.checkin.hrv || data.checkin.sleepHours)) {
+        const checkin: Checkin = {
+          date: todayISO,
+          sleepHours: data.checkin.sleepHours || 0,
+          restHR: data.checkin.restHR || 0,
+          hrv: data.checkin.hrv || 0,
+          hipPain: 0,
+          shoulderPain: 0,
+          breathing: 'good',
+          weight: data.checkin.weight || 0,
+          notes: 'Первый чек-ин (онбординг)',
+          muscleSoreness: 0,
+          energy: 0,
+          mood: 0,
+          sleepQuality: 0,
+          stress: 0,
+          readiness: 'green',
+          ts: Date.now(),
+        };
+        await saveCheckin(checkin);
+      }
+
+      // Update store state
+      const allCheckins = await getAllCheckins();
+      const derived = computeDerived(
+        get().sessions,
+        allCheckins,
+        todayISO,
+        data.trainDays,
+        'unknown',
+        todayISO
+      );
+
+      set({
+        trainDays: data.trainDays,
+        startDate: todayISO,
+        editTrainDays: data.trainDays,
+        editStartDate: todayISO,
+        checkins: allCheckins,
+        ...derived,
+      });
+
+      // Mark onboarding as completed in localStorage (persists across app remounts)
+      markOnboardingCompleted();
+
+      showToast('Настройка завершена!');
+    } catch (err) {
+      console.error('Onboarding completion failed:', err);
+      showToast('Ошибка при сохранении настроек', 'error');
     }
   },
 }));

@@ -2,6 +2,7 @@
 // Страница аналитики — потребляет context, использует sub-components
 
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../../stores/useAppStore.js';
 import TrendChart from './TrendChart.jsx';
 import WarningsList from './WarningsList.jsx';
@@ -9,6 +10,7 @@ import WeeklySummary from './WeeklySummary.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 
 export default function AnalyticsPage() {
+  const { t } = useTranslation();
   const state = useAppStore();
   
   // Add safeguard for context availability
@@ -31,11 +33,11 @@ export default function AnalyticsPage() {
     return React.createElement(
       'div',
       { className: 'page-enter' },
-      React.createElement('h2', null, 'Аналитика'),
+      React.createElement('h2', null, t('analytics.title')),
       React.createElement(EmptyState, {
         icon: '📈',
-        title: 'Недостаточно данных',
-        subtitle: 'Нужно минимум 2 чек-ина. Заполни сегодня и завтра — появятся первые графики.',
+        title: t('analytics.insufficientData'),
+        subtitle: t('analytics.needMinimumCheckins'),
       })
     );
   }

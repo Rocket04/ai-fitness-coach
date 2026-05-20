@@ -236,3 +236,71 @@ const month3 = {
 };
 
 export const MONTHS = [month1, month2, month3];
+
+/* ───────────────────────────────────────────────────────────
+ * APRE — Autoregulatory Progressive Resistance Exercise
+ * Источник: Mann J.B. et al. (2010), APRE Protocol Tables
+ * ─────────────────────────────────────────────────────────── */
+
+/**
+ * Таблицы протоколов APRE (3RM, 6RM, 10RM).
+ *
+ * Структура каждого протокола:
+ *   50: { reps }   — Сет 1: 50% от currentRM, фиксированные повторения
+ *   75: { reps }   — Сет 2: 75% от currentRM, фиксированные повторения
+ *   adjustments    — Таблица корректировок по результату AMRAP (Сет 3 → Сет 4, Сет 4 → следующая неделя)
+ *
+ * ВАЖНО (методология Манна):
+ *   - Сет 3 (AMRAP) → корректирует вес Сета 4 (set4Adjust)
+ *   - Сет 4 (AMRAP) → корректирует currentRM для следующей недели (nextWeekAdjust)
+ *
+ * Единицы: кг. При unit === 'lbs' значения умножаются по маппингу:
+ *   2.5 кг → 5 lbs | 5 кг → 10 lbs | 7.5 кг → 15 lbs | 10 кг → 20 lbs
+ */
+export const APRE_TABLES = {
+  APRE_3: {
+    50: { reps: 6 },
+    75: { reps: 3 },
+    adjustments: [
+      { maxReps: 2,        set4: -5,  nextWeek: -2.5 },
+      { maxReps: 4,        set4: 0,   nextWeek: 0    },
+      { maxReps: 6,        set4: 5,   nextWeek: 5    },
+      { maxReps: Infinity, set4: 10,  nextWeek: 7.5  },
+    ],
+  },
+  APRE_6: {
+    50: { reps: 10 },
+    75: { reps: 6 },
+    adjustments: [
+      { maxReps: 2,        set4: -5,   nextWeek: -5  },
+      { maxReps: 4,        set4: -2.5, nextWeek: 0   },
+      { maxReps: 7,        set4: 0,    nextWeek: 2.5 },
+      { maxReps: 12,       set4: 2.5,  nextWeek: 5   },
+      { maxReps: Infinity, set4: 5,    nextWeek: 7.5 },
+    ],
+  },
+  APRE_10: {
+    50: { reps: 12 },
+    75: { reps: 10 },
+    adjustments: [
+      { maxReps: 6,        set4: -5,   nextWeek: -5  },
+      { maxReps: 8,        set4: -2.5, nextWeek: 0   },
+      { maxReps: 11,       set4: 0,    nextWeek: 2.5 },
+      { maxReps: 16,       set4: 2.5,  nextWeek: 5   },
+      { maxReps: Infinity, set4: 5,    nextWeek: 7.5 },
+    ],
+  },
+};
+
+/**
+ * Уровни калистенической прогрессии.
+ * Используется вместо кг/lbs для упражнений с весом тела.
+ * Хранится как целое число [1, 5]; при APRE изменяется на ±1.
+ */
+export const CALISTHENICS_PROGRESSIONS = {
+  1: 'Easy',
+  2: 'Medium',
+  3: 'Advanced',
+  4: 'Hard',
+  5: 'Elite',
+};

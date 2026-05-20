@@ -32,14 +32,17 @@ function CheckinRow({ checkin, allCheckins }) {
   );
 }
 
-export default function CheckinHistory({ checkins }) {
+export default function CheckinHistory({ checkins, defaultLimit = 5 }) {
   const [open, setOpen] = useState(false);
+  const [showAll, setShowAll] = useState(false);
 
   if (!checkins || checkins.length === 0) return null;
 
   const sorted = [...checkins]
-    .sort((a, b) => (b.date || '').localeCompare(a.date || ''))
-    .slice(0, 14);
+    .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
+  const visible = showAll ? sorted : sorted.slice(0, defaultLimit);
+  const hasMore = sorted.length > defaultLimit;
 
   return React.createElement(
     Collapsible,
@@ -51,8 +54,16 @@ export default function CheckinHistory({ checkins }) {
     React.createElement(
       'div',
       { className: 'checkin-history' },
-      sorted.map(c =>
+      visible.map(c =>
         React.createElement(CheckinRow, { key: c.date, checkin: c, allCheckins: checkins })
+      ),
+      hasMore && React.createElement(
+        'button',
+        {
+          className: 'checkin-history__more',
+          onClick: () => setShowAll(v => !v),
+        },
+        showAll ? 'Скрыть' : `Показать ещё (${sorted.length - defaultLimit})`
       )
     )
   );

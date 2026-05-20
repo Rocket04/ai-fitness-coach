@@ -1,0 +1,480 @@
+{
+  "app": {
+    "title": "Smart Fitness Coach",
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close",
+    "next": "Next →",
+    "back": "← Back",
+    "skip": "Skip",
+    "done": "Done",
+    "confirm": "Confirm",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add"
+  },
+
+  "nav": {
+    "today": "Today",
+    "log": "Log",
+    "analytics": "Analytics",
+    "profile": "Profile",
+    "methodology": "Methodology"
+  },
+
+  "today": {
+    "title": "Today",
+    "recoveryScore": "Recovery Score",
+    "recoveryLabel": "Recovery",
+    "noData": "No data",
+    "checkinPrompt": "Complete your check-in",
+    "tapForMetrics": "Tap the ring for 7-day metrics",
+    "ready": "Ready",
+    "average": "Average",
+    "rest": "Rest",
+    "restDay": "Recovery Day",
+    "restDescription": "Today is rest day. Recommended: stretching, walking, sleep, and recovery activities.",
+    "trainingDay": "Training Day",
+    "testDay": "Test Day",
+    "week": "Week",
+    "deload": "🔄 Deload",
+    "exercises": "Exercises",
+    "exerciseCount": "{{count}} exercises",
+    "howWasWorkout": "How was your workout?",
+    "rpe": "RPE",
+    "duration": "Duration (min)",
+    "notes": "Notes",
+    "notesPlaceholder": "Which sets felt heavy?",
+    "saveWorkout": "Save Workout",
+    "cancelWorkout": "Cancel Workout",
+    "coachTips": "Coach Tips",
+    "morning": "Morning",
+    "morningStatus": "Activation",
+    "evening": "Evening",
+    "eveningStatus": "Recovery",
+    "done": "Done",
+    "notDone": "Not done",
+    "tomorrow": "Tomorrow",
+    "restTomorrow": "🛌 Rest",
+    "type": "Type {{type}}",
+    "streak": "{{count}} day streak",
+    "rpeDescriptions": {
+      "0": "No load — rest day",
+      "1": "Very easy — recovery",
+      "2": "Easy — warm up, technique",
+      "3": "Easy — preparation",
+      "4": "Moderate — base volume",
+      "5": "Moderate — working sets",
+      "6": "Hard — working weight",
+      "7": "Hard — intensity",
+      "8": "Very hard — near limit",
+      "9": "Limit — failure close",
+      "10": "Maximum — failure"
+    },
+    "rpeZones": {
+      "light": "Light",
+      "moderate": "Moderate",
+      "high": "High"
+    },
+    "status": {
+      "ready": "Ready",
+      "average": "Average",
+      "rest": "Rest"
+    },
+    "hint": "Energy, mood, muscle soreness",
+    "doCheckin": "Complete check-in"
+  },
+
+  "recovery": {
+    "title": "Recovery Score",
+    "description": "Comprehensive recovery index (0–100%) based on HRV, sleep, resting HR, and subjective feelings. Higher = better recovery.",
+    "components": {
+      "hrv": "HRV",
+      "sleep": "Sleep",
+      "rhr": "Resting HR",
+      "subjective": "Subjective"
+    },
+    "weights": {
+      "hrv": "40%",
+      "sleep": "30%",
+      "rhr": "10%",
+      "subjective": "20%"
+    },
+    "status": {
+      "green": "Green",
+      "yellow": "Yellow",
+      "red": "Red"
+    },
+    "statusDesc": {
+      "green": "— ready for full load",
+      "yellow": "— moderate load",
+      "red": "— recovery needed"
+    }
+  },
+
+  "checkin": {
+    "title": "Check-in",
+    "daily": "Daily Check-in",
+    "sleep": "Sleep",
+    "duration": "Duration",
+    "hours": "hours",
+    "quality": "Quality",
+    "howDidYouSleep": "how did you sleep",
+    "sleep7Days": "Sleep, 7 days",
+    "breathing": "Breathing",
+    "difficulty": "Difficulty",
+    "restingHR": "Resting HR",
+    "bpm": "bpm",
+    "load": "Load",
+    "rpe": "RPE",
+    "notes": "Notes",
+    "save": "Save",
+    "filled": "Filled",
+    "breathingOptions": {
+      "good": "Good",
+      "mild": "Mild difficulty",
+      "bad": "Bad"
+    }
+  },
+
+  "log": {
+    "habitsImpact": "Habits Impact",
+    "insufficientDataChart": "Insufficient data for chart",
+    "noDataHeatmap": "No data for heatmap",
+    "weeklyStats": "Weekly Statistics",
+    "workouts": "Workouts",
+    "avgRPE": "Average RPE",
+    "green": "Green",
+    "yellow": "Yellow",
+    "red": "Red",
+    "monthlyStats": "Monthly Statistics"
+  },
+
+  "analytics": {
+    "insufficientData": "Insufficient Data",
+    "needMinimumCheckins": "Need at least 2 check-ins. Complete today and tomorrow — first charts will appear.",
+    "title": "Analytics"
+  },
+
+  "session": {
+    "workoutHistory": "Workout History",
+    "testResults": "Test Results",
+    "export": "Export",
+    "import": "Import",
+    "reset": "Reset"
+  },
+
+  "exercise": {
+    "apre": "APRE",
+    "apreTooltip": "Auto-regulatory load: weight adjusts to your current state. Set 3 — AMRAP (max reps), Set 4 weight adjusts based on results.",
+    "set": "Set",
+    "set1": "Set 1",
+    "set2": "Set 2",
+    "set3": "Set 3",
+    "set4": "Set 4",
+    "amrap": "AMRAP",
+    "reps": "reps",
+    "unconfigured": "Exercise not configured. Set initial parameters for APRE calculation.",
+    "configure": "Configure",
+    "nextWeek": "Next Week",
+    "nextWeekProgress": "📈 Next week: {{value}} {{reason}}",
+    "recoveryBanner": {
+      "red": "⛔ Active recovery day. Weight reduced by {{reduction}} {{unit}} to protect CNS.",
+      "yellow": "⚠️ Recovery reduced. Lower intensity to RPE 6–7, avoid failure."
+    },
+    "adjustmentReason": "({{sign}}{{amount}} {{unit}} for {{reps}} reps)"
+  },
+
+  "rpe": {
+    "scale": "RPE Scale",
+    "0": "No exertion — skip/rest",
+    "1": "Very easy — recovery",
+    "2": "Easy — warmup, technique",
+    "3": "Easy — preparatory block",
+    "4": "Moderate — base volume",
+    "5": "Moderate — working sets",
+    "6": "Hard — working weight",
+    "7": "Hard — intensity",
+    "8": "Very hard — limit",
+    "9": "Limit — failure close",
+    "10": "Maximum — failure",
+    "zone": {
+      "light": "Light",
+      "moderate": "Moderate",
+      "high": "High"
+    }
+  },
+
+  "profile": {
+    "title": "Profile",
+    "stats": {
+      "title": "📊 Your Metrics",
+      "hrv": "HRV",
+      "restHR": "Resting HR",
+      "recovery": "Recovery",
+      "readiness": "Readiness"
+    },
+    "rehab": {
+      "title": "🧘‍♂️ Rehab",
+      "description": "7 morning exercises (15 min) + 8 evening (20 min). Reduce injury risk and speed up recovery.",
+      "subtitle": "Spine mobility, T-spine, hip, shoulder, breathing techniques.",
+      "open": "Open Program"
+    },
+    "info": {
+      "title": "📖 Guide",
+      "description": "Heart rate zones (Z1–Z5), HRV guide and status explanations — what each readiness color means and how to act.",
+      "open": "Open Guide"
+    },
+    "methodology": {
+      "title": "🧠 Methodology",
+      "description": "Open formulas: how Recovery Score is calculated, why load changes, and where weight coefficients come from.",
+      "subtitle": "Scientific base: APRE (meta-analysis 2021), Oura Readiness, Firstbeat methodology.",
+      "open": "Open Methodology"
+    },
+    "nutrition": {
+      "title": "🍽️ Nutrition",
+      "description": "Personal macros and supplement plan with rationale for current training block.",
+      "subtitle": "Advice changes based on day (training/rest), Recovery Score, and muscle soreness.",
+      "open": "Open Nutrition"
+    },
+    "settings": {
+      "title": "⚙️ Settings",
+      "open": "Open Settings",
+      "startDate": "Start Date",
+      "trainingDays": "Training Days",
+      "save": "Save",
+      "cancel": "Cancel"
+    },
+    "tour": {
+      "title": "🎯 Tour",
+      "description": "Interactive tour of app features",
+      "start": "Start Tour"
+    },
+    "exercises": {
+      "title": "🏋️ Exercises",
+      "description": "Configure starting weights and APRE protocols for all exercises.",
+      "configured": "{{count}} of {{total}} exercises configured",
+      "open": "Configure Exercises"
+    },
+    "data": {
+      "title": "💾 Data",
+      "export": "💾 Export",
+      "import": "📂 Import",
+      "reset": "🗑️ Reset",
+      "resetConfirm": "Confirm Deletion",
+      "resetWarning": "Delete all data? This action cannot be undone.",
+      "delete": "Delete"
+    },
+    "language": {
+      "title": "🌐 Language",
+      "ru": "Русский",
+      "en": "English"
+    },
+    "confirmDelete": "⚠️ Confirm Deletion",
+    "confirmDeleteDesc": "Delete all data? This action cannot be undone.",
+    "confirmReset": "⚠️ Confirm Reset",
+    "confirmResetDesc": "Reset all exercise settings? This action cannot be undone.",
+    "importError": "Import error: {{error}}",
+    "table": {
+      "parameter": "Parameter",
+      "value": "Value",
+      "note": "Note"
+    },
+    "edit": "Edit",
+    "reset": "Reset",
+    "resetAll": "Reset All",
+    "close": "Close",
+    "recommendations": "Recommendations for muscle gain"
+  },
+
+  "onboarding": {
+    "welcome": {
+      "icon": "🎯",
+      "title": "Welcome!",
+      "description": "Smart Fitness Coach — a personal trainer that adapts load to your condition.",
+      "features": [
+        "📊 Recovery Score — comprehensive recovery assessment",
+        "🤖 Automatic workout adjustments",
+        "📈 APRE — scientific weight progression",
+        "🔒 All data on device, no cloud"
+      ],
+      "cta": "Start Setup →"
+    },
+    "trainingDays": {
+      "icon": "📅",
+      "title": "Choose Training Days",
+      "description": "We recommend 3 days per week with rest between workouts. Order: A → B → C.",
+      "hint": "Selected: {{count}} day(s)",
+      "hintEmpty": "Select at least one day"
+    },
+    "checkin": {
+      "icon": "💤",
+      "title": "First Check-in",
+      "description": "This data is needed for Recovery Score calculation. Can be filled later.",
+      "weight": "Weight",
+      "restHR": "Resting HR",
+      "hrv": "HRV",
+      "sleepHours": "Sleep",
+      "units": {
+        "kg": "kg",
+        "lbs": "lbs",
+        "bpm": "bpm",
+        "ms": "ms",
+        "hours": "hrs"
+      }
+    },
+    "recovery": {
+      "icon": "💚",
+      "title": "Recovery Score",
+      "description": "Comprehensive recovery index (0–100%) based on:",
+      "cta": "Start Training 🚀"
+    }
+  },
+
+  "zones": {
+    "z1": {
+      "name": "Warmup",
+      "desc": "Nose breathing, talking without effort. No strain at all.",
+      "use": "Warmup ≥8 min, cooldown ≥7 min, walks"
+    },
+    "z2": {
+      "name": "Aerobic Base",
+      "desc": "Full sentences. Can sing — with difficulty. A bit warm.",
+      "use": "MAIN zone. 80% of all runs. VO2max grows here"
+    },
+    "z3": {
+      "name": "Tempo",
+      "desc": "Short phrases, not sentences. Noticeable breathing.",
+      "use": "M2–M3 only. Short inserts ≤10 min. If chest tight — drop down"
+    },
+    "z4": {
+      "name": "Threshold",
+      "desc": "⚠ Words only. Loud breathing. Cannot sustain long.",
+      "use": "Intervals ≤90 sec in M3 only. Bronchospasm risk with prolonged work"
+    },
+    "z5": {
+      "name": "Maximum",
+      "desc": "🚫 Cannot talk at all. Cannot sustain >30–60 sec.",
+      "use": "Excluded initially and for athletes with asthma. Introduced in M3+ only."
+    }
+  },
+
+  "toast": {
+    "checkinSaved": "Check-in saved",
+    "workoutSaved": "Workout saved",
+    "workoutCancelled": "Workout cancelled",
+    "settingsSaved": "Settings saved",
+    "dataImported": "Data imported",
+    "dataExported": "Data exported",
+    "dataReset": "All data deleted",
+    "onboardingComplete": "Setup complete!",
+    "error": "Error saving",
+    "importError": "Could not import file. Check JSON format."
+  },
+
+  "units": {
+    "kg": "kg",
+    "lbs": "lbs",
+    "bpm": "bpm",
+    "ms": "ms",
+    "hours": "hrs",
+    "minutes": "min",
+    "percent": "%",
+    "reps": "reps",
+    "training": {
+      "deload": "🔄 Deload",
+      "testDay": "Test Day",
+      "trainingDay": "Training Day",
+      "pullUps": "Pull-ups",
+      "pushUps": "Push-ups",
+      "plank": "Plank (sec)"
+    }
+  },
+
+  "tooltips": {
+    "recoveryScore": {
+      "title": "Recovery Score",
+      "description": "Comprehensive recovery index (0–100%). Combines HRV, sleep, resting HR, and subjective feelings. Green = ready for full load, yellow = caution, red = rest."
+    },
+    "readiness": {
+      "title": "Readiness",
+      "description": "Final training status based on Recovery Score and check-in data."
+    },
+    "hrv": {
+      "title": "HRV (Heart Rate Variability)",
+      "description": "Measures nervous system balance. Higher HRV usually indicates good recovery and readiness for training."
+    },
+    "apre": {
+      "title": "APRE (Autoregulatory Progressive Resistance Exercise)",
+      "description": "Scientific method for automatic weight adjustment. Weight changes based on reps performed in set 3 (AMRAP)."
+    },
+    "rpe": {
+      "title": "RPE (Rating of Perceived Exertion)",
+      "description": "Subjective difficulty rating on scale 0–10. Helps track progression and avoid overtraining."
+    },
+    "deload": {
+      "title": "Deload Week",
+      "description": "Every 4th week volume drops by 40%. Allows nervous system recovery and preparation for new cycle."
+    },
+    "sleep": {
+      "title": "Sleep",
+      "description": "Sleep quantity and quality are key recovery factors. 7–9 hours recommended for active people."
+    },
+    "restingHR": {
+      "title": "Resting HR",
+      "description": "Heart rate immediately after waking. Elevated resting HR may signal poor recovery."
+    },
+    "exercise": {
+      "title": "APRE Exercise",
+      "description": "APRE exercises have 4 sets: 2 warmup sets, AMRAP (max reps), and adjustment set."
+    },
+    "sparkline": {
+      "title": "7-Day Trend",
+      "description": "Mini-chart showing metric dynamics over the past week. Tap for detailed view."
+    },
+    "streak": {
+      "title": "Day Streak",
+      "description": "Consecutive days with check-ins. Maintain consistency for better progress!"
+    }
+  },
+
+  "tour": {
+    "next": "Next →",
+    "back": "← Back",
+    "skip": "Skip",
+    "finish": "Finish",
+    "step1": {
+      "title": "Recovery Score — Your Readiness Indicator",
+      "content": "This ring shows how well you've recovered. Green = full training, yellow = reduce intensity, red = rest day. Tap the ring to see detailed metrics."
+    },
+    "step2": {
+      "title": "7-Day Trends",
+      "content": "These mini-charts show your key metrics: HRV (heart rate variability), sleep, and load (RPE). Trends help visualize overall recovery picture."
+    },
+    "step3": {
+      "title": "Today's Training Plan",
+      "content": "Shows workout type (A, B, or C) and exercise list. On rest days, you'll see recovery recommendations."
+    },
+    "step4": {
+      "title": "APRE — Smart Weight Progression",
+      "content": "APRE exercises automatically adjust weight for next week. Do max reps in set 3 (AMRAP), and the system calculates new weight."
+    },
+    "step5": {
+      "title": "Rate Your Workout (RPE)",
+      "content": "After training, rate difficulty on scale 0–10. Helps track progression and avoid overtraining. 7–8 is good working intensity."
+    },
+    "step6": {
+      "title": "Quick Actions",
+      "content": "Mark morning activation and evening recovery routines. These help maintain fitness and reduce injury risk."
+    },
+    "step7": {
+      "title": "What's Next Tomorrow",
+      "content": "Preview of next day's plan helps mentally prepare. If tomorrow is rest — plan other activities."
+    },
+    "step8": {
+      "title": "Navigation & Profile",
+      "content": "Use bottom menu to switch sections: Log (history), Analytics (trends), Profile (settings). Happy training!"
+    }
+  }
+}

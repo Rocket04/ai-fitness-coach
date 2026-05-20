@@ -1,2 +1,0 @@
-import{t as e}from"./rolldown-runtime-jpDsebLB.js";import{d as t}from"./radix-vBtt9_U9.js";var n=e((e=>{var n=t();e.createRoot=n.createRoot,e.hydrateRoot=n.hydrateRoot}));export{n as t};
-//# sourceMappingURL=react-vendor-DABp5p_s.js.map

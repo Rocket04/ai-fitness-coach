@@ -4,7 +4,7 @@
 import React, { useState } from 'react';
 import { useAppStore } from '../../stores/useAppStore.js';
 import { ZONES, HRV_GUIDE } from '../../config/constants.js';
-import * as CollapsiblePrimitive from '@radix-ui/react-collapsible';
+import { Collapsible as CollapsiblePrimitive } from '@base-ui/react/collapsible';
 
 /* ---------- helpers ---------- */
 
@@ -241,7 +241,7 @@ export default function InfoPage() {
         React.createElement('span', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text3)' } }, showReadiness ? '▲' : '▼')
       ),
       React.createElement(
-        CollapsiblePrimitive.Content,
+        CollapsiblePrimitive.Panel,
         { className: 'collapsible-content' },
         React.createElement(
           'div',
@@ -280,7 +280,7 @@ export default function InfoPage() {
         React.createElement('span', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text3)' } }, showHrv ? '▲' : '▼')
       ),
       React.createElement(
-        CollapsiblePrimitive.Content,
+        CollapsiblePrimitive.Panel,
         { className: 'collapsible-content' },
         HRV_GUIDE.map((item, i) => React.createElement(HrvCard, {
           key: i,
@@ -301,7 +301,7 @@ export default function InfoPage() {
         React.createElement('span', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text3)' } }, showZones ? '▲' : '▼')
       ),
       React.createElement(
-        CollapsiblePrimitive.Content,
+        CollapsiblePrimitive.Panel,
         { className: 'collapsible-content' },
         ZONES.map((zone, i) => React.createElement(ZoneCard, {
           key: i,

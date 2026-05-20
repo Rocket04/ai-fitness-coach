@@ -2,16 +2,18 @@
 // Переиспользуемый SVG-график трендов
 
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 /**
  * @param {{ data: Array, yKey: string, color: string, label?: string, unit?: string, height?: number }} props
  */
 export default function TrendChart({ data, yKey, color, label, unit = '', height = 160 }) {
+  const { t } = useTranslation();
   if (!data || data.length < 2) {
     return React.createElement(
       'div',
       { className: 'text-center p-lg text-muted font-body' },
-      'Недостаточно данных для графика'
+      t('log.insufficientDataChart')
     );
   }
 
@@ -23,7 +25,7 @@ export default function TrendChart({ data, yKey, color, label, unit = '', height
     return React.createElement(
       'div',
       { className: 'text-center p-lg text-muted font-body' },
-      'Недостаточно данных для графика'
+      t('log.insufficientDataChart')
     );
   }
 

@@ -195,7 +195,7 @@ export async function getCheckinsForLastDays(days: number): Promise<Checkin[]> {
  */
 export async function saveSetting(key: string, value: unknown): Promise<void> {
   try {
-    const serialized = typeof value === 'object' ? JSON.stringify(value) : String(value);
+    const serialized = JSON.stringify(value);
     await db.settings.put({ key, value: serialized });
   } catch (err) {
     throw new Error(`Ошибка при сохранении настройки ${key}: ${(err as Error).message}`);

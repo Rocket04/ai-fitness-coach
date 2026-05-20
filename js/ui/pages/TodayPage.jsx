@@ -1,59 +1,40 @@
 // js/ui/pages/TodayPage.js
-// Главная страница «Сегодня» — дашборд в стиле Whoop/Athlytic
+// Главная страница «Сегодня» — премиум-дашборд в стиле Whoop/Athlytic
+// 6 слоёв прогрессивного раскрытия
 
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next'; 
 import { useAppStore } from '../../stores/useAppStore.js';
-import { ReadinessIndicator, RecoveryBar } from './RecoveryScoreCard.jsx';
-import SessionPlan from './SessionPlan.jsx';
-import CoachAdvice from './CoachAdvice.jsx';
-import TomorrowPreview from '../components/TomorrowPreview.jsx';
+import { useFitnessData, isExerciseConfigured } from '../../hooks/useFitnessData.js';
 import Collapsible from '../components/Collapsible.jsx';
+import ExerciseCard from '../components/ExerciseCard.jsx';
+import ExerciseConfigModal from '../components/ExerciseConfigModal.jsx';
+import HelpIcon from '../components/HelpIcon.jsx';
 
-/* ---------- RPE scale descriptions ---------- */
-const RPE_DESCRIPTIONS = {
-  0: 'Нет нагрузки — пропуск/отдых',
-  1: 'Очень легко — восстановление, лёгкая разминка',
-  2: 'Легко — разминочная серия, техника',
-  3: 'Легко — подготовительный блок',
-  4: 'Умеренно — базовый объём, контролируемый темп',
-  5: 'Умеренно — рабочие подходы, дыхание ровное',
-  6: 'Тяжело — рабочий вес, к концу тяжело',
-  7: 'Тяжело — интенсив, короткие фразы между подходами',
-  8: 'Очень тяжело — предельные подходы, нельзя говорить',
-  9: 'Предел — выход за зону комфорта, фейл близок',
-  10: 'Максимум — мышечный отказ, больше невозможно',
-};
+// i18n usage example (after installing dependencies):
+// const { t } = useTranslation();
+// t('today.title') → "Сегодня" or "Today" based on language
 
-function rpeZone(value) {
-  if (value <= 3) return { color: 'var(--green)', label: 'Лёгкая' };
-  if (value <= 6) return { color: 'var(--yellow)', label: 'Умеренная' };
-  return { color: 'var(--red)', label: 'Высокая' };
+/* ---------- RPE scale descriptions (i18n) ---------- */
+function getRpeDescription(key, t) {
+  return t(`today.rpeDescriptions.${key}`);
 }
 
-/* ---------- Sparkline component ---------- */
-function Sparkline({ data, color }) {
-  if (!data || data.length < 2) {
-    return React.createElement('div', { className: 'sparkline sparkline--empty' }, '\u2014');
-  }
-  const min = Math.min(...data);
-  const max = Math.max(...data);
-  const range = max - min || 1;
-  const w = 120, h = 32, pad = 2;
-  const points = data.map((v, i) => {
-    const x = pad + (i / (data.length - 1)) * (w - pad * 2);
-    const y = pad + (h - pad * 2) - ((v - min) / range) * (h - pad * 2);
-    return `${x},${y}`;
-  }).join(' ');
-  const area = `${pad},${h - pad} ${points} ${w - pad},${h - pad}`;
-  return React.createElement('svg', { viewBox: `0 0 ${w} ${h}`, className: 'sparkline' },
-    React.createElement('polygon', { points: area, fill: color, opacity: 0.15 }),
-    React.createElement('polyline', { points, fill: 'none', stroke: color, strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' })
-  );
+function rpeZone(value, t) {
+  if (value <= 3) return { color: 'var(--green)', label: t('today.rpeZones.light') };
+  if (value <= 6) return { color: 'var(--yellow)', label: t('today.rpeZones.moderate') };
+  return { color: 'var(--red)', label: t('today.rpeZones.high') };
 }
 
-/* ---------- Readiness Ring ---------- */
-function ReadinessRing({ score, onClick }) {
-  const radius = 70;
+function getStatusLabel(readiness, recoveryScore, t) {
+  if (readiness === 'green') return { text: t('today.status.ready'), color: 'var(--green)' };
+  if (readiness === 'yellow') return { text: t('today.status.average'), color: 'var(--yellow)' };
+  return { text: t('today.status.rest'), color: 'var(--red)' };
+}
+
+/* ---------- Premium Hero Ring (200px) ---------- */
+function HeroRing({ score, onClick, t }) {
+  const radius = 90;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (score / 100) * circumference;
   const color = score >= 70 ? 'var(--green)' : score >= 40 ? 'var(--yellow)' : 'var(--red)';
@@ -63,28 +44,157 @@ function ReadinessRing({ score, onClick }) {
       onClick?.();
     }
   };
+  
+  // Empty state for first launch (score = 0)
+  if (!score) {
+    return React.createElement('div', {
+      className: 'hero-ring--large hero-ring--empty',
+      role: 'button',
+      tabIndex: 0,
+      'aria-label': t('today.doCheckin'),
+      onClick,
+      onKeyDown: handleKeyDown,
+    },
+      React.createElement('svg', { viewBox: '0 0 200 200', className: 'readiness-ring__svg' },
+        React.createElement('circle', { cx: 100, cy: 100, r: radius, className: 'readiness-ring__bg', style: { stroke: 'var(--surface3)' } }),
+        React.createElement('text', { x: 100, y: 85, className: 'readiness-ring__score', textAnchor: 'middle', style: { fontSize: '24px' } }, '—'),
+        React.createElement('text', { x: 100, y: 110, className: 'readiness-ring__label', textAnchor: 'middle' }, t('today.recoveryLabel')),
+        React.createElement('text', { x: 100, y: 135, className: 'readiness-ring__hint', textAnchor: 'middle', style: { fontSize: '12px', fill: 'var(--text3)' } }, t('today.doCheckin'))
+      )
+    );
+  }
+  
   return React.createElement('div', {
-    className: 'readiness-ring',
+    className: 'hero-ring--large',
     onClick,
     onKeyDown: handleKeyDown,
     role: 'button',
     tabIndex: 0,
-    'aria-label': `Recovery Score: ${score}%. Нажмите для подробностей.`
+    'aria-label': `Recovery Score: ${score}%. Нажмите для метрик.`
   },
-    React.createElement('svg', { viewBox: '0 0 160 160', className: 'readiness-ring__svg' },
-      React.createElement('circle', { cx: 80, cy: 80, r: radius, className: 'readiness-ring__bg' }),
+    React.createElement('svg', { viewBox: '0 0 200 200', className: 'readiness-ring__svg' },
+      React.createElement('defs',
+        null,
+        React.createElement('linearGradient', { id: 'ringGradient', x1: '0%', y1: '0%', x2: '100%', y2: '100%' },
+          React.createElement('stop', { offset: '0%', stopColor: score >= 70 ? '#4ade80' : score >= 40 ? '#facc15' : '#f87171', stopOpacity: 0.8 }),
+          React.createElement('stop', { offset: '100%', stopColor: score >= 70 ? '#22c55e' : score >= 40 ? '#eab308' : '#ef4444', stopOpacity: 1 })
+        )
+      ),
+      React.createElement('circle', { cx: 100, cy: 100, r: radius, className: 'readiness-ring__bg' }),
       React.createElement('circle', {
-        cx: 80, cy: 80, r: radius, className: 'readiness-ring__progress',
-        style: { stroke: color, strokeDasharray: circumference, strokeDashoffset: offset }
+        cx: 100, cy: 100, r: radius, className: 'readiness-ring__progress',
+        style: { stroke: 'url(#ringGradient)', strokeDasharray: circumference, strokeDashoffset: offset }
       }),
-      React.createElement('text', { x: 80, y: 72, className: 'readiness-ring__score', textAnchor: 'middle' }, score),
-      React.createElement('text', { x: 80, y: 92, className: 'readiness-ring__label', textAnchor: 'middle' }, 'Recovery')
+      React.createElement('text', { x: 100, y: 88, className: 'readiness-ring__score', textAnchor: 'middle' }, score),
+      React.createElement('text', { x: 100, y: 112, className: 'readiness-ring__label', textAnchor: 'middle' }, t('today.recoveryLabel'))
+    )
+  );
+}
+
+/* ---------- Sparkline Card Component ---------- */
+function SparklineCard({ label, value, data, color, unit = '', t }) {
+  const lastValue = data && data.length > 0 ? data[data.length - 1] : null;
+  const displayValue = value !== undefined ? value : (lastValue !== null ? `${lastValue}${unit}` : '—');
+
+  // Build sparkline SVG path
+  let sparklineSvg = null;
+  if (data && data.length >= 2) {
+    const min = Math.min(...data);
+    const max = Math.max(...data);
+    const range = max - min || 1;
+    const w = 100, h = 28, pad = 2;
+    const points = data.map((v, i) => {
+      const x = pad + (i / (data.length - 1)) * (w - pad * 2);
+      const y = pad + (h - pad * 2) - ((v - min) / range) * (h - pad * 2);
+      return `${x},${y}`;
+    }).join(' ');
+    const area = `${pad},${h - pad} ${points} ${w - pad},${h - pad}`;
+
+    sparklineSvg = React.createElement('svg', { viewBox: `0 0 ${w} ${h}`, className: 'sparkline sparkline--animated' },
+      React.createElement('polygon', { points: area, fill: color, opacity: 0.12 }),
+      React.createElement('polyline', { points, fill: 'none', stroke: color, strokeWidth: 2.5, strokeLinecap: 'round', strokeLinejoin: 'round' })
+    );
+  } else {
+    sparklineSvg = React.createElement('div', { className: 'sparkline sparkline--empty' }, t ? t('today.noData') : 'Нет данных');
+  }
+
+  return React.createElement('div', { className: 'sparkline-card' },
+    React.createElement('div', { className: 'sparkline-card__header' },
+      React.createElement('span', { className: 'sparkline-card__label' }, label),
+      React.createElement('span', { className: 'sparkline-card__value', style: { color } }, displayValue)
+    ),
+    sparklineSvg
+  );
+}
+
+/* ---------- Exercise List Component ---------- */
+function ExerciseList({ exercises }) {
+  if (!exercises || exercises.length === 0) return null;
+
+  return React.createElement('div', { className: 'exercise-list' },
+    exercises.map((ex, idx) =>
+      React.createElement('div', { key: idx, className: 'exercise-row' },
+        React.createElement('span', { className: 'exercise-name' }, ex.n || ex.name || '—'),
+        React.createElement('span', { className: 'exercise-sets' }, `${ex.s || ex.sets || '—'}×${ex.r || ex.reps || '—'}`)
+      )
+    )
+  );
+}
+
+/* ---------- Coach Tips Panel ---------- */
+function CoachTipsPanel({ tips, t }) {
+  const [open, setOpen] = useState(false);
+  if (!tips || tips.length === 0) return null;
+
+  return React.createElement('div', { className: 'card', style: { padding: 0, overflow: 'hidden' } },
+    React.createElement('button', {
+      className: 'collapsible__header',
+      onClick: () => setOpen(!open),
+      style: { borderBottom: open ? '1px solid var(--border)' : 'none' }
+    },
+      React.createElement('span', null, '\uD83D\uDCA1 ' + (t ? t('today.coachTips') : 'Советы тренера')),
+      React.createElement('span', { className: 'coach-badge' }, tips.length),
+      React.createElement('span', { style: { marginLeft: 'auto', fontSize: '0.8rem', color: 'var(--text2)' } }, open ? '▲' : '▼')
+    ),
+    open && React.createElement('div', { className: 'collapsible__body', 'data-open': '', style: { padding: 'var(--spacing-md)' } },
+      React.createElement('ul', { style: { margin: 0, paddingLeft: '1.2rem', display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)' } },
+        tips.map((tip, idx) => React.createElement('li', { key: idx, style: { fontSize: '0.9rem', color: 'var(--text)', lineHeight: 1.5 } }, tip))
+      )
+    )
+  );
+}
+
+/* ---------- Quick Action Toggle ---------- */
+function QuickActionToggle({ icon, label, statusLabel, active, onClick, t }) {
+  return React.createElement('button', {
+    className: `quick-action-toggle${active ? ' active' : ''}`,
+    onClick,
+    'aria-label': `${label} — ${active ? (t ? t('today.done') : 'выполнено') : (t ? t('today.notDone') : 'не выполнено')}`
+  },
+    React.createElement('span', { className: 'quick-action-toggle__icon' }, active ? '✅' : icon),
+    React.createElement('div', { className: 'quick-action-toggle__text' },
+      React.createElement('span', { className: 'quick-action-toggle__label' }, label),
+      React.createElement('span', { className: 'quick-action-toggle__status' }, active ? (t ? t('today.done') : 'Выполнено') : statusLabel)
+    )
+  );
+}
+
+/* ---------- Tomorrow Mini Preview ---------- */
+function TomorrowMini({ tomorrowType, tomorrowPlan, t }) {
+  const isRest = !tomorrowType;
+  const typeLabel = tomorrowType || (t ? t('today.rest') : 'Отдых');
+  const color = tomorrowType === 'A' ? 'var(--green)' : tomorrowType === 'B' ? 'var(--yellow)' : tomorrowType === 'C' ? 'var(--blue)' : 'var(--text2)';
+
+  return React.createElement('div', { className: 'tomorrow-card' },
+    React.createElement('span', { className: 'tomorrow-card__label' }, t ? t('today.tomorrow') : 'Завтра'),
+    React.createElement('span', { className: 'tomorrow-card__type', style: { color: isRest ? 'var(--text2)' : color } },
+      isRest ? '\uD83D\uDE34 ' + (t ? t('today.restTomorrow') : 'Отдых') : (t ? t('today.type', { type: typeLabel }) : `Тип ${typeLabel}`)
     )
   );
 }
 
 /* ---------- Вычисляет 3 баланса из чек-ина и тренд-данных ---------- */
-function buildBalances(checkin, trendData7) {
+function buildBalances(checkin, trendData7, t) {
   if (!checkin) return [];
   const color = (score) => score >= 70 ? 'var(--green)' : score >= 40 ? 'var(--yellow)' : 'var(--red)';
 
@@ -98,10 +208,10 @@ function buildBalances(checkin, trendData7) {
     const hrvScore = mean > 0 ? Math.min(100, Math.round((hrv / mean) * 70)) : (hrv >= 70 ? 90 : hrv >= 55 ? 60 : 30);
     balances.push({
       key: 'hrv',
-      label: 'ВНС (HRV)',
-      value: `${hrv} мс`,
+      label: t('recovery.components.hrv'),
+      value: `${hrv} ms`,
       color: color(hrvScore),
-      hint: `HRV ${hrv} мс — баланс вегетативной нервной системы`,
+      hint: `HRV ${hrv} ms — ANS balance`,
     });
   }
 
@@ -111,10 +221,10 @@ function buildBalances(checkin, trendData7) {
     const sleepScore = Math.min(100, Math.round((sleep / 8) * 100));
     balances.push({
       key: 'sleep',
-      label: 'Сон',
-      value: `${sleep} ч`,
+      label: t('recovery.components.sleep'),
+      value: `${sleep} h`,
       color: color(sleepScore),
-      hint: `Сон ${sleep} ч — норма 8 ч`,
+      hint: `Sleep ${sleep} h — target 8 h`,
     });
   }
 
@@ -128,245 +238,315 @@ function buildBalances(checkin, trendData7) {
     const subjScore = Math.min(100, Math.round((raw / 5) * 100));
     balances.push({
       key: 'subjective',
-      label: 'Субъективно',
+      label: t('recovery.components.subjective'),
       value: `${Math.round(raw * 10) / 10}/5`,
       color: color(subjScore),
-      hint: 'Энергия, настроение, болезненность мышц',
+      hint: t('today.hint'),
     });
   }
 
   return balances;
 }
 
-/* ---------- Quick Action Button ---------- */
-function QuickAction({ label, icon, done, onClick }) {
-  return React.createElement('button', {
-    className: `quick-action${done ? ' done' : ''}`,
-    onClick,
-    'aria-label': done ? `${label} — выполнено` : label,
-    'aria-pressed': done
-  },
-    React.createElement('span', { className: 'quick-action__icon' }, done ? '\u2705' : icon),
-    React.createElement('span', { className: 'quick-action__label' }, label)
-  );
-}
-
-/* ---------- main component ---------- */
+/* ---------- Main Component: 6-Layer Premium Dashboard ---------- */
 export default function TodayPage() {
+  const { t } = useTranslation();
   const {
-    sessionPlan, trainType, readiness, autoReadiness, manualOverride,
-    recoveryScore, rpe, sessionNote,
-    testPullUps, testPushUps, testPlank,
-    trainingDone, weekLabel, tomorrowPlan, tomorrowType,
-    morningDone, eveningDone, apreReasons,
-    durationMinutes, lastCheckin, streak,
-    trendData7, rpeTrend7,
+    sessionPlan, trainType, readiness, recoveryScore, rpe, sessionNote,
+    testPullUps, testPushUps, testPlank, trainingDone, weekLabel, weekNumber, totalMultiplier,
+    tomorrowPlan, tomorrowType, morningDone, eveningDone, apreReasons,
+    durationMinutes, lastCheckin, streak, trendData7, rpeTrend7,
     setRpe, setSessionNote, setDurationMinutes, setTestPullUps, setTestPushUps, setTestPlank,
-    handleManualOverrideChange, handleToggleTraining,
-    handleMarkMorning, handleMarkEvening,
+    handleToggleTraining, handleMarkMorning, handleMarkEvening,
+    coachAdvice, updateApreResult,
   } = useAppStore();
 
-  const [sparkOpen, setSparkOpen] = useState(false);
-  const [detailsOpen, setDetailsOpen] = useState(false);
+  // Exercise configuration state
+  const { exercises: configs, updateExerciseById } = useFitnessData();
+  const [configModalOpen, setConfigModalOpen] = useState(false);
+  const [selectedExercise, setSelectedExercise] = useState(null);
 
+  // Layer visibility states
+  const [showSparklines, setShowSparklines] = useState(false);
+  const [showTrainingDetails, setShowTrainingDetails] = useState(false);
+
+  // Map exercise names to config IDs for lookup
+  const nameToIdMap = {
+    'отжимания': 'push_ups',
+    'подтягивания': 'pull_ups',
+    'брусья': 'dips',
+    'приседания': 'squat',
+    'становая': 'deadlift',
+    'жим лёжа': 'bench_press',
+    'жим стоя': 'overhead_press',
+    'тяга': 'barbell_row',
+  };
+
+  // Helper to find config for an exercise by name or id
+  const findExerciseConfig = (ex) => {
+    // First try to match by id if exercise has one
+    if (ex.id) {
+      const byId = configs.find(c => c.id === ex.id);
+      if (byId) return byId;
+    }
+    // Then try name mapping
+    const mappedId = nameToIdMap[ex.n?.toLowerCase()];
+    if (mappedId) {
+      const byMappedId = configs.find(c => c.id === mappedId);
+      if (byMappedId) return byMappedId;
+    }
+    // Finally try fuzzy name match
+    return configs.find(c =>
+      c.name.toLowerCase() === ex.n?.toLowerCase() ||
+      ex.n?.toLowerCase().includes(c.name.toLowerCase()) ||
+      c.name.toLowerCase().includes(ex.n?.toLowerCase())
+    );
+  };
+
+  const handleConfigureExercise = (ex) => {
+    const config = findExerciseConfig(ex);
+    if (config) {
+      setSelectedExercise(config);
+      setConfigModalOpen(true);
+    }
+  };
+
+  const handleSaveExerciseConfig = ({ id, protocol, currentRM, currentLevel }) => {
+    updateExerciseById(id, { protocol, currentRM, currentLevel });
+  };
+
+  // Derived values
   const isRestDay = !trainType || !sessionPlan;
   const rpeKey = Math.round(rpe);
-  const rpeDesc = RPE_DESCRIPTIONS[rpeKey] || '';
-  const zone = rpeZone(rpe);
-  const readinessColor = readiness === 'green' ? 'var(--green)' : readiness === 'yellow' ? 'var(--yellow)' : 'var(--red)';
-  const readinessLabel = readiness === 'green' ? 'Зелёный' : readiness === 'yellow' ? 'Жёлтый' : 'Красный';
+  const rpeDesc = getRpeDescription(rpeKey, t) || '';
+  const zone = rpeZone(rpe, t);
+  const status = getStatusLabel(readiness, recoveryScore, t);
 
   // Sparkline data
-  const hrvSpark = (trendData7 || []).map(d => d.hrv).filter(Boolean);
-  const sleepSpark = (trendData7 || []).map(d => d.sleepHours).filter(Boolean);
-  const rpeSpark = (rpeTrend7 || []).map(d => d.rpe).filter(Boolean);
-
-  // 3 балланса для визуализации
-  const balances = buildBalances(lastCheckin, trendData7);
+  const hrvData = (trendData7 || []).map(d => d.hrv).filter(Boolean);
+  const sleepData = (trendData7 || []).map(d => d.sleepHours).filter(Boolean);
+  const loadData = (rpeTrend7 || []).map(d => d.rpe || 0).filter(Boolean);
 
   const todayStr = new Date().toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
 
   return React.createElement('div', { className: 'today-page' },
 
-    // ── Date header ──
-    React.createElement('div', { className: 'today-header' },
-      React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' } },
-        React.createElement('h2', { className: 'today-header__title' }, '\uD83C\uDFC3\uFE0F Сегодня'),
-        streak >= 2 && React.createElement('span', { className: 'streak-badge' }, `🔥 ${streak}`)
-      ),
-      React.createElement('p', { className: 'today-header__date' }, todayStr)
-    ),
-
-    // ════════════════════════════════════════════════════════════
-    // LEVEL 1: Hero — всегда видно
-    // ════════════════════════════════════════════════════════════
-    React.createElement('div', { className: 'card card--hero text-center' },
-      React.createElement(ReadinessRing, {
+    // ═══════════════════════════════════════════════════════════════════
+    // LAYER 1: Hero Ring (always visible)
+    // ═══════════════════════════════════════════════════════════════════
+    React.createElement('div', {
+      className: 'card card--hero text-center card-appear',
+      'aria-live': 'polite',
+      'aria-atomic': 'true',
+      'aria-label': `Recovery Score: ${recoveryScore || 0}%`
+    },
+      React.createElement(HeroRing, {
         score: recoveryScore || 0,
-        onClick: () => setSparkOpen(o => !o),
+        onClick: () => setShowSparklines(o => !o),
+        t,
       }),
       React.createElement('div', {
-        className: 'readiness-label',
-        style: {
-          backgroundColor: readinessColor,
-          color: '#000',
-        },
-      }, readinessLabel),
-      React.createElement('p', { className: 'readiness-hint mt-sm' }, 'Тренды HRV, сна и RPE за 7 дней ↓'),
-      balances.length > 0 && React.createElement(
-        'div',
-        { className: 'balance-row' },
-        balances.map(b => React.createElement(
-          'button',
-          { key: b.key, className: 'balance-item', onClick: () => setSparkOpen(o => !o), title: b.hint, 'aria-label': `${b.label}: ${b.value}. ${b.hint}` },
-          React.createElement('span', { className: 'balance-item__dot', style: { background: b.color } }),
-          React.createElement('span', { className: 'balance-item__label' }, b.label),
-          React.createElement('span', { className: 'balance-item__value' }, b.value)
-        ))
+        className: 'status-pill',
+        style: { backgroundColor: status.color },
+      }, status.text),
+      React.createElement('p', { className: 'readiness-hint mt-sm' },
+        t('today.tapForMetrics'),
+        React.createElement(HelpIcon, {
+          term: 'Recovery Score',
+          definition: t('recovery.description')
+        })
       )
     ),
 
-    // ════════════════════════════════════════════════════════════
-    // LEVEL 2: Sparklines — раскрывается по тапу на кольцо
-    // ════════════════════════════════════════════════════════════
-    React.createElement(Collapsible, {
-      open: sparkOpen,
-      onToggle: () => setSparkOpen(o => !o),
-      title: 'Метрики недели',
-      summary: `HRV ${hrvSpark[hrvSpark.length - 1] || '\u2014'} мс`,
-    },
-      React.createElement('div', { className: 'sparkline-grid' },
-        React.createElement('div', { className: 'sparkline-item' },
-          React.createElement('span', { className: 'sparkline-item__label' }, 'HRV'),
-          React.createElement(Sparkline, { data: hrvSpark, color: 'var(--blue)' })
-        ),
-        React.createElement('div', { className: 'sparkline-item' },
-          React.createElement('span', { className: 'sparkline-item__label' }, 'Сон'),
-          React.createElement(Sparkline, { data: sleepSpark, color: 'var(--green)' })
-        ),
-        React.createElement('div', { className: 'sparkline-item' },
-          React.createElement('span', { className: 'sparkline-item__label' }, 'RPE'),
-          React.createElement(Sparkline, { data: rpeSpark, color: 'var(--yellow)' })
-        )
-      )
-    ),
-
-    // ════════════════════════════════════════════════════════════
-    // LEVEL 3: Подробнее — план, RPE, советы
-    // ════════════════════════════════════════════════════════════
-    React.createElement('div', { className: 'mb-md' },
-      React.createElement('button', {
-        className: 'btn btn-outline w-full font-weight-600',
-        onClick: () => setDetailsOpen(o => !o),
-      }, detailsOpen ? '\u25B2 Скрыть подробности' : '\u25BC Подробнее'),
-      React.createElement(Collapsible, {
-        open: detailsOpen,
-        onToggle: () => {}, // managed by parent button
-        title: '',
-        summary: '',
-      },
-        // Training Plan
-        !isRestDay && sessionPlan && React.createElement(SessionPlan, {
-          sessionPlan, trainType, weekLabel, apreReasons,
+    // ═══════════════════════════════════════════════════════════════════
+    // LAYER 2: Weekly Sparklines (tap to expand)
+    // ═══════════════════════════════════════════════════════════════════
+    showSparklines && React.createElement('div', { className: 'card-appear' },
+      React.createElement('div', { style: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem' } },
+        React.createElement(SparklineCard, {
+          label: t('recovery.components.hrv'),
+          data: hrvData,
+          color: 'var(--blue)',
+          unit: ' ms',
+          t
         }),
+        React.createElement(SparklineCard, {
+          label: t('checkin.sleep'),
+          data: sleepData,
+          color: 'var(--green)',
+          unit: ' h',
+          t
+        }),
+        React.createElement(SparklineCard, {
+          label: t('checkin.rpe'),
+          data: loadData,
+          color: 'var(--orange)',
+          unit: '',
+          t
+        })
+      )
+    ),
 
-        // Test Results
-        sessionPlan && sessionPlan.isTestDay &&
-          React.createElement('div', { className: 'card bg-yellow-light' },
-            React.createElement('h4', { className: 'mb-sm text-yellow flex items-center gap-xs' },
-              React.createElement('span', null, '\uD83D\uDD2C'), 'Результаты тестов'
-            ),
-            React.createElement('div', { className: 'grid-3' },
-              React.createElement('label', { className: 'flex flex-column gap-xs font-body font-weight-500' },
-                'Подтягивания',
-                React.createElement('input', { type: 'number', value: testPullUps, onChange: e => setTestPullUps(Number(e.target.value)), min: 0 })
+    // ═══════════════════════════════════════════════════════════════════
+    // LAYER 3: Training Plan / Rest Day
+    // ═══════════════════════════════════════════════════════════════════
+    isRestDay
+      ? React.createElement('div', { className: 'card rest-day-card card-appear', style: { animationDelay: '0.1s' } },
+          React.createElement('span', { className: 'rest-day-icon' }, '🧘'),
+          React.createElement('span', { className: 'rest-day-title' }, t('today.restDay')),
+          React.createElement('span', { className: 'rest-day-desc' }, t('today.restDescription'))
+        )
+      : React.createElement('div', { className: 'card card-appear', style: { animationDelay: '0.1s', padding: 0, overflow: 'hidden' } },
+          // Training Header
+          React.createElement('div', { className: 'training-header' },
+            React.createElement('span', { className: 'training-type' }, trainType),
+            React.createElement('div', { className: 'training-meta' },
+              React.createElement('div', { className: 'training-week' },
+                weekLabel,
+                weekNumber % 4 === 0 && React.createElement('span', {
+                  className: 'deload-badge',
+                  style: { marginLeft: '8px', fontSize: '0.75rem', color: 'var(--blue)' }
+                }, t('training.deload'))
               ),
-              React.createElement('label', { className: 'flex flex-column gap-xs font-body font-weight-500' },
-                'Отжимания',
-                React.createElement('input', { type: 'number', value: testPushUps, onChange: e => setTestPushUps(Number(e.target.value)), min: 0 })
-              ),
-              React.createElement('label', { className: 'flex flex-column gap-xs font-body font-weight-500' },
-                'Планка (сек)',
-                React.createElement('input', { type: 'number', value: testPlank, onChange: e => setTestPlank(Number(e.target.value)), min: 0 })
+              React.createElement('div', { className: 'training-title' },
+                sessionPlan?.mode === 'test' ? t('training.testDay') : t('training.trainingDay')
               )
             )
           ),
+          // Exercise List
+          sessionPlan?.exercises && React.createElement(Collapsible, {
+            open: showTrainingDetails,
+            onToggle: () => setShowTrainingDetails(o => !o),
+            title: t('today.exercises'),
+            summary: t('today.exerciseCount', { count: sessionPlan.exercises.length }),
+          },
+            React.createElement('div', { className: 'exercise-list' },
+              sessionPlan.exercises.map((ex, idx) => {
+                // Find user config for this exercise
+                const userConfig = findExerciseConfig(ex);
 
-        // RPE + Save
-        !isRestDay && React.createElement('div', { className: 'card' },
-          React.createElement('div', { className: 'flex justify-between items-center mb-sm' },
-            React.createElement('span', { className: 'font-body font-weight-600' }, 'Как прошла тренировка?'),
-            React.createElement('strong', { className: 'font-mono', style: { fontSize: '1.3rem', color: zone.color } }, rpe || '?')
-          ),
-          React.createElement('div', { className: 'font-body text-secondary mb-sm', style: { minHeight: '1.2em' } }, rpeDesc),
-          React.createElement('div', { className: 'rpe-zone-line' },
-            Array.from({ length: 10 }, (_, i) =>
-              React.createElement('div', { key: i, className: 'rpe-zone-segment opacity-transition', style: { opacity: i < rpeKey ? 1 : 0.3 } })
-            )
-          ),
-          React.createElement('div', { className: 'rpe-anchors' },
-            React.createElement('span', null, '0 — отдых'),
-            React.createElement('span', null, '5 — тяжело'),
-            React.createElement('span', null, '10 — предел')
-          ),
-          React.createElement('div', { className: 'my-sm' },
-            React.createElement('input', { type: 'range', min: 0, max: 10, step: 0.5, value: rpe, onChange: e => setRpe(Number(e.target.value)), className: 'w-full' })
-          ),
-          React.createElement('div', { className: 'flex justify-between font-caption text-muted mb-sm' },
-            React.createElement('span', { className: 'text-green font-weight-500' }, 'лёгкая'),
-            React.createElement('span', { className: 'text-yellow font-weight-500' }, 'умеренная'),
-            React.createElement('span', { className: 'text-red font-weight-500' }, 'высокая')
-          ),
-          React.createElement('div', { className: 'mb-sm' },
-            React.createElement('label', { className: 'font-body font-weight-500', style: { marginBottom: 'var(--spacing-xs)', display: 'block' } }, 'Длительность (мин)'),
-            React.createElement('input', {
-              type: 'number',
-              min: 0,
-              max: 300,
-              value: durationMinutes,
-              onChange: e => setDurationMinutes(Number(e.target.value)),
-              className: 'w-full font-body', style: { padding: '0.375rem 0.5rem' },
+                // Create mapped exercise with user config applied
+                const mappedEx = { ...ex };
+
+                if (userConfig) {
+                  // Force overwrite with user config values
+                  mappedEx.protocol = userConfig.protocol;
+                  mappedEx.currentRM = userConfig.currentRM;
+                  mappedEx.currentLevel = userConfig.currentLevel;
+                  mappedEx.isCalisthenics = userConfig.isCalisthenics;
+                  mappedEx.unit = userConfig.unit;
+                  mappedEx.id = userConfig.id; // Ensure id is set for future lookups
+                }
+
+                const isConfigured = userConfig ? isExerciseConfigured(userConfig) : false;
+
+                return React.createElement(ExerciseCard, {
+                  key: `${mappedEx.n}-${idx}`,
+                  ex: mappedEx,
+                  recoveryScore: recoveryScore || 0,
+                  onApreResult: updateApreResult,
+                  isConfigured,
+                  onConfigure: () => handleConfigureExercise(mappedEx),
+                });
+              })
+            ),
+
+            // Exercise Config Modal
+            React.createElement(ExerciseConfigModal, {
+              isOpen: configModalOpen,
+              onClose: () => setConfigModalOpen(false),
+              exercise: selectedExercise,
+              onSave: handleSaveExerciseConfig,
             })
           ),
-          React.createElement('div', { className: 'mb-sm' },
-            React.createElement('label', { className: 'font-body font-weight-500', style: { marginBottom: 'var(--spacing-xs)', display: 'block' } }, 'Заметки'),
-            React.createElement('textarea', { value: sessionNote, onChange: e => setSessionNote(e.target.value), placeholder: 'Что было тяжело? Какой подход дался хуже всего? Остановили ли раньше?', rows: 2, className: 'w-full' })
+          // Test inputs if test day
+          sessionPlan?.isTestDay && React.createElement('div', { className: 'grid-3', style: { padding: '0 var(--spacing-md) var(--spacing-md)' } },
+            React.createElement('label', { className: 'flex flex-column gap-xs font-body' },
+              t('training.pullUps'),
+              React.createElement('input', { type: 'number', value: testPullUps, onChange: e => setTestPullUps(Number(e.target.value)), min: 0, style: { padding: '0.5rem' } })
+            ),
+            React.createElement('label', { className: 'flex flex-column gap-xs font-body' },
+              t('training.pushUps'),
+              React.createElement('input', { type: 'number', value: testPushUps, onChange: e => setTestPushUps(Number(e.target.value)), min: 0, style: { padding: '0.5rem' } })
+            ),
+            React.createElement('label', { className: 'flex flex-column gap-xs font-body' },
+              t('training.plank'),
+              React.createElement('input', { type: 'number', value: testPlank, onChange: e => setTestPlank(Number(e.target.value)), min: 0, style: { padding: '0.5rem' } })
+            )
           ),
-          React.createElement('button', {
-            className: `${trainingDone ? 'btn btn-red' : 'btn btn-accent'} w-full`,
-            onClick: handleToggleTraining,
-          }, trainingDone ? 'Отменить тренировку' : 'Сохранить тренировку')
+          // RPE Form
+          React.createElement('div', { style: { padding: '0 var(--spacing-md) var(--spacing-md)' } },
+            React.createElement('div', { className: 'flex justify-between items-center mb-sm' },
+              React.createElement('span', { className: 'font-body font-weight-600' }, t('today.howWasWorkout')),
+              React.createElement('strong', { className: 'font-mono', style: { fontSize: '1.5rem', color: zone.color } }, rpe || '?')
+            ),
+            React.createElement('div', { className: 'font-body text-secondary mb-sm' }, rpeDesc),
+            React.createElement('input', {
+              type: 'range', min: 0, max: 10, step: 0.5, value: rpe,
+              onChange: e => setRpe(Number(e.target.value)),
+              className: 'w-full',
+              style: { marginBottom: 'var(--spacing-sm)' }
+            }),
+            React.createElement('div', { className: 'flex gap-sm mb-sm' },
+              React.createElement('label', { className: 'flex-1 font-body' },
+                t('today.duration'),
+                React.createElement('input', {
+                  type: 'number', min: 0, max: 300, value: durationMinutes,
+                  onChange: e => setDurationMinutes(Number(e.target.value)),
+                  className: 'w-full', style: { padding: '0.5rem', marginTop: '0.25rem' }
+                })
+              ),
+              React.createElement('div', { style: { flex: 2 } },
+                React.createElement('label', { className: 'font-body' }, t('today.notes')),
+                React.createElement('textarea', {
+                  value: sessionNote, onChange: e => setSessionNote(e.target.value),
+                  placeholder: t('today.notesPlaceholder'),
+                  rows: 2, className: 'w-full', style: { marginTop: '0.25rem' }
+                })
+              )
+            ),
+            React.createElement('button', {
+              className: `${trainingDone ? 'btn btn-red' : 'btn btn-accent'} w-full`,
+              onClick: handleToggleTraining,
+              style: { minHeight: '48px' }
+            }, trainingDone ? t('today.cancelWorkout') : t('today.saveWorkout'))
+          )
         ),
 
-        // Coach Advice
-        React.createElement(CoachAdvice)
-      )
-    ),
+  // ═══════════════════════════════════════════════════════════════════
+  // LAYER 4-5: Coach Tips + Quick Actions
+  // ═══════════════════════════════════════════════════════════════════
+  React.createElement('div', { className: 'card card-appear', style: { animationDelay: '0.2s', padding: 'var(--spacing-md)' } },
+    React.createElement(CoachTipsPanel, { tips: coachAdvice || [], t }),
+    React.createElement('div', { style: { display: 'flex', gap: 'var(--spacing-sm)', marginTop: 'var(--spacing-md)' } },
+      React.createElement(QuickActionToggle, {
+        icon: '☀️',
+        label: t('today.morning'),
+        statusLabel: t('today.morningStatus'),
+        active: morningDone,
+        onClick: handleMarkMorning,
+        t
+      }),
+      React.createElement(QuickActionToggle, {
+        icon: '🌙',
+        label: t('today.evening'),
+        statusLabel: t('today.eveningStatus'),
+        active: eveningDone,
+        onClick: handleMarkEvening,
+        t
+      })
+    )
+  ),
 
-    // ════════════════════════════════════════════════════════════
-    // Bottom: компактно
-    // ════════════════════════════════════════════════════════════
-    React.createElement(ReadinessIndicator, {
-      readiness, autoReadiness, manualOverride,
-      onManualOverrideChange: handleManualOverrideChange,
-      lastCheckin, recoveryScore,
-    }),
-    React.createElement(RecoveryBar, { score: recoveryScore }),
+    // ═══════════════════════════════════════════════════════════════════
+    // LAYER 6: Tomorrow Preview (compact)
+    // ═══════════════════════════════════════════════════════════════════
+    React.createElement(TomorrowMini, { tomorrowType, tomorrowPlan, t }),
 
-    // Quick Actions
-    React.createElement('div', { className: 'card card--quick-actions' },
-      React.createElement('h3', { className: 'card__title' }, 'Быстрые действия'),
-      React.createElement('div', { className: 'quick-actions-grid' },
-        React.createElement(QuickAction, { label: 'Утренняя активация', icon: '☀️', done: morningDone, onClick: handleMarkMorning }),
-        React.createElement(QuickAction, { label: 'Вечернее восстановление', icon: '🌙', done: eveningDone, onClick: handleMarkEvening })
-      )
-    ),
-
-    // Tomorrow Preview
-    React.createElement(
-      'div',
-      { className: 'card' },
-      React.createElement(TomorrowPreview, { tomorrowPlan, tomorrowType })
+    // Date header at bottom
+    React.createElement('div', { className: 'text-center mt-sm' },
+      React.createElement('span', { className: 'today-header__date' }, todayStr),
+      streak >= 2 && React.createElement('span', { className: 'streak-badge', style: { marginLeft: 'var(--spacing-sm)' } }, `🔥 ${streak}`)
     )
   );
 }

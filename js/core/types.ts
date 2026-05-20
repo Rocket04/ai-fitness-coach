@@ -5,7 +5,7 @@ export type ReadinessStatus = 'green' | 'yellow' | 'red';
 export type ManualStatus = 'green' | 'yellow' | 'red' | 'unknown';
 export type WorkoutType = 'A' | 'B' | 'C' | null;
 export type SessionType = 'A' | 'B' | 'C' | 'rest' | 'morning' | 'evening' | 'mobility';
-export type SessionMode = 'full' | 'yellow' | 'minimum';
+export type SessionMode = 'full' | 'yellow' | 'minimum' | 'deload';
 export type BreathingStatus = 'good' | 'mild' | 'bad';
 export type ToastType = 'success' | 'error';
 
@@ -91,12 +91,44 @@ export interface TestResults {
   plankSec: number;
 }
 
+export type ApreProtocolKey = 'APRE_3' | 'APRE_6' | 'APRE_10';
+export type ApreUnit = 'kg' | 'lbs';
+
+/** Результат одного AMRAP-сета (set3 или set4) */
+export interface ApreSetResult {
+  reps: number;
+  weight: number;
+}
+
+/** Итог APRE-упражнения, сохраняемый в Session */
+export interface ApreExerciseResult {
+  exerciseName: string;
+  protocol: ApreProtocolKey;
+  /** Расчётный RM для следующей недели (на основе set4 AMRAP) */
+  nextRM: number;
+  unit: ApreUnit;
+  isCalisthenics: boolean;
+  lastSet3Reps: number;
+  lastSet4Reps: number;
+  /** Уровень прогрессии при калистенике (1-5) */
+  calisthenicLevel?: number;
+}
+
 export interface Exercise {
   n: string; // name
   s: string; // sets
   r: string; // reps
   w?: string; // weight/notes
   isTest?: boolean;
+  // APRE extension (optional — только у помеченных силовых)
+  isApre?: boolean;
+  protocol?: ApreProtocolKey;
+  /** Текущий тренировочный максимум (кг или lbs) */
+  currentRM?: number;
+  unit?: ApreUnit;
+  isCalisthenics?: boolean;
+  /** Уровень прогрессии при калистенике (1-5) */
+  calisthenicLevel?: number;
 }
 
 export interface Session {
@@ -114,6 +146,8 @@ export interface Session {
   testResults?: TestResults;
   mode?: SessionMode;
   updatedAt: number;
+  /** Результаты APRE-упражнений текущей тренировки */
+  apreResults?: ApreExerciseResult[];
 }
 
 export interface SessionPlan {
@@ -122,6 +156,8 @@ export interface SessionPlan {
   mode: SessionMode;
   monthColor: string;
   isTestDay?: boolean;
+  /** Каждая 4-я неделя — разгрузочная (deload) с пониженной нагрузкой */
+  isDeload?: boolean;
 }
 
 export interface Settings {

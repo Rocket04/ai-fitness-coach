@@ -1,8 +1,12 @@
 // js/ui/pages/ProfilePage.js
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../../stores/useAppStore.js';
+import { changeLanguage, getCurrentLanguage } from '../../i18n/index.js';
 import { ZONES, HRV_GUIDE, NUTRITION, MORNING_ROUTINE, EVENING_ROUTINE, DAYS, DAYS_TO_DOW } from '../../config/constants.js';
+import { useFitnessData, isExerciseConfigured, DEFAULT_EXERCISES } from '../../hooks/useFitnessData.js';
 import Modal from '../components/Modal.jsx';
+import ExerciseConfigModal from '../components/ExerciseConfigModal.jsx';
 
 function findHrvRange(hrv, guide) {
   if (!hrv || hrv <= 0) return null;
@@ -45,17 +49,34 @@ function ProfileSection({ title, children, defaultOpen = false }) {
 }
 
 export default function ProfilePage() {
+  const { t } = useTranslation();
   const {
-    showSettings, editStartDate, editTrainDays,
+    showSettings, showResetConfirm, editStartDate, editTrainDays,
     lastCheckin, recoveryScore, readiness,
-    setShowSettings, setEditStartDate, setEditTrainDays,
+    setShowSettings, setShowResetConfirm, setEditStartDate, setEditTrainDays,
     toggleDay, handleSaveSettings, setActiveTab,
-    handleExportData, handleImportData, handleResetAll,
+    handleExportData, handleImportData, handleResetAll, confirmResetData,
   } = useAppStore();
+
+  // Exercise configuration
+  const { exercises, updateExerciseById, resetAllConfigs, loaded } = useFitnessData();
+  const [configModalOpen, setConfigModalOpen] = useState(false);
+  const [selectedExercise, setSelectedExercise] = useState(null);
 
   const [showRehab, setShowRehab] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
   const [showNutrition, setShowNutrition] = useState(false);
+  const [showExerciseConfigurator, setShowExerciseConfigurator] = useState(false);
+  const [showExerciseResetConfirm, setShowExerciseResetConfirm] = useState(false);
+
+  const handleOpenConfig = (ex) => {
+    setSelectedExercise(ex);
+    setConfigModalOpen(true);
+  };
+
+  const handleSaveConfig = ({ id, protocol, currentRM, currentLevel }) => {
+    updateExerciseById(id, { protocol, currentRM, currentLevel });
+  };
 
   const hrv = lastCheckin?.hrv ? Number(lastCheckin.hrv) : 0;
   const restHr = lastCheckin?.restHR ? Number(lastCheckin.restHR) : 0;
@@ -64,21 +85,21 @@ export default function ProfilePage() {
   return React.createElement(
     'div',
     { className: 'profile-page' },
-    React.createElement('h2', { className: 'profile-page__title' }, '\uD83D\uDC64 Профиль'),
+    React.createElement('h2', { className: 'profile-page__title' }, '\uD83D\uDC64 ' + t('profile.title')),
 
     // ── Personal stats card ──
     lastCheckin && React.createElement(
       'div',
       { className: 'card card--stats' },
-      React.createElement('h3', { className: 'card__title' }, '\uD83D\uDCCA Ваши показатели'),
+      React.createElement('h3', { className: 'card__title' }, '\uD83D\uDCCA ' + t('profile.stats.title')),
       React.createElement(
         'div',
         { className: 'stat-grid' },
         hrv > 0 && React.createElement(
           'div',
           { className: 'stat-box' },
-          React.createElement('div', { className: 'stat-value' }, `${hrv} мс`),
-          React.createElement('div', { className: 'stat-label' }, 'HRV'),
+          React.createElement('div', { className: 'stat-value' }, `${hrv} ms`),
+          React.createElement('div', { className: 'stat-label' }, t('profile.stats.hrv')),
           activeHrvRange && React.createElement('span', {
             className: 'pill',
             style: { backgroundColor: activeHrvRange.color, color: '#000', fontSize: 'var(--font-size-caption)', marginTop: 'var(--spacing-xs)' }
@@ -88,78 +109,125 @@ export default function ProfilePage() {
           'div',
           { className: 'stat-box' },
           React.createElement('div', { className: 'stat-value' }, `${restHr}`),
-          React.createElement('div', { className: 'stat-label' }, 'ЧСС покоя')
+          React.createElement('div', { className: 'stat-label' }, t('profile.stats.restHR'))
         ),
         typeof recoveryScore === 'number' && recoveryScore > 0 && React.createElement(
           'div',
           { className: 'stat-box' },
           React.createElement('div', { className: 'stat-value' }, `${recoveryScore}%`),
-          React.createElement('div', { className: 'stat-label' }, 'Recovery')
+          React.createElement('div', { className: 'stat-label' }, t('profile.stats.recovery'))
         ),
         React.createElement(
           'div',
           { className: 'stat-box' },
           React.createElement('div', { className: 'stat-value' }, readiness === 'green' ? '\uD83D\uDFE2' : readiness === 'yellow' ? '\uD83D\uDFE1' : '\uD83D\uDD34'),
-          React.createElement('div', { className: 'stat-label' }, 'Готовность')
+          React.createElement('div', { className: 'stat-label' }, t('profile.stats.readiness'))
         )
       )
     ),
 
     // ── Rehab section ──
-    React.createElement(ProfileSection, { title: '\uD83E\uDDD8\u200D\u2642\uFE0F Реабилитация' },
-      React.createElement('p', null, '7 упражнений утром (15 мин) + 8 вечером (20 мин). Снижают риск травм и ускоряют восстановление после нагрузок.'),
-      React.createElement('p', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text3)', marginTop: 'var(--spacing-xs)' } }, 'Мобильность позвоночника, T-spine, ТБС, плечо, дыхательные техники.'),
+    React.createElement(ProfileSection, { title: t('profile.rehab.title') },
+      React.createElement('p', null, t('profile.rehab.description')),
+      React.createElement('p', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text3)', marginTop: 'var(--spacing-xs)' } }, t('profile.rehab.subtitle')),
       React.createElement('button', {
         className: 'btn',
         onClick: () => setShowRehab(true),
-      }, 'Открыть программу')
+      }, t('profile.rehab.open'))
     ),
 
     // ── Info section ──
-    React.createElement(ProfileSection, { title: '\uD83D\uDCD6 Справка' },
-      React.createElement('p', null, 'Пульсовые зоны (Z1–Z5), HRV-гайд и расшифровка статусов — что означает каждый цвет готовности и как действовать.'),
-      activeHrvRange && React.createElement('p', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text3)', marginTop: 'var(--spacing-xs)' } }, `Твой HRV сейчас: ${activeHrvRange.label} — ${activeHrvRange.action}`),
+    React.createElement(ProfileSection, { title: t('profile.info.title') },
+      React.createElement('p', null, t('profile.info.description')),
+      activeHrvRange && React.createElement('p', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text3)', marginTop: 'var(--spacing-xs)' } }, `${t('profile.stats.hrv')}: ${activeHrvRange.label} — ${activeHrvRange.action}`),
       React.createElement('button', {
         className: 'btn',
         onClick: () => setShowInfo(true),
-      }, 'Открыть справку')
+      }, t('profile.info.open'))
     ),
 
     // ── Methodology section ──
-    React.createElement(ProfileSection, { title: '\uD83E\uDDE0 Методология' },
-      React.createElement('p', null, 'Открытые формулы: как считается Recovery Score, почему нагрузка меняется и откуда берутся весовые коэффициенты.'),
-      React.createElement('p', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text3)', marginTop: 'var(--spacing-xs)' } }, 'Научная база: APRE (meta-analysis 2021), Oura Readiness, Firstbeat методология.'),
+    React.createElement(ProfileSection, { title: t('profile.methodology.title') },
+      React.createElement('p', null, t('profile.methodology.description')),
+      React.createElement('p', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text3)', marginTop: 'var(--spacing-xs)' } }, t('profile.methodology.subtitle')),
       React.createElement('button', {
         className: 'btn',
         onClick: () => { window.location.hash = ''; setActiveTab(4); },
-      }, 'Открыть методологию')
+      }, t('profile.methodology.open'))
     ),
 
     // ── Nutrition section ──
-    React.createElement(ProfileSection, { title: '\uD83C\uDF7D\uFE0F Питание' },
-      React.createElement('p', null, 'Персональные нормы КБЖУ и план добавок с обоснованием под текущий тренировочный блок.'),
-      React.createElement('p', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text3)', marginTop: 'var(--spacing-xs)' } }, 'Советы меняются в зависимости от дня (тренировка/отдых), Recovery Score и мышечной болезненности.'),
+    React.createElement(ProfileSection, { title: t('profile.nutrition.title') },
+      React.createElement('p', null, t('profile.nutrition.description')),
+      React.createElement('p', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text3)', marginTop: 'var(--spacing-xs)' } }, t('profile.nutrition.subtitle')),
       React.createElement('button', {
         className: 'btn',
         onClick: () => setShowNutrition(true),
-      }, 'Открыть питание')
+      }, t('profile.nutrition.open'))
     ),
 
     // ── Settings section ──
-    React.createElement(ProfileSection, { title: '\u2699\uFE0F Настройки' },
+    React.createElement(ProfileSection, { title: t('profile.settings.title') },
       React.createElement('button', {
         className: 'btn btn-accent',
         onClick: () => setShowSettings(true),
-      }, 'Открыть настройки')
+      }, t('profile.settings.open'))
+    ),
+
+    // ── Language section ──
+    React.createElement(ProfileSection, { title: t('profile.language.title') },
+      React.createElement('div', { className: 'flex gap-sm flex-wrap' },
+        React.createElement('button', {
+          className: `btn ${getCurrentLanguage() === 'ru' ? 'btn-accent' : ''}`,
+          onClick: async () => {
+            await changeLanguage('ru');
+          },
+        }, t('profile.language.ru')),
+        React.createElement('button', {
+          className: `btn ${getCurrentLanguage() === 'en' ? 'btn-accent' : ''}`,
+          onClick: async () => {
+            await changeLanguage('en');
+          },
+        }, t('profile.language.en'))
+      )
+    ),
+
+    // ── Tour section ──
+    React.createElement(ProfileSection, { title: t('profile.tour.title') },
+      React.createElement('p', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text2)', marginBottom: 'var(--spacing-sm)' } },
+        t('profile.tour.description')
+      ),
+      React.createElement('button', {
+        className: 'tour-start-btn',
+        onClick: () => {
+          window.location.hash = 'tour';
+          setActiveTab(0);
+        },
+      },
+        React.createElement('span', { className: 'tour-start-btn__icon' }, '🎯'),
+        t('profile.tour.start')
+      )
+    ),
+
+    // ── Exercise Configurator section ──
+    React.createElement(ProfileSection, { title: t('profile.exercises.title') },
+      React.createElement('p', null, t('profile.exercises.description')),
+      React.createElement('p', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text3)', marginTop: 'var(--spacing-xs)' } },
+        t('profile.exercises.configured', { count: exercises.filter(e => isExerciseConfigured(e)).length, total: exercises.length })
+      ),
+      React.createElement('button', {
+        className: 'btn btn-accent',
+        onClick: () => setShowExerciseConfigurator(true),
+      }, t('profile.exercises.open'))
     ),
 
     // ── Data section ──
-    React.createElement(ProfileSection, { title: '\uD83D\uDCBE Данные' },
+    React.createElement(ProfileSection, { title: t('profile.data.title') },
       React.createElement('div', { className: 'flex gap-sm flex-wrap' },
         React.createElement('button', {
           className: 'btn',
           onClick: handleExportData,
-        }, '\uD83D\uDCBE Экспорт'),
+        }, t('profile.data.export')),
         React.createElement('button', {
           className: 'btn',
           onClick: async () => {
@@ -173,16 +241,16 @@ export default function ProfilePage() {
                 await handleImportData(file);
               } catch (err) {
                 console.error('Import failed:', err);
-                alert('Ошибка импорта: ' + (err instanceof Error ? err.message : 'Неверный формат файла'));
+                alert(t('profile.importError', { error: err instanceof Error ? err.message : 'Invalid file format' }));
               }
             };
             input.click();
           },
-        }, '\uD83D\uDCC2 Импорт'),
+        }, t('profile.data.import')),
         React.createElement('button', {
           className: 'btn btn-red',
           onClick: handleResetAll,
-        }, '\uD83D\uDDD1\uFE0F Сброс')
+        }, t('profile.data.reset'))
       )
     ),
 
@@ -190,11 +258,11 @@ export default function ProfilePage() {
     showSettings && React.createElement(Modal, {
       isOpen: true,
       onClose: () => setShowSettings(false),
-      title: 'Настройки',
+      title: t('profile.settings.title'),
     },
       React.createElement('div', { className: 'flex flex-column gap-md' },
         React.createElement('label', { className: 'flex flex-column gap-xs font-body font-weight-500' },
-          React.createElement('span', null, 'Дата старта'),
+          React.createElement('span', null, t('profile.settings.startDate')),
           React.createElement('input', {
             type: 'date',
             value: editStartDate,
@@ -202,7 +270,7 @@ export default function ProfilePage() {
           })
         ),
         React.createElement('div', null,
-          React.createElement('span', { className: 'block mb-sm font-body font-weight-500' }, 'Дни тренировок'),
+          React.createElement('span', { className: 'block mb-sm font-body font-weight-500' }, t('profile.settings.trainingDays')),
           React.createElement('div', { className: 'flex gap-xs flex-wrap' },
             DAYS.map((day, i) =>
               React.createElement('button', {
@@ -217,11 +285,11 @@ export default function ProfilePage() {
           React.createElement('button', {
             className: 'btn',
             onClick: () => setShowSettings(false),
-          }, 'Отмена'),
+          }, t('profile.settings.cancel')),
           React.createElement('button', {
             className: 'btn btn-accent',
             onClick: handleSaveSettings,
-          }, 'Сохранить')
+          }, t('profile.settings.save'))
         )
       )
     ),
@@ -230,7 +298,7 @@ export default function ProfilePage() {
     showRehab && React.createElement(Modal, {
       isOpen: true,
       onClose: () => setShowRehab(false),
-      title: '\uD83E\uDDD8\u200D\u2642\uFE0F Программа реабилитации',
+      title: t('profile.rehab.title'),
     },
       React.createElement('div', null,
         React.createElement('h4', { className: 'text-yellow mt-0' }, '\u2600\uFE0F Утренняя активация'),
@@ -258,7 +326,7 @@ export default function ProfilePage() {
     showInfo && React.createElement(Modal, {
       isOpen: true,
       onClose: () => setShowInfo(false),
-      title: '\uD83D\uDCD6 Справка',
+      title: t('profile.info.title'),
     },
       React.createElement('div', null,
         React.createElement('h4', null, 'Пульсовые зоны'),
@@ -303,10 +371,10 @@ export default function ProfilePage() {
     showNutrition && React.createElement(Modal, {
       isOpen: true,
       onClose: () => setShowNutrition(false),
-      title: '\uD83C\uDF7D\uFE0F Питание',
+      title: t('profile.nutrition.title'),
     },
       React.createElement('div', null,
-        React.createElement('p', { className: 'text-secondary' }, 'Рекомендации по питанию для набора массы'),
+        React.createElement('p', { className: 'text-secondary' }, t('profile.recommendations')),
         React.createElement(
           'div',
           { style: { overflowX: 'auto' } },
@@ -315,9 +383,9 @@ export default function ProfilePage() {
           { className: 'w-full mt-sm', style: { borderCollapse: 'collapse', minWidth: '400px' } },
           React.createElement('thead', null,
             React.createElement('tr', { className: 'border-bottom' },
-              React.createElement('th', { className: 'text-left p-sm font-caption text-secondary' }, 'Параметр'),
-              React.createElement('th', { className: 'text-left p-sm font-caption text-secondary' }, 'Значение'),
-              React.createElement('th', { className: 'text-left p-sm font-caption text-secondary' }, 'Примечание')
+              React.createElement('th', { className: 'text-left p-sm font-caption text-secondary' }, t('profile.table.parameter')),
+              React.createElement('th', { className: 'text-left p-sm font-caption text-secondary' }, t('profile.table.value')),
+              React.createElement('th', { className: 'text-left p-sm font-caption text-secondary' }, t('profile.table.note'))
             )
           ),
           React.createElement('tbody', null,
@@ -333,6 +401,117 @@ export default function ProfilePage() {
         ),
         React.createElement('p', { className: 'font-body text-secondary mt-sm' },
           '\u26A0\uFE0F При астме важно получать достаточно белка и магния. Дефицит магния усугубляет бронхоспазм.'
+        )
+      )
+    ),
+
+    // ── Reset confirmation modal ──
+    showResetConfirm && React.createElement(Modal, {
+      isOpen: true,
+      onClose: () => setShowResetConfirm(false),
+      title: t('profile.confirmDelete'),
+    },
+      React.createElement('div', { className: 'flex flex-column gap-md' },
+        React.createElement('p', null, t('profile.confirmDeleteDesc')),
+        React.createElement('div', { className: 'flex gap-sm justify-end' },
+          React.createElement('button', {
+            className: 'btn',
+            onClick: () => setShowResetConfirm(false),
+          }, t('profile.settings.cancel')),
+          React.createElement('button', {
+            className: 'btn btn-red',
+            onClick: confirmResetData,
+          }, t('profile.data.delete'))
+        )
+      )
+    ),
+
+    // ── Exercise Configurator modal ──
+    showExerciseConfigurator && React.createElement(Modal, {
+      isOpen: true,
+      onClose: () => setShowExerciseConfigurator(false),
+      title: t('profile.exercises.title'),
+    },
+      React.createElement('div', { className: 'exercise-configurator' },
+        // Strength exercises
+        React.createElement('h4', { style: { margin: '0 0 0.5rem' } }, '\uD83C\uDFCB\uFE0F Силовые'),
+        exercises.filter(e => !e.isCalisthenics).map(ex => {
+          const configured = isExerciseConfigured(ex);
+          return React.createElement('div', {
+            key: ex.id,
+            className: `exercise-config-item ${configured ? 'exercise-config-item--configured' : 'exercise-config-item--unconfigured'}`
+          },
+            React.createElement('span', { className: 'exercise-config-name' }, ex.name),
+            configured && React.createElement('span', { className: 'exercise-config-value' },
+              `${ex.protocol} | ${ex.currentRM}${ex.unit}`
+            ),
+            React.createElement('button', {
+              className: 'exercise-config-btn',
+              onClick: () => handleOpenConfig(ex),
+            }, configured ? t('profile.edit') : t('profile.configure'))
+          );
+        }),
+        // Calisthenics
+        React.createElement('h4', { style: { margin: '1rem 0 0.5rem' } }, '\uD83E\uDD38\u200D\u2642\uFE0F Калистеника'),
+        exercises.filter(e => e.isCalisthenics).map(ex => {
+          const configured = isExerciseConfigured(ex);
+          const levelNames = { 1: 'Easy', 2: 'Medium', 3: 'Hard', 4: 'Elite', 5: 'Master' };
+          return React.createElement('div', {
+            key: ex.id,
+            className: `exercise-config-item ${configured ? 'exercise-config-item--configured' : 'exercise-config-item--unconfigured'}`
+          },
+            React.createElement('span', { className: 'exercise-config-name' }, ex.name),
+            configured && React.createElement('span', { className: 'exercise-config-value' },
+              `${ex.protocol} | ${levelNames[ex.currentLevel] || ex.currentLevel}`
+            ),
+            React.createElement('button', {
+              className: 'exercise-config-btn',
+              onClick: () => handleOpenConfig(ex),
+            }, configured ? t('profile.edit') : t('profile.configure'))
+          );
+        }),
+        // Actions
+        React.createElement('div', { className: 'configurator-actions' },
+          React.createElement('button', {
+            className: 'btn',
+            onClick: () => setShowExerciseConfigurator(false),
+          }, t('profile.close')),
+          React.createElement('button', {
+            className: 'btn btn-red',
+            onClick: () => setShowExerciseResetConfirm(true),
+          }, t('profile.resetAll'))
+        )
+      )
+    ),
+
+    // ── Exercise Config Modal (shared) ──
+    React.createElement(ExerciseConfigModal, {
+      isOpen: configModalOpen,
+      onClose: () => setConfigModalOpen(false),
+      exercise: selectedExercise,
+      onSave: handleSaveConfig,
+    }),
+
+    // ── Exercise Reset Confirmation Modal ──
+    showExerciseResetConfirm && React.createElement(Modal, {
+      isOpen: true,
+      onClose: () => setShowExerciseResetConfirm(false),
+      title: t('profile.confirmReset'),
+    },
+      React.createElement('div', { className: 'flex flex-column gap-md' },
+        React.createElement('p', null, t('profile.confirmResetDesc')),
+        React.createElement('div', { className: 'flex gap-sm justify-end' },
+          React.createElement('button', {
+            className: 'btn',
+            onClick: () => setShowExerciseResetConfirm(false),
+          }, t('profile.settings.cancel')),
+          React.createElement('button', {
+            className: 'btn btn-red',
+            onClick: () => {
+              resetAllConfigs();
+              setShowExerciseResetConfirm(false);
+            },
+          }, t('profile.reset'))
         )
       )
     )

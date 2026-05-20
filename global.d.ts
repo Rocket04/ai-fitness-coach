@@ -68,3 +68,33 @@ declare module '@radix-ui/react-collapsible' {
   export const Trigger: React.FC<{ className: string; children: React.ReactNode }>;
   export const Content: React.FC<{ className: string; children: React.ReactNode }>;
 }
+
+// i18next module declarations (stubs until packages are installed)
+declare module 'i18next' {
+  export default class i18next {
+    static use(plugin: any): typeof i18next;
+    static init(options: any): Promise<void>;
+    static changeLanguage(lng: string): Promise<void>;
+    static readonly language: string;
+  }
+  export const use: typeof i18next.use;
+  export const init: typeof i18next.init;
+  export const changeLanguage: typeof i18next.changeLanguage;
+}
+declare module 'react-i18next' {
+  export function initReactI18next(): any;
+  export function useTranslation(ns?: string): { t: (key: string, options?: any) => string; i18n: any };
+  export const I18nextProvider: React.FC<{ i18n: any; children: React.ReactNode }>;
+}
+declare module 'i18next-browser-languagedetector' {
+  export default class LanguageDetector {
+    constructor();
+    type: string;
+  }
+}
+
+// JSON module declarations for translation files
+declare module '*.json' {
+  const value: any;
+  export default value;
+}

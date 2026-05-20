@@ -5,9 +5,15 @@ import type { Session, Exercise, SessionMode } from './types.js';
 
 /**
  * Недельный множитель на основе сводки за прошлую неделю.
+ * Каждая 4-я неделя — разгрузочная (deload) с пониженной нагрузкой.
  */
-export function getWeeklyMultiplier(weeklySummary: any, dayOfWeek = 1): number {
+export function getWeeklyMultiplier(weeklySummary: any, dayOfWeek = 1, weekNumber = 1): number {
   if (dayOfWeek !== 1) return 1.0;
+
+  // Deload week: every 4th week reduces load by 40%
+  if (weekNumber % 4 === 0) {
+    return 0.6;
+  }
 
   if (weeklySummary.completed >= 3 &&
       weeklySummary.dominantStatus === 'green' &&
@@ -108,15 +114,22 @@ export function applyApreAdjustment(exercises: Exercise[], lastSession: Session 
 /**
  * Корректирует список упражнений в зависимости от режима тренировки.
  */
+const FALLBACK_RECOVERY_EXERCISES: Exercise[] = [
+  { n: 'Мобильность ТБС (восстановление)', s: '2', r: '10–12', w: 'лёгкие движения без боли' },
+  { n: 'Дыхательная гимнастика', s: '3', r: '10 вдохов', w: '4-7-8 техника' },
+];
+
 export function adjustExercisesForMode(exercises: Exercise[], mode: SessionMode): Exercise[] {
   if (mode === 'minimum') {
-    return exercises
+    const filtered = exercises
       .filter(e => !e.isTest && e.n && (
         e.n.toLowerCase().includes('мобильн') ||
         e.n.toLowerCase().includes('растяж') ||
         e.n.toLowerCase().includes('дыхан')
       ))
       .slice(0, 2);
+    // Fallback: если в плане нет восстановительных упражнений, использовать стандартный набор
+    return filtered.length > 0 ? filtered : FALLBACK_RECOVERY_EXERCISES;
   }
 
   if (mode === 'yellow') {
@@ -126,6 +139,18 @@ export function adjustExercisesForMode(exercises: Exercise[], mode: SessionMode)
       if (isNaN(sets)) return e;
       const newSets = sets > 1 ? sets - 1 : sets;
       return { ...e, s: String(newSets) };
+    });
+  }
+
+  // Deload week: reduce volume by ~40% (rounded down, minimum 1 set)
+  if (mode === 'deload') {
+    return exercises.map(e => {
+      if (e.isTest) return e;
+      const sets = parseInt(e.s, 10);
+      if (isNaN(sets)) return e;
+      // Reduce by 40% (multiply by 0.6), round up to ensure at least 1 set
+      const newSets = Math.max(1, Math.ceil(sets * 0.6));
+      return { ...e, s: String(newSets), w: `${e.w || ''} (разгрузка)`.trim() };
     });
   }
 

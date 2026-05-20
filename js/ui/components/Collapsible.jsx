@@ -1,5 +1,5 @@
 import React from 'react';
-import * as CollapsiblePrimitive from '@radix-ui/react-collapsible';
+import { Collapsible as CollapsiblePrimitive } from '@base-ui/react/collapsible';
 
 /**
  * Сворачиваемая секция на базе Radix Collapsible.
@@ -26,7 +26,7 @@ export default function Collapsible({ open, defaultOpen, onToggle, title, summar
       React.createElement('span', { className: 'collapsible__chevron' }, '\u25BC')
     ),
     React.createElement(
-      CollapsiblePrimitive.Content,
+      CollapsiblePrimitive.Panel,
       { className: 'collapsible__body', style: contentStyle },
       children
     )

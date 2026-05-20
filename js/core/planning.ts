@@ -4,6 +4,7 @@
 import { MONTHS, TRAIN_ORDER } from '../config/constants.js';
 import type { Session, ReadinessStatus, SessionPlan } from './types.js';
 import { applyMultiplierToExercises, applyApreAdjustment, adjustExercisesForMode } from './loadAdjustments.js';
+import { annotateExercisesWithApre } from './apre/engine.js';
 
 type WorkoutType = 'A' | 'B' | 'C';
 
@@ -44,32 +45,51 @@ export function getMonthAndDayIndex(weekNumber: number, trainType: WorkoutType |
 
 /**
  * Собирает тренировку из месячного плана со всеми корректировками.
+ * Каждая 4-я неделя (4, 8, 12) — разгрузочная (deload) с пониженной нагрузкой.
  */
-export function buildSessionFromMonth(month: any, dayIndex: number | null, readiness: ReadinessStatus, debt: boolean, multiplier = 1.0, apreSession: Session | null = null): SessionPlan | null {
+export function buildSessionFromMonth(
+  month: any,
+  dayIndex: number | null,
+  readiness: ReadinessStatus,
+  debt: boolean,
+  multiplier = 1.0,
+  apreSession: Session | null = null,
+  weekNumber = 1
+): SessionPlan | null {
   if (!month || dayIndex === null) return null;
 
   const dayPlan = month.days[dayIndex];
   if (!dayPlan) return null;
 
-  const mode = readiness === 'red'
-    ? 'minimum'
-    : (readiness === 'yellow' || debt ? 'yellow' : 'full');
+  // Deload week: every 4th week overrides other modes
+  const isDeloadWeek = weekNumber > 0 && weekNumber % 4 === 0;
+  const mode: import('./types.js').SessionMode = isDeloadWeek
+    ? 'deload'
+    : readiness === 'red'
+      ? 'minimum'
+      : (readiness === 'yellow' || debt ? 'yellow' : 'full');
 
   let exercises = dayPlan.exercises;
 
   exercises = applyMultiplierToExercises(exercises, multiplier);
 
-  if (apreSession && mode === 'full') {
+  if (apreSession && (mode === 'full' || mode === 'deload')) {
     exercises = applyApreAdjustment(exercises, apreSession);
   }
 
   exercises = adjustExercisesForMode(exercises, mode);
+
+  // Аннотируем силовые упражнения APRE-метаданными.
+  // В режиме minimum/yellow/deload тоже аннотируем (UI-карточка сама снизит нагрузку через recoveryScore).
+  const prevApreResults = apreSession?.apreResults ?? [];
+  exercises = annotateExercisesWithApre(exercises, prevApreResults);
 
   return {
     ...dayPlan,
     exercises,
     mode,
     monthColor: month.color,
+    isDeload: isDeloadWeek,
   };
 }
 

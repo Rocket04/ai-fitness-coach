@@ -2,8 +2,10 @@
 // Сводка за неделю (используется в Analytics)
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 export default function WeeklySummary({ weeklySummary, monthStats }) {
+  const { t } = useTranslation();
   if (!weeklySummary) return null;
 
   return React.createElement(
@@ -12,7 +14,7 @@ export default function WeeklySummary({ weeklySummary, monthStats }) {
     React.createElement(
       'h4',
       { className: 'mb-sm font-body text-secondary', style: { textTransform: 'uppercase', letterSpacing: '0.03em' } },
-      'Сводка за неделю'
+      t('log.weeklyStats')
     ),
     React.createElement(
       'div',
@@ -21,7 +23,7 @@ export default function WeeklySummary({ weeklySummary, monthStats }) {
         'div',
         { className: 'month-stat-item' },
         React.createElement('span', { className: 'month-stat-value' }, weeklySummary.completed || 0),
-        React.createElement('span', { className: 'month-stat-label' }, 'тренировок')
+        React.createElement('span', { className: 'month-stat-label' }, t('log.workouts'))
       ),
       React.createElement(
         'div',
@@ -31,34 +33,25 @@ export default function WeeklySummary({ weeklySummary, monthStats }) {
           { className: `month-stat-value ${weeklySummary.avgRPE !== null ? 'text-primary' : 'text-secondary'}` },
           weeklySummary.avgRPE !== null ? weeklySummary.avgRPE : '—'
         ),
-        React.createElement('span', { className: 'month-stat-label' }, 'ср. RPE')
+        React.createElement('span', { className: 'month-stat-label' }, t('log.avgRPE'))
       ),
       React.createElement(
         'div',
         { className: 'month-stat-item' },
         React.createElement('span', { className: 'month-stat-value text-green' }, weeklySummary.green || 0),
-        React.createElement('span', { className: 'month-stat-label' }, 'зелёных')
+        React.createElement('span', { className: 'month-stat-label' }, t('log.green'))
       ),
       React.createElement(
         'div',
         { className: 'month-stat-item' },
         React.createElement('span', { className: 'month-stat-value text-yellow' }, weeklySummary.yellow || 0),
-        React.createElement('span', { className: 'month-stat-label' }, 'жёлтых')
+        React.createElement('span', { className: 'month-stat-label' }, t('log.yellow'))
       ),
       React.createElement(
         'div',
         { className: 'month-stat-item' },
         React.createElement('span', { className: 'month-stat-value text-red' }, weeklySummary.red || 0),
-        React.createElement('span', { className: 'month-stat-label' }, 'красных')
-      )
-    ),
-    monthStats && React.createElement(
-      'div',
-      { className: 'mt-sm flex justify-between font-body text-muted' },
-      React.createElement('span', null, 'За месяц:'),
-      React.createElement('span', null,
-        monthStats.completed, ' тренировок (зел: ', monthStats.green,
-        ', ж: ', monthStats.yellow, ', к: ', monthStats.red, ')'
+        React.createElement('span', { className: 'month-stat-label' }, t('log.red'))
       )
     )
   );
