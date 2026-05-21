@@ -140,8 +140,9 @@
 
   "log": {
     "habitsImpact": "Habits Impact",
-    "insufficientDataChart": "Insufficient data for chart",
-    "noDataHeatmap": "No data for heatmap",
+    "insufficientDataChart": "📊 Recovery Score vs. Sleep chart will appear after 7+ days of data. It will show how sleep quality affects recovery.",
+    "noDataHeatmap": "🗓️ Weekly heatmap will display your metrics by day after 7+ check-ins. It will help you see trends.",
+    "insufficientDataCorrelations": "Correlations between your habits and Recovery Score will appear here when enough data accumulates. Keep filling in your check-ins.",
     "weeklyStats": "Weekly Statistics",
     "workouts": "Workouts",
     "avgRPE": "Average RPE",
@@ -154,7 +155,12 @@
   "analytics": {
     "insufficientData": "Insufficient Data",
     "needMinimumCheckins": "Need at least 2 check-ins. Complete today and tomorrow — first charts will appear.",
-    "title": "Analytics"
+    "title": "Analytics",
+    "goToCheckin": "Fill Check-in",
+    "recoveryScore": "Recovery Score",
+    "hrv": "HRV",
+    "restHR": "Resting HR",
+    "rpe": "RPE"
   },
 
   "session": {
@@ -216,7 +222,7 @@
       "readiness": "Readiness"
     },
     "rehab": {
-      "title": "🧘‍♂️ Rehab",
+      "title": "Rehab",
       "description": "7 morning exercises (15 min) + 8 evening (20 min). Reduce injury risk and speed up recovery.",
       "subtitle": "Spine mobility, T-spine, hip, shoulder, breathing techniques.",
       "open": "Open Program"
@@ -227,7 +233,7 @@
       "open": "Open Guide"
     },
     "methodology": {
-      "title": "🧠 Methodology",
+      "title": "Methodology",
       "description": "Open formulas: how Recovery Score is calculated, why load changes, and where weight coefficients come from.",
       "subtitle": "Scientific base: APRE (meta-analysis 2021), Oura Readiness, Firstbeat methodology.",
       "open": "Open Methodology"

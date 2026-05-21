@@ -4,6 +4,7 @@
 
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next'; 
+import { Check, Sun, Moon, Flame, PersonStanding, Lightbulb } from 'lucide-react';
 import { useAppStore } from '../../stores/useAppStore.js';
 import { useFitnessData, isExerciseConfigured } from '../../hooks/useFitnessData.js';
 import Collapsible from '../components/Collapsible.jsx';
@@ -152,7 +153,7 @@ function CoachTipsPanel({ tips, t }) {
       onClick: () => setOpen(!open),
       style: { borderBottom: open ? '1px solid var(--border)' : 'none' }
     },
-      React.createElement('span', null, '\uD83D\uDCA1 ' + (t ? t('today.coachTips') : 'Советы тренера')),
+      React.createElement('span', null, React.createElement(Lightbulb, { size: 20 }), ' ' + (t ? t('today.coachTips') : 'Советы тренер')),
       React.createElement('span', { className: 'coach-badge' }, tips.length),
       React.createElement('span', { style: { marginLeft: 'auto', fontSize: '0.8rem', color: 'var(--text2)' } }, open ? '▲' : '▼')
     ),
@@ -171,7 +172,7 @@ function QuickActionToggle({ icon, label, statusLabel, active, onClick, t }) {
     onClick,
     'aria-label': `${label} — ${active ? (t ? t('today.done') : 'выполнено') : (t ? t('today.notDone') : 'не выполнено')}`
   },
-    React.createElement('span', { className: 'quick-action-toggle__icon' }, active ? '✅' : icon),
+    React.createElement('span', { className: 'quick-action-toggle__icon' }, active ? React.createElement(Check, { size: 20 }) : icon),
     React.createElement('div', { className: 'quick-action-toggle__text' },
       React.createElement('span', { className: 'quick-action-toggle__label' }, label),
       React.createElement('span', { className: 'quick-action-toggle__status' }, active ? (t ? t('today.done') : 'Выполнено') : statusLabel)
@@ -188,7 +189,7 @@ function TomorrowMini({ tomorrowType, tomorrowPlan, t }) {
   return React.createElement('div', { className: 'tomorrow-card' },
     React.createElement('span', { className: 'tomorrow-card__label' }, t ? t('today.tomorrow') : 'Завтра'),
     React.createElement('span', { className: 'tomorrow-card__type', style: { color: isRest ? 'var(--text2)' : color } },
-      isRest ? '\uD83D\uDE34 ' + (t ? t('today.restTomorrow') : 'Отдых') : (t ? t('today.type', { type: typeLabel }) : `Тип ${typeLabel}`)
+      isRest ? React.createElement(React.Fragment, null, React.createElement(Moon, { size: 16 }), ' ' + (t ? t('today.restTomorrow') : 'Отдых')) : (t ? t('today.type', { type: typeLabel }) : `Тип ${typeLabel}`)
     )
   );
 }
@@ -303,7 +304,9 @@ export default function TodayPage() {
     );
   };
 
-  const handleConfigureExercise = (ex) => {
+  const handleConfigureExercise = (idx) => {
+    const ex = sessionPlan?.exercises?.[idx];
+    if (!ex) return;
     const config = findExerciseConfig(ex);
     if (config) {
       setSelectedExercise(config);
@@ -392,7 +395,7 @@ export default function TodayPage() {
     // ═══════════════════════════════════════════════════════════════════
     isRestDay
       ? React.createElement('div', { className: 'card rest-day-card card-appear', style: { animationDelay: '0.1s' } },
-          React.createElement('span', { className: 'rest-day-icon' }, '🧘'),
+          React.createElement('span', { className: 'rest-day-icon' }, React.createElement(PersonStanding, { size: 20 })),
           React.createElement('span', { className: 'rest-day-title' }, t('today.restDay')),
           React.createElement('span', { className: 'rest-day-desc' }, t('today.restDescription'))
         )
@@ -446,7 +449,7 @@ export default function TodayPage() {
                   recoveryScore: recoveryScore || 0,
                   onApreResult: updateApreResult,
                   isConfigured,
-                  onConfigure: () => handleConfigureExercise(mappedEx),
+                  onConfigure: () => handleConfigureExercise(idx),
                 });
               })
             ),
@@ -520,7 +523,7 @@ export default function TodayPage() {
     React.createElement(CoachTipsPanel, { tips: coachAdvice || [], t }),
     React.createElement('div', { style: { display: 'flex', gap: 'var(--spacing-sm)', marginTop: 'var(--spacing-md)' } },
       React.createElement(QuickActionToggle, {
-        icon: '☀️',
+        icon: React.createElement(Sun, { size: 20 }),
         label: t('today.morning'),
         statusLabel: t('today.morningStatus'),
         active: morningDone,
@@ -528,7 +531,7 @@ export default function TodayPage() {
         t
       }),
       React.createElement(QuickActionToggle, {
-        icon: '🌙',
+        icon: React.createElement(Moon, { size: 20 }),
         label: t('today.evening'),
         statusLabel: t('today.eveningStatus'),
         active: eveningDone,
@@ -546,7 +549,7 @@ export default function TodayPage() {
     // Date header at bottom
     React.createElement('div', { className: 'text-center mt-sm' },
       React.createElement('span', { className: 'today-header__date' }, todayStr),
-      streak >= 2 && React.createElement('span', { className: 'streak-badge', style: { marginLeft: 'var(--spacing-sm)' } }, `🔥 ${streak}`)
+      streak >= 2 && React.createElement('span', { className: 'streak-badge', style: { marginLeft: 'var(--spacing-sm)' } }, React.createElement(Flame, { size: 20 }), ` ${streak}`)
     )
   );
 }

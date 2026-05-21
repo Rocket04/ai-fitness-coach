@@ -2,6 +2,7 @@
 // Тепловая карта 7 дней × 4 метрики (Recovery, HRV, Sleep, Readiness)
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 function getDayLabel(dateStr) {
   const d = new Date(dateStr + 'T12:00:00');
@@ -25,11 +26,12 @@ function readinessDot(status) {
 }
 
 export default function HeatmapGrid({ data }) {
+  const { t } = useTranslation();
   if (!data || data.length === 0) {
     return React.createElement(
       'div',
       { className: 'heatmap-grid' },
-      React.createElement('p', { className: 'text-secondary text-center' }, 'Нет данных для тепловой карты')
+      React.createElement('p', { className: 'text-muted text-center text-sm' }, t('log.noDataHeatmap'))
     );
   }
 

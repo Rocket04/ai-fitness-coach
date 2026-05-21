@@ -2705,6 +2705,212 @@ input[type='range']::-moz-range-track {
   color: var(--text);
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   ONBOARDING REDESIGN — Value-First Minimalist
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Step 1: Value - Large headline centered layout */
+.onboarding-content--value {
+  justify-content: center;
+  text-align: center;
+  padding: var(--spacing-lg) 0;
+}
+
+.onboarding-headline {
+  font-size: clamp(1.75rem, 5vw, 2.5rem);
+  font-weight: 800;
+  line-height: 1.2;
+  margin: 0 0 var(--spacing-md);
+  color: var(--text);
+  letter-spacing: -0.02em;
+}
+
+.onboarding-tagline {
+  font-size: var(--font-size-body);
+  color: var(--text2);
+  margin: 0 0 var(--spacing-xl);
+  font-weight: 500;
+}
+
+.onboarding-value-cta {
+  margin-top: auto;
+  width: 100%;
+}
+
+.onboarding-btn--primary {
+  width: 100%;
+  min-height: 56px;
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.onboarding-btn--primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.45);
+}
+
+.onboarding-btn--primary:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
+/* Step 2: Goal Cards */
+.onboarding-content--goal {
+  align-items: stretch;
+}
+
+.onboarding-goal-cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-lg);
+  width: 100%;
+}
+
+.onboarding-goal-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: var(--spacing-md);
+  background: var(--surface2);
+  border: 2px solid transparent;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  position: relative;
+}
+
+.onboarding-goal-card:hover {
+  background: var(--surface3);
+  border-color: var(--border);
+  transform: translateX(4px);
+}
+
+.onboarding-goal-card--selected {
+  background: var(--surface);
+  border-color: var(--goal-color, var(--accent));
+  box-shadow: 0 0 0 1px var(--goal-color, var(--accent)), 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.onboarding-goal-card--selected:hover {
+  border-color: var(--goal-color, var(--accent));
+  transform: translateX(4px);
+}
+
+.onboarding-goal-icon {
+  font-size: 1.75rem;
+  margin-bottom: 2px;
+}
+
+.onboarding-goal-title {
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.onboarding-goal-subtitle {
+  font-size: var(--font-size-caption);
+  color: var(--text3);
+  font-weight: 400;
+}
+
+.onboarding-goal-check {
+  position: absolute;
+  top: var(--spacing-sm);
+  right: var(--spacing-sm);
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--goal-color, var(--accent));
+  color: white;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* Training Days Chips */
+.onboarding-days-section {
+  margin-top: auto;
+  margin-bottom: var(--spacing-lg);
+}
+
+.onboarding-section-label {
+  font-size: var(--font-size-caption);
+  font-weight: 600;
+  color: var(--text2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--spacing-sm);
+}
+
+.onboarding-days-chips {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.onboarding-day-chip {
+  min-width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface2);
+  border: 2px solid transparent;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  color: var(--text2);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.onboarding-day-chip:hover:not(:disabled) {
+  background: var(--surface3);
+  border-color: var(--border);
+}
+
+.onboarding-day-chip--selected {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+
+.onboarding-day-chip:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Step 3: Recovery Ring */
+.onboarding-content--recovery {
+  align-items: center;
+  text-align: center;
+}
+
+.onboarding-recovery-ring {
+  margin: var(--spacing-md) 0 var(--spacing-lg);
+}
+
+.onboarding-recovery-message {
+  font-size: var(--font-size-body);
+  color: var(--text2);
+  line-height: 1.6;
+  max-width: 320px;
+  margin: 0 0 var(--spacing-xl);
+}
+
+.onboarding-recovery-message strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
 .configurator-actions {
   display: flex;
   gap: 0.75rem;

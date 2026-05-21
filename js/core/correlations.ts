@@ -44,7 +44,7 @@ export function sleepToRecovery(checkins: Checkin[]): CorrelationResult {
   const delta = pctDiff(avg(highSleep), avg(lowSleep));
   return {
     title: 'Сон → Recovery',
-    icon: '💤',
+    icon: 'Moon',
     insight: delta !== null && delta > 0
       ? `В дни с ≥7ч сна Recovery Score на ${delta}% выше`
       : delta !== null && delta < 0
@@ -65,7 +65,7 @@ export function sleepQualityToHrv(checkins: Checkin[]): CorrelationResult {
   const delta = pctDiff(avg(highQ), avg(lowQ));
   return {
     title: 'Качество сна → HRV',
-    icon: '✨',
+    icon: 'Sparkles',
     insight: delta !== null && delta > 0
       ? `При качестве сна ≥4 HRV в среднем на ${delta}% выше`
       : delta !== null && delta < 0
@@ -87,7 +87,7 @@ export function stressToRecovery(checkins: Checkin[]): CorrelationResult {
   const delta = pctDiff(avg(lowStress), avg(highStress));
   return {
     title: 'Стресс → Recovery',
-    icon: '🌀',
+    icon: 'Activity',
     insight: delta !== null && delta > 0
       ? `При низком стрессе Recovery Score на ${delta}% выше`
       : delta !== null && delta < 0
@@ -111,7 +111,7 @@ export function energyToRecovery(checkins: Checkin[]): CorrelationResult {
   if (highEnergy.length === 0 || lowEnergy.length === 0) {
     return {
       title: 'Энергия → Recovery',
-      icon: '⚡',
+      icon: 'Zap',
       insight: 'Недостаточно данных для сравнения энергии и восстановления',
       deltaPercent: null,
       sampleSize: highEnergy.length + lowEnergy.length,
@@ -131,7 +131,7 @@ export function energyToRecovery(checkins: Checkin[]): CorrelationResult {
   if (avgHigh > avgLow + 5) {
     return {
       title: 'Энергия → Recovery',
-      icon: '⚡',
+      icon: 'Zap',
       insight: `При энергии ≥4 Recovery Score на ${delta && delta > 0 ? delta : 10}% выше`,
       deltaPercent: delta && delta > 0 ? delta : 10,
       sampleSize: highEnergy.length + lowEnergy.length,
@@ -140,7 +140,7 @@ export function energyToRecovery(checkins: Checkin[]): CorrelationResult {
   
   return {
     title: 'Энергия → Recovery',
-    icon: '⚡',
+    icon: 'Zap',
     insight: delta !== null && delta > 0
       ? `При энергии ≥4 Recovery Score на ${delta}% выше`
       : delta !== null && delta < 0
@@ -158,7 +158,7 @@ export function energyToRecovery(checkins: Checkin[]): CorrelationResult {
 export function hrvToReadiness(checkins: Checkin[]): CorrelationResult {
   const withHrv = checkins.filter(c => c.hrv > 0 && c.readiness);
   if (withHrv.length < 4) {
-    return { title: 'HRV → Готовность', icon: '📡', insight: 'Недостаточно данных', deltaPercent: null, sampleSize: withHrv.length };
+    return { title: 'HRV → Готовность', icon: 'Radio', insight: 'Недостаточно данных', deltaPercent: null, sampleSize: withHrv.length };
   }
   const baseline = avg(withHrv.map(c => c.hrv));
   const highHrv = withHrv.filter(c => c.hrv >= baseline);
@@ -172,7 +172,7 @@ export function hrvToReadiness(checkins: Checkin[]): CorrelationResult {
   if (greenHighCount === highHrv.length && greenLowCount === 0 && highHrv.length > 0) {
     return {
       title: 'HRV → Готовность',
-      icon: '📡',
+      icon: 'Radio',
       insight: `При высоком HRV зелёных дней на 100% больше (${highHrv.length}/${highHrv.length})`,
       deltaPercent: 100,
       sampleSize: withHrv.length,
@@ -185,7 +185,7 @@ export function hrvToReadiness(checkins: Checkin[]): CorrelationResult {
   
   return {
     title: 'HRV → Готовность',
-    icon: '📡',
+    icon: 'Radio',
     insight: delta !== null && delta > 0
       ? `При HRV ≥baseline зелёных дней на ${delta}% больше`
       : delta !== null && delta < 0
@@ -203,7 +203,7 @@ export function hrvToReadiness(checkins: Checkin[]): CorrelationResult {
 export function weightTrend(checkins: Checkin[]): CorrelationResult {
   const sorted = [...checkins].filter(c => c.weight > 0).sort((a, b) => a.date.localeCompare(b.date));
   if (sorted.length < 3) {
-    return { title: 'Вес → Тренд', icon: '⚖️', insight: 'Недостаточно данных для тренда веса', deltaPercent: null, sampleSize: sorted.length };
+    return { title: 'Вес → Тренд', icon: 'Scale', insight: 'Недостаточно данных для тренда веса', deltaPercent: null, sampleSize: sorted.length };
   }
   // Simple linear regression: x = day index, y = weight
   const n = sorted.length;
@@ -219,7 +219,7 @@ export function weightTrend(checkins: Checkin[]): CorrelationResult {
   const direction = changePerWeek > 0 ? 'рост' : changePerWeek < 0 ? 'снижение' : 'стабильность';
   return {
     title: 'Вес → Тренд',
-    icon: '⚖️',
+    icon: 'Scale',
     insight: changePerWeek !== 0
       ? `Тренд веса: ${direction} ${Math.abs(changePerWeek)} кг/неделя`
       : 'Вес стабилен за последние записи',

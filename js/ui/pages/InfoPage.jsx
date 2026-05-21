@@ -2,6 +2,7 @@
 // Справочная страница — зоны, HRV-гайд, расшифровка готовности
 
 import React, { useState } from 'react';
+import { Star } from 'lucide-react';
 import { useAppStore } from '../../stores/useAppStore.js';
 import { ZONES, HRV_GUIDE } from '../../config/constants.js';
 import { Collapsible as CollapsiblePrimitive } from '@base-ui/react/collapsible';
@@ -63,7 +64,7 @@ function ZoneCard({ zone, isRecommended }) {
     isRecommended && React.createElement(
       'p',
       { style: { fontSize: 'var(--font-size-caption)', color: zone.color, marginTop: 'var(--spacing-xs)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)' } },
-      '⭐ Рекомендована для сегодняшней тренировки'
+      React.createElement(React.Fragment, null, React.createElement(Star, { size: 14 }), ' Рекомендована для сегодняшней тренировки')
     )
   );
 }
@@ -106,7 +107,7 @@ function HrvCard({ item, isActive }) {
     isActive && React.createElement(
       'p',
       { style: { fontSize: 'var(--font-size-caption)', color: item.color, marginTop: 'var(--spacing-xs)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)' } },
-      '⭐ Ваш текущий показатель'
+      React.createElement(React.Fragment, null, React.createElement(Star, { size: 14 }), ' Ваш текущий показатель')
     )
   );
 }

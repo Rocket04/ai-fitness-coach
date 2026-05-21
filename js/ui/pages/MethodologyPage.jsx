@@ -2,6 +2,7 @@
 // Научная база приложения — формулы и объяснения
 
 import React, { useMemo, useEffect } from 'react';
+import { BarChart3, Target, Scale, AlertTriangle, TrendingUp, Activity, Circle } from 'lucide-react';
 import { useAppStore } from '../../stores/useAppStore.js';
 import { RECOVERY_WEIGHTS, SUBJECTIVE_THRESHOLDS } from '../../config/constants.js';
 import HelpIcon from '../components/HelpIcon.jsx';
@@ -30,7 +31,11 @@ export default function MethodologyPage() {
   const lastSessionLoad = lastTraining?.sessionLoad ? Number(lastTraining.sessionLoad) : 0;
   const lastDuration = lastTraining?.durationMinutes ? Number(lastTraining.durationMinutes) : 0;
 
-  const readinessEmoji = readiness === 'green' ? '\uD83D\uDFE2' : readiness === 'yellow' ? '\uD83D\uDFE1' : '\uD83D\uDD34';
+  const readinessIcon = readiness === 'green'
+    ? React.createElement(Circle, { size: 16, fill: 'var(--green)', color: 'var(--green)' })
+    : readiness === 'yellow'
+      ? React.createElement(Circle, { size: 16, fill: 'var(--yellow)', color: 'var(--yellow)' })
+      : React.createElement(Circle, { size: 16, fill: 'var(--red)', color: 'var(--red)' });
 
   /* ---------- Scroll to hash on mount ---------- */
   useEffect(() => {
@@ -91,7 +96,7 @@ export default function MethodologyPage() {
   /* ---------- Current values header ---------- */
   const headerStats = [
     { label: 'Recovery', value: typeof recoveryScore === 'number' ? `${recoveryScore}%` : '\u2014' },
-    { label: 'Готовность', value: readinessEmoji },
+    { label: 'Готовность', value: readinessIcon },
     { label: 'HRV', value: hrv > 0 ? `${hrv} мс` : '\u2014' },
     { label: 'ЧСС покоя', value: restHR > 0 ? `${restHR} уд/мин` : '\u2014' },
     { label: 'Сон', value: sleepHours > 0 ? `${sleepHours} ч` : '\u2014' },
@@ -157,7 +162,7 @@ export default function MethodologyPage() {
     ),
 
     // ── 1. Recovery Score ──
-    React.createElement(SectionCard, { icon: '\uD83D\uDCCA', title: React.createElement('span', null, 'Recovery Score', React.createElement(HelpIcon, { term: 'Recovery Score', definition: 'Комплексный индекс восстановления (0-100%), основанный на HRV, сне, ЧСС покоя и субъективных ощущениях.' })), id: 'recovery-score' },
+    React.createElement(SectionCard, { icon: React.createElement(BarChart3, { size: 18 }), title: React.createElement('span', null, 'Recovery Score', React.createElement(HelpIcon, { term: 'Recovery Score', definition: 'Комплексный индекс восстановления (0-100%), основанный на HRV, сне, ЧСС покоя и субъективных ощущениях.' })), id: 'recovery-score' },
       React.createElement(FormulaBlock, {
         text: 'Score = (hrvScore\u00D70.4 + sleepScore\u00D70.3 + rhrScore\u00D70.1 + subjectiveScore\u00D70.2) \u00D7 10',
       }),
@@ -183,7 +188,7 @@ export default function MethodologyPage() {
     ),
 
     // ── 2. APRE ──
-    React.createElement(SectionCard, { icon: '\uD83C\uDFAF', title: React.createElement('span', null, 'APRE (Auto-regulation by Performance)', React.createElement(HelpIcon, { term: 'APRE', definition: 'Метод автоматической регулировки нагрузки по субъективной интенсивности (RPE). При лёгкой нагрузке — увеличиваем объём, при тяжёлой — снижаем.' })), id: 'apre' },
+    React.createElement(SectionCard, { icon: React.createElement(Target, { size: 18 }), title: React.createElement('span', null, 'APRE (Auto-regulation by Performance)', React.createElement(HelpIcon, { term: 'APRE', definition: 'Метод автоматической регулировки нагрузки по субъективной интенсивности (RPE). При лёгкой нагрузке — увеличиваем объём, при тяжёлой — снижаем.' })), id: 'apre' },
       React.createElement(FormulaBlock, { text: 'RPE \u2264 4 \u2192 +1 повтор  |  RPE \u2265 8 \u2192 \u22121 повтор' }),
       React.createElement('div', { className: 'text-sm', style: { color: 'var(--text2)' } },
         React.createElement('p', { style: { margin: 'var(--spacing-xs) 0' } },
@@ -199,7 +204,7 @@ export default function MethodologyPage() {
     ),
 
     // ── 3. Session Load ──
-    React.createElement(SectionCard, { icon: '\u2696\uFE0F', title: React.createElement('span', null, 'Session Load (Фостер, 2001)', React.createElement(HelpIcon, { term: 'Session Load', definition: 'Внутренняя тренировочная нагрузка = RPE × длительность (мин). Позволяет сравнивать тренировки разной интенсивности и длительности.' })), id: 'session-load' },
+    React.createElement(SectionCard, { icon: React.createElement(Scale, { size: 18 }), title: React.createElement('span', null, 'Session Load (Фостер, 2001)', React.createElement(HelpIcon, { term: 'Session Load', definition: 'Внутренняя тренировочная нагрузка = RPE × длительность (мин). Позволяет сравнивать тренировки разной интенсивности и длительности.' })), id: 'session-load' },
       React.createElement(FormulaBlock, { text: 'Session Load = RPE \u00D7 durationMinutes' }),
       React.createElement('div', { className: 'text-sm', style: { color: 'var(--text2)' } },
         React.createElement('p', { style: { margin: 'var(--spacing-xs) 0' } },
@@ -215,7 +220,7 @@ export default function MethodologyPage() {
     ),
 
     // ── 4. Субъективные пороги ──
-    React.createElement(SectionCard, { icon: '\uD83D\uDEA8', title: 'Субъективные пороги', id: 'subjective-thresholds' },
+    React.createElement(SectionCard, { icon: React.createElement(AlertTriangle, { size: 18 }), title: 'Субъективные пороги', id: 'subjective-thresholds' },
       React.createElement(FormulaBlock, {
         text: `muscleSoreness \u2265 ${SUBJECTIVE_THRESHOLDS.muscleSorenessHigh}  |  energy \u2264 ${SUBJECTIVE_THRESHOLDS.energyLow}  |  mood \u2264 ${SUBJECTIVE_THRESHOLDS.moodLow}  |  sleepQuality \u2264 ${SUBJECTIVE_THRESHOLDS.sleepQualityLow}  |  stress \u2265 ${SUBJECTIVE_THRESHOLDS.stressHigh}`,
       }),
@@ -233,7 +238,7 @@ export default function MethodologyPage() {
     ),
 
     // ── 5. HRV-бейзлайн ──
-    React.createElement(SectionCard, { icon: '\uD83D\uDCC8', title: React.createElement('span', null, 'HRV-бейзлайн (14 дней)', React.createElement(HelpIcon, { term: 'HRV', definition: 'Вариабельность сердечного ритма — показатель баланса автономной нервной системы. Высокий HRV обычно означает лучшее восстановление и адаптацию к стрессу.' })), id: 'hrv-baseline' },
+    React.createElement(SectionCard, { icon: React.createElement(Activity, { size: 18 }), title: React.createElement('span', null, 'HRV-бейзлайн (14 дней)', React.createElement(HelpIcon, { term: 'HRV', definition: 'Вариабельность сердечного ритма — показатель баланса автономной нервной системы. Высокий HRV обычно означает лучшее восстановление и адаптацию к стрессу.' })), id: 'hrv-baseline' },
       React.createElement(FormulaBlock, { text: 'z = (value \u2212 mean) / std  \u2192  score = 5 + z \u00D7 2.5' }),
       React.createElement('div', { className: 'text-sm', style: { color: 'var(--text2)' } },
         React.createElement('p', { style: { margin: 'var(--spacing-xs) 0' } },
@@ -249,7 +254,7 @@ export default function MethodologyPage() {
     ),
 
     // ── 6. Статусы готовности ──
-    React.createElement(SectionCard, { icon: '\uD83D\uDFE2\uD83D\uDFE1\uD83D\uDD34', title: 'Статусы готовности', id: 'readiness-statuses' },
+    React.createElement(SectionCard, { icon: React.createElement(React.Fragment, null, React.createElement(Circle, { size: 14, fill: 'var(--green)', color: 'var(--green)' }), React.createElement(Circle, { size: 14, fill: 'var(--yellow)', color: 'var(--yellow)' }), React.createElement(Circle, { size: 14, fill: 'var(--red)', color: 'var(--red)' })), title: 'Статусы готовности', id: 'readiness-statuses' },
       React.createElement('div', { className: 'text-sm', style: { color: 'var(--text2)' } },
         React.createElement('p', { style: { margin: 'var(--spacing-xs) 0' } },
           'Алгоритм оценивает показатели чекина по двум уровням:'

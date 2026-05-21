@@ -2,6 +2,7 @@
 import { useEffect, lazy, Suspense, useState } from 'react';
 import ReactDOM from 'react-dom/client';
 import { I18nextProvider, useTranslation } from 'react-i18next';
+import { Home, BookOpen, TrendingUp, User, X, Check } from 'lucide-react';
 import i18n from './i18n/index.js';
 import { useAppStore } from './stores/useAppStore.js';
 import { DAYS, DAYS_TO_DOW } from './config/constants.js';
@@ -26,10 +27,10 @@ interface BottomNavProps {
 function BottomNav({ activeTab, setActiveTab }: BottomNavProps) {
   const { t } = useTranslation();
   const tabs = [
-    { idx: 0, label: t('nav.today'), icon: '🏃️' },
-    { idx: 1, label: t('nav.log'), icon: '📝' },
-    { idx: 2, label: t('nav.analytics'), icon: '📊' },
-    { idx: 3, label: t('nav.profile'), icon: '👤' },
+    { idx: 0, label: t('nav.today'), icon: Home },
+    { idx: 1, label: t('nav.log'), icon: BookOpen },
+    { idx: 2, label: t('nav.analytics'), icon: TrendingUp },
+    { idx: 3, label: t('nav.profile'), icon: User },
   ];
 
   return (
@@ -42,7 +43,9 @@ function BottomNav({ activeTab, setActiveTab }: BottomNavProps) {
           aria-label={t.label}
           aria-current={activeTab === t.idx ? 'page' : undefined}
         >
-          <span className="bottom-nav__icon" aria-hidden="true">{t.icon}</span>
+          <span className="bottom-nav__icon" aria-hidden="true">
+            <t.icon size={24} />
+          </span>
           <span className="bottom-nav__label">{t.label}</span>
         </button>
       ))}
@@ -169,7 +172,7 @@ function AppContent() {
       {toast.visible && (
         <div className={`toast ${toast.type === 'error' ? 'error' : 'success'}`}>
           <span className="toast-icon">
-            {toast.type === 'error' ? '❌' : '✅'}
+            {toast.type === 'error' ? <X size={20} /> : <Check size={20} />}
           </span>
           {toast.message}
         </div>

@@ -2,6 +2,7 @@
 // Модальное окно настройки упражнения (протокол + стартовый вес/уровень)
 
 import React, { useState, useEffect } from 'react';
+import { Settings } from 'lucide-react';
 import Modal from './Modal.jsx';
 import { CALISTHENICS_PROGRESSIONS } from '../../core/apre/engine.js';
 
@@ -66,7 +67,10 @@ export default function ExerciseConfigModal({ isOpen, onClose, exercise, onSave 
   return React.createElement(Modal, {
     isOpen,
     onClose,
-    title: `⚙️ Настройка: ${exercise.name}`
+    title: React.createElement(React.Fragment, null,
+      React.createElement(Settings, { size: 20 }),
+      ` Настройка: ${exercise.name}`
+    )
   },
     React.createElement('div', { className: 'exercise-config-modal' },
       // Протокол APRE

@@ -1,4 +1,5 @@
 import React from 'react';
+import { X } from 'lucide-react';
 import { Dialog } from '@base-ui/react/dialog';
 
 /**
@@ -15,7 +16,7 @@ export default function Modal({ isOpen, onClose, title, children }) {
           className="modal"
           aria-describedby={undefined}
         >
-          <Dialog.Close className="modal-close" aria-label="Закрыть">✕</Dialog.Close>
+          <Dialog.Close className="modal-close" aria-label="Закрыть"><X size={20} /></Dialog.Close>
           {title && <Dialog.Title className="modal-title">{title}</Dialog.Title>}
           <div className="modal-content">{children}</div>
         </Dialog.Popup>

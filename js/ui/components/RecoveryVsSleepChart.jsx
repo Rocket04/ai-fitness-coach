@@ -2,13 +2,15 @@
 // Совмещённый scatter+линия: Recovery Score vs Часы сна (SVG)
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 export default function RecoveryVsSleepChart({ data }) {
+  const { t } = useTranslation();
   if (!data || data.length < 2) {
     return React.createElement(
       'div',
       { className: 'recovery-chart-container' },
-      React.createElement('p', { className: 'text-secondary text-center' }, 'Недостаточно данных для графика')
+      React.createElement('p', { className: 'text-muted text-center text-sm' }, t('log.insufficientDataChart'))
     );
   }
 

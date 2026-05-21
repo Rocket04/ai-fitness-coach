@@ -1,6 +1,7 @@
 // js/ui/pages/ProfilePage.js
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Target, User, BarChart, Circle, Sun, Moon, Star, AlertTriangle, Dumbbell, Play } from 'lucide-react';
 import { useAppStore } from '../../stores/useAppStore.js';
 import { changeLanguage, getCurrentLanguage } from '../../i18n/index.js';
 import { ZONES, HRV_GUIDE, NUTRITION, MORNING_ROUTINE, EVENING_ROUTINE, DAYS, DAYS_TO_DOW } from '../../config/constants.js';
@@ -85,13 +86,13 @@ export default function ProfilePage() {
   return React.createElement(
     'div',
     { className: 'profile-page' },
-    React.createElement('h2', { className: 'profile-page__title' }, '\uD83D\uDC64 ' + t('profile.title')),
+    React.createElement('h2', { className: 'profile-page__title' }, React.createElement(User, { size: 24 }), ' ', t('profile.title')),
 
     // ── Personal stats card ──
     lastCheckin && React.createElement(
       'div',
       { className: 'card card--stats' },
-      React.createElement('h3', { className: 'card__title' }, '\uD83D\uDCCA ' + t('profile.stats.title')),
+      React.createElement('h3', { className: 'card__title' }, React.createElement(BarChart, { size: 20 }), ' ', t('profile.stats.title')),
       React.createElement(
         'div',
         { className: 'stat-grid' },
@@ -120,7 +121,7 @@ export default function ProfilePage() {
         React.createElement(
           'div',
           { className: 'stat-box' },
-          React.createElement('div', { className: 'stat-value' }, readiness === 'green' ? '\uD83D\uDFE2' : readiness === 'yellow' ? '\uD83D\uDFE1' : '\uD83D\uDD34'),
+          React.createElement('div', { className: 'stat-value' }, readiness === 'green' ? React.createElement(Circle, { size: 20, fill: 'currentColor' }) : readiness === 'yellow' ? React.createElement(Circle, { size: 20, fill: 'currentColor' }) : React.createElement(Circle, { size: 20, fill: 'currentColor' })),
           React.createElement('div', { className: 'stat-label' }, t('profile.stats.readiness'))
         )
       )
@@ -204,7 +205,7 @@ export default function ProfilePage() {
           setActiveTab(0);
         },
       },
-        React.createElement('span', { className: 'tour-start-btn__icon' }, '🎯'),
+        React.createElement('span', { className: 'tour-start-btn__icon' }, React.createElement(Target, { size: 20 })),
         t('profile.tour.start')
       )
     ),
@@ -301,7 +302,7 @@ export default function ProfilePage() {
       title: t('profile.rehab.title'),
     },
       React.createElement('div', null,
-        React.createElement('h4', { className: 'text-yellow mt-0' }, '\u2600\uFE0F Утренняя активация'),
+        React.createElement('h4', { className: 'text-yellow mt-0' }, React.createElement(Sun, { size: 20 }), ' Утренняя активация'),
         React.createElement('ul', null,
           MORNING_ROUTINE.map((item, i) =>
             React.createElement('li', { key: i },
@@ -310,7 +311,7 @@ export default function ProfilePage() {
             )
           )
         ),
-        React.createElement('h4', { className: 'text-blue' }, '\uD83C\uDF19 Вечернее расслабление'),
+        React.createElement('h4', { className: 'text-blue' }, React.createElement(Moon, { size: 20 }), ' Вечернее расслабление'),
         React.createElement('ul', null,
           EVENING_ROUTINE.map((item, i) =>
             React.createElement('li', { key: i },
@@ -355,7 +356,7 @@ export default function ProfilePage() {
             React.createElement('strong', null, item.range),
             ` \u2014 ${item.label}`,
             React.createElement('div', { className: 'font-body' }, item.action),
-            activeHrvRange === item && React.createElement('div', { className: 'font-weight-600', style: { color: item.color } }, '\u2B50 Ваш текущий показатель')
+            activeHrvRange === item && React.createElement('div', { className: 'font-weight-600', style: { color: item.color } }, React.createElement(Star, { size: 16 }), ' Ваш текущий показатель')
           )
         ),
         React.createElement('h4', null, '\u0420\u0430\u0441\u0448\u0438\u0444\u0440\u043e\u0432\u043a\u0430 \u0433\u043e\u0442\u043e\u0432\u043d\u043e\u0441\u0442\u0438'),
@@ -400,7 +401,7 @@ export default function ProfilePage() {
         )
         ),
         React.createElement('p', { className: 'font-body text-secondary mt-sm' },
-          '\u26A0\uFE0F При астме важно получать достаточно белка и магния. Дефицит магния усугубляет бронхоспазм.'
+          React.createElement(AlertTriangle, { size: 16 }), ' При астме важно получать достаточно белка и магния. Дефицит магния усугубляет бронхоспазм.'
         )
       )
     ),
@@ -434,7 +435,7 @@ export default function ProfilePage() {
     },
       React.createElement('div', { className: 'exercise-configurator' },
         // Strength exercises
-        React.createElement('h4', { style: { margin: '0 0 0.5rem' } }, '\uD83C\uDFCB\uFE0F Силовые'),
+        React.createElement('h4', { style: { margin: '0 0 0.5rem' } }, React.createElement(Dumbbell, { size: 20 }), ' Силовые'),
         exercises.filter(e => !e.isCalisthenics).map(ex => {
           const configured = isExerciseConfigured(ex);
           return React.createElement('div', {
@@ -452,7 +453,7 @@ export default function ProfilePage() {
           );
         }),
         // Calisthenics
-        React.createElement('h4', { style: { margin: '1rem 0 0.5rem' } }, '\uD83E\uDD38\u200D\u2642\uFE0F Калистеника'),
+        React.createElement('h4', { style: { margin: '1rem 0 0.5rem' } }, React.createElement(Play, { size: 20 }), ' Калистеника'),
         exercises.filter(e => e.isCalisthenics).map(ex => {
           const configured = isExerciseConfigured(ex);
           const levelNames = { 1: 'Easy', 2: 'Medium', 3: 'Hard', 4: 'Elite', 5: 'Master' };

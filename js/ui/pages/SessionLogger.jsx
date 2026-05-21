@@ -3,6 +3,7 @@
 
 import React, { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Check, Circle, Sun, Moon, Play, Dumbbell, BarChart } from 'lucide-react';
 import { useAppStore } from '../../stores/useAppStore.js';
 import EmptyState from '../components/EmptyState.jsx';
 import { Collapsible as CollapsiblePrimitive } from '@base-ui/react/collapsible';
@@ -10,19 +11,19 @@ import { Collapsible as CollapsiblePrimitive } from '@base-ui/react/collapsible'
 /* ---------- sub-components ---------- */
 
 function ReadinessPill({ status }) {
-  const STATUS_ICON = { green: '✓', yellow: '○', red: '●' };
+  const STATUS_ICON = { green: React.createElement(Check, { size: 20 }), yellow: React.createElement(Circle, { size: 20 }), red: React.createElement(Circle, { size: 20, fill: 'currentColor' }) };
   return React.createElement(
     'span',
     { className: `pill ${status} font-caption`, style: { padding: '0.15rem 0.5rem' } },
-    STATUS_ICON[status] || '⚪'
+    STATUS_ICON[status] || React.createElement(Circle, { size: 20 })
   );
 }
 
 function SessionRow({ session }) {
   const dateStr = session.date ? session.date.slice(5) : '??';
-  const typeLabel = session.type === 'morning' ? '☀️' :
-    session.type === 'evening' ? '🌙' :
-    session.type ? `🏃 ${session.type}` : '🏃';
+  const typeLabel = session.type === 'morning' ? React.createElement(Sun, { size: 20 }) :
+    session.type === 'evening' ? React.createElement(Moon, { size: 20 }) :
+    session.type ? React.createElement(Play, { size: 20 }) + ` ${session.type}` : React.createElement(Play, { size: 20 });
 
   return React.createElement(
     'div',
@@ -78,7 +79,7 @@ export default function SessionLogger() {
         CollapsiblePrimitive.Panel,
         { className: 'collapsible-content' },
         trainSessions.length === 0
-          ? React.createElement(EmptyState, { icon: '🏋️', title: 'Тренировок пока нет', subtitle: 'Отметьте выполненную тренировку на главной' })
+          ? React.createElement(EmptyState, { icon: React.createElement(Dumbbell, { size: 20 }), title: 'Тренировок пока нет', subtitle: 'Отметьте выполненную тренировку на главной' })
           : trainSessions.map(s =>
               React.createElement(SessionRow, { key: s.key || s.date + s.type, session: s })
             )
@@ -104,7 +105,7 @@ export default function SessionLogger() {
         CollapsiblePrimitive.Panel,
         { className: 'collapsible-content' },
         testSessions.length === 0
-          ? React.createElement(EmptyState, { icon: '📊', title: 'Тестов пока нет', subtitle: 'Тесты проводятся в день C при зелёной готовности' })
+          ? React.createElement(EmptyState, { icon: React.createElement(BarChart, { size: 20 }), title: 'Тестов пока нет', subtitle: 'Тесты проводятся в день C при зелёной готовности' })
           : testSessions.map((s, i) => {
               const tr = s.testResults || {};
               return React.createElement(

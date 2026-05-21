@@ -17,19 +17,19 @@ export const TOOLTIPS = {
     term: 'Recovery Score',
     i18nTitle: 'tooltips.recoveryScore.title',
     i18nDescription: 'tooltips.recoveryScore.description',
-    icon: '💚',
+    icon: 'Heart',
   },
   readiness: {
     term: 'Готовность',
     i18nTitle: 'tooltips.readiness.title',
     i18nDescription: 'tooltips.readiness.description',
-    icon: '📊',
+    icon: 'BarChart3',
   },
   hrv: {
     term: 'HRV',
     i18nTitle: 'tooltips.hrv.title',
     i18nDescription: 'tooltips.hrv.description',
-    icon: '💓',
+    icon: 'Heart',
   },
   
   // Training
@@ -37,19 +37,19 @@ export const TOOLTIPS = {
     term: 'APRE',
     i18nTitle: 'tooltips.apre.title',
     i18nDescription: 'tooltips.apre.description',
-    icon: '📈',
+    icon: 'TrendingUp',
   },
   rpe: {
     term: 'RPE',
     i18nTitle: 'tooltips.rpe.title',
     i18nDescription: 'tooltips.rpe.description',
-    icon: '⚡',
+    icon: 'Zap',
   },
   deload: {
     term: 'Разгрузка',
     i18nTitle: 'tooltips.deload.title',
     i18nDescription: 'tooltips.deload.description',
-    icon: '🔄',
+    icon: 'RefreshCw',
   },
   
   // Check-in metrics
@@ -57,13 +57,13 @@ export const TOOLTIPS = {
     term: 'Сон',
     i18nTitle: 'tooltips.sleep.title',
     i18nDescription: 'tooltips.sleep.description',
-    icon: '😴',
+    icon: 'Moon',
   },
   restingHR: {
     term: 'ЧСС покоя',
     i18nTitle: 'tooltips.restingHR.title',
     i18nDescription: 'tooltips.restingHR.description',
-    icon: '❤️',
+    icon: 'Heart',
   },
   
   // Exercise
@@ -71,7 +71,7 @@ export const TOOLTIPS = {
     term: 'Упражнение',
     i18nTitle: 'tooltips.exercise.title',
     i18nDescription: 'tooltips.exercise.description',
-    icon: '🏋️',
+    icon: 'Dumbbell',
   },
   
   // Trends
@@ -79,7 +79,7 @@ export const TOOLTIPS = {
     term: 'Тренд',
     i18nTitle: 'tooltips.sparkline.title',
     i18nDescription: 'tooltips.sparkline.description',
-    icon: '📉',
+    icon: 'TrendingDown',
   },
   
   // Streak
@@ -87,7 +87,7 @@ export const TOOLTIPS = {
     term: 'Серия',
     i18nTitle: 'tooltips.streak.title',
     i18nDescription: 'tooltips.streak.description',
-    icon: '🔥',
+    icon: 'Flame',
   },
 };
 

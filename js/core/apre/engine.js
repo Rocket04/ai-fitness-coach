@@ -284,6 +284,9 @@ export function isStrengthExercise(ex) {
  * Загружает APRE-данные из последней завершённой сессии (previousApreResults),
  * если они доступны.
  *
+ * Только первые 2 силовых упражнения в плане помечаются как APRE.
+ * Остальные силовые упражнения остаются isApre: false.
+ *
  * @param {Array<import('../../core/types.js').Exercise>} exercises
  * @param {import('../../core/types.js').ApreExerciseResult[]} [previousApreResults=[]]
  * @returns {Array<import('../../core/types.js').Exercise>}
@@ -291,8 +294,14 @@ export function isStrengthExercise(ex) {
 export function annotateExercisesWithApre(exercises, previousApreResults = []) {
   if (!exercises) return [];
 
+  let strengthCount = 0;
+  const maxApreExercises = 2;
+
   return exercises.map(ex => {
     if (!isStrengthExercise(ex)) return ex;
+
+    strengthCount++;
+    const isApre = strengthCount <= maxApreExercises;
 
     // Ищем предыдущий результат для этого упражнения
     const prev = previousApreResults.find(r => r.exerciseName === ex.n);
@@ -302,7 +311,7 @@ export function annotateExercisesWithApre(exercises, previousApreResults = []) {
 
     return {
       ...ex,
-      isApre: true,
+      isApre,
       protocol,
       isCalisthenics: true, // в текущем плане — только калистеника
       unit: 'kg',

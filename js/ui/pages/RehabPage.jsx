@@ -1,7 +1,8 @@
 import React from 'react';
+import { Sun, Moon } from 'lucide-react';
 import { MORNING_ROUTINE, EVENING_ROUTINE } from '../../config/constants.js';
 
-function RoutineList({ title, routines, done, onMarkDone, color, icon }) {
+function RoutineList({ title, routines, done, onMarkDone, color, iconComponent }) {
   const items = routines.map((item, i) =>
     React.createElement(
       'div',
@@ -39,7 +40,7 @@ function RoutineList({ title, routines, done, onMarkDone, color, icon }) {
           marginBottom: 'var(--spacing-sm)',
         }
       },
-      React.createElement('h3', { style: { margin: 0, fontSize: '1.05rem' } }, `${icon} ${title}`),
+      React.createElement('h3', { style: { margin: 0, fontSize: '1.05rem', display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)' } }, iconComponent, title),
       React.createElement(
         'button',
         {
@@ -68,14 +69,14 @@ export default function RehabPage({ morningDone, eveningDone, markMorning, markE
       routines: MORNING_ROUTINE,
       done: morningDone,
       onMarkDone: markMorning,
-      icon: '\u2600\uFE0F',
+      iconComponent: React.createElement(Sun, { size: 20 }),
     }),
     React.createElement(RoutineList, {
       title: 'Вечернее расслабление',
       routines: EVENING_ROUTINE,
       done: eveningDone,
       onMarkDone: markEvening,
-      icon: '\uD83C\uDF19',
+      iconComponent: React.createElement(Moon, { size: 20 }),
     })
   );
 }

@@ -2,6 +2,7 @@
 // Умный сворачиваемый блок советов тренера (Вариант 3)
 
 import React, { useState, useMemo } from 'react';
+import { Check, AlertTriangle, Circle, Activity, Moon, BarChart, Trophy, X, Minus, Pause, Brain, Sparkles } from 'lucide-react';
 import { useAppStore } from '../../stores/useAppStore.js';
 import { detectNegativeTrends } from '../../core/analytics.js';
 import Collapsible from '../components/Collapsible.jsx';
@@ -25,7 +26,7 @@ export default function CoachAdvice() {
     const items = [];
     if (overtrainingWarning) {
       items.push({
-        icon: '\uD83D\uDEA8',
+        icon: React.createElement(AlertTriangle, { size: 20 }),
         color: 'red',
         title: overtrainingWarning.title,
         text: overtrainingWarning.message,
@@ -34,7 +35,7 @@ export default function CoachAdvice() {
     } else if (trendWarnings && trendWarnings.length > 0) {
       const w = trendWarnings[0];
       items.push({
-        icon: '\u26A0\uFE0F',
+        icon: React.createElement(AlertTriangle, { size: 20 }),
         color: 'yellow',
         title: `\u0422\u0440\u0435\u043D\u0434: ${w.metric}`,
         text: w.message,
@@ -46,7 +47,7 @@ export default function CoachAdvice() {
       for (const w of direct) {
         if (items.some(x => x.title.includes(w.metric))) continue;
         items.push({
-          icon: w.severity === 'high' ? '\uD83D\uDD34' : '\uD83D\uDFE1',
+          icon: w.severity === 'high' ? React.createElement(Circle, { size: 20, fill: 'currentColor' }) : React.createElement(Circle, { size: 20 }),
           color: w.severity === 'high' ? 'red' : 'yellow',
           title: `\u041F\u0440\u0435\u0434\u0443\u043F\u0440\u0435\u0436\u0434\u0435\u043D\u0438\u0435: ${w.metric}`,
           text: w.message,
@@ -76,7 +77,7 @@ export default function CoachAdvice() {
     });
     if (bWithPain.length >= 2 && bSessions.length > 0) {
       items.push({
-        icon: '\uD83C\uDFD0',
+        icon: React.createElement(Activity, { size: 20 }),
         title: 'Foam rolling \u043F\u043E\u0441\u043B\u0435 \u0442\u0438\u043F\u0430 B',
         text: `\u041F\u043E\u0441\u043B\u0435 ${bWithPain.length} \u0438\u0437 ${bSessions.length} \u0442\u0440\u0435\u043D\u0438\u0440\u043E\u0432\u043E\u043A \u0442\u0438\u043F\u0430 B \u043E\u0442\u043C\u0435\u0447\u0430\u043B\u0430\u0441\u044C \u0431\u043E\u043B\u044C. \u0414\u043E\u0431\u0430\u0432\u044C \u043C\u0424\u0420 \u0432 \u0432\u0435\u0447\u0435\u0440\u043D\u044E\u044E \u0440\u0443\u0442\u0438\u043D\u0443.`,
       });
@@ -97,7 +98,7 @@ export default function CoachAdvice() {
         const avg = values.reduce((a, b) => a + b, 0) / values.length;
         if (avg <= 2) {
           items.push({
-            icon: '\uD83C\uDF7D\uFE0F',
+            icon: React.createElement(Activity, { size: 20 }),
             title: `\u041D\u0438\u0437\u043A\u0430\u044F \u044D\u043D\u0435\u0440\u0433\u0438\u044F \u043F\u043E ${dayNames[Number(day)]}`,
             text: `\u0421\u0440\u0435\u0434\u043D\u044F\u044F \u044D\u043D\u0435\u0440\u0433\u0438\u044F \u2014 ${avg.toFixed(1)}/5. \u041F\u043E\u043F\u0440\u043E\u0431\u0443\u0439 \u0443\u0432\u0435\u043B\u0438\u0447\u0438\u0442\u044C \u043A\u0430\u043B\u043E\u0440\u0438\u0438 \u0432 \u044D\u0442\u043E\u0442 \u0434\u0435\u043D\u044C.`,
           });
@@ -112,7 +113,7 @@ export default function CoachAdvice() {
     const poorSleep = recentCheckins.filter(c => Number(c.sleepQuality) > 0 && Number(c.sleepQuality) <= 2);
     if (poorSleep.length >= 3) {
       items.push({
-        icon: '\uD83C\uDF19',
+        icon: React.createElement(Moon, { size: 20 }),
         title: '\u041F\u0440\u043E\u0431\u043B\u0435\u043C\u044B \u0441\u043E \u0441\u043D\u043E\u043C',
         text: `${poorSleep.length} \u0438\u0437 \u043F\u043E\u0441\u043B\u0435\u0434\u043D\u0438\u0445 5 \u0447\u0435\u043A\u0438\u043D\u043E\u0432 \u2014 \u043F\u043B\u043E\u0445\u043E\u0435 \u043A\u0430\u0447\u0435\u0441\u0442\u0432\u043E \u0441\u043D\u0430. \u041F\u0440\u043E\u0432\u0435\u0440\u044C \u0433\u0438\u0433\u0438\u0435\u043D\u0443 \u0441\u043D\u0430.`,
       });
@@ -133,7 +134,7 @@ export default function CoachAdvice() {
       .sort((a, b) => (b.date || '').localeCompare(a.date || ''))[0];
     if (lastTraining && typeof lastTraining.sessionLoad === 'number') {
       const loadItem = {
-        icon: '\uD83D\uDCAA',
+        icon: React.createElement(BarChart, { size: 20 }),
         text: [`Последняя нагрузка: ${lastTraining.sessionLoad} у.е.`, React.createElement(HelpIcon, { term: 'Session Load', definition: 'Внутренняя тренировочная нагрузка = RPE × длительность (мин). Позволяет сравнивать тренировки разной интенсивности.' })],
       };
       if (lastTraining.sessionLoad > 400) {
@@ -145,7 +146,7 @@ export default function CoachAdvice() {
     if (apreReasons && apreReasons.length > 0) {
       for (const r of apreReasons) {
         items.push({
-          icon: '\uD83C\uDFAF',
+          icon: React.createElement(Trophy, { size: 20 }),
           text: [r, React.createElement(HelpIcon, { term: 'APRE', definition: 'Метод автоматической регулировки нагрузки по субъективной интенсивности (RPE).' })]
         });
       }
@@ -154,18 +155,18 @@ export default function CoachAdvice() {
     if (sessionPlan) {
       if (readiness === 'red') {
         items.push({
-          icon: '\u274C',
+          icon: React.createElement(X, { size: 20 }),
           text: ['\u0417\u0430\u043C\u0435\u043D\u0438 \u0431\u0435\u0433 Z3 \u043D\u0430 Z2 (\u043C\u0430\u043A\u0441\u0438\u043C\u0443\u043C 130\u2013140 \u0443\u0434/\u043C\u0438\u043D). \u0423\u0431\u0435\u0440\u0438 \u0438\u043D\u0442\u0435\u0440\u0432\u0430\u043B\u044B \u0438 \u0442\u0435\u043C\u043F\u043E\u0432\u044B\u0435 \u043E\u0442\u0440\u0435\u0437\u043A\u0438.', React.createElement(HelpIcon, { term: 'Recovery Score', definition: 'Комплексный индекс восстановления (0-100%), основанный на HRV, сне, ЧСС покоя и субъективных ощущениях.' })],
         });
       } else if (readiness === 'yellow') {
         items.push({
-          icon: '\u2796',
+          icon: React.createElement(Minus, { size: 20 }),
           text: ['\u0421\u0434\u0435\u043B\u0430\u0439 \u043D\u0430 1 \u043F\u043E\u0434\u0445\u043E\u0434 \u043C\u0435\u043D\u044C\u0448\u0435 \u0432 \u043A\u0430\u0436\u0434\u043E\u043C \u0441\u0438\u043B\u043E\u0432\u043E\u043C \u0443\u043F\u0440\u0430\u0436\u043D\u0435\u043D\u0438\u0438. \u0411\u0435\u0433 \u2014 \u0442\u043E\u043B\u044C\u043A\u043E Zone 1\u20132.', React.createElement(HelpIcon, { term: 'RPE', definition: 'Rating of Perceived Exertion — шкала субъективной интенсивности от 0 (отдых) до 10 (максимум усилий).' })],
         });
       }
       if (recoveryDebt) {
         items.push({
-          icon: '\u23F8\uFE0F',
+          icon: React.createElement(Pause, { size: 20 }),
           text: ['\u041E\u0431\u043D\u0430\u0440\u0443\u0436\u0435\u043D\u0430 \u043D\u0430\u043A\u043E\u043F\u043B\u0435\u043D\u043D\u0430\u044F \u0443\u0441\u0442\u0430\u043B\u043E\u0441\u0442\u044C (Recovery Debt). \u0414\u043E\u0431\u0430\u0432\u044C 1 \u0434\u043E\u043F\u043E\u043B\u043D\u0438\u0442\u0435\u043B\u044C\u043D\u044B\u0439 \u0434\u0435\u043D\u044C \u043E\u0442\u0434\u044B\u0445\u0430.', React.createElement(HelpIcon, { term: 'Recovery Debt', definition: 'Накопленная усталость от нескольких дней недостаточного восстановления. Требует дополнительного отдыха для предотвращения перетренированности.' })],
         });
       }
@@ -175,14 +176,14 @@ export default function CoachAdvice() {
       const stress = Number(lastCheckin.stress);
       if (stress >= 4) {
         items.push({
-          icon: '\uD83E\uDECC',
+          icon: React.createElement(Brain, { size: 20 }),
           text: 'Box breathing: 4-4-4-4. 5\u20138 \u043C\u0438\u043D\u0443\u0442 \u043F\u0435\u0440\u0435\u0434 \u0441\u043D\u043E\u043C.',
         });
       }
       const soreness = Number(lastCheckin.muscleSoreness);
       if (soreness >= 4) {
         items.push({
-          icon: '\uD83E\uDDD8',
+          icon: React.createElement(Activity, { size: 20 }),
           text: '\u041C\u044B\u0448\u0435\u0447\u043D\u0430\u044F \u0431\u043E\u043B\u0435\u0437\u043D\u0435\u043D\u043D\u043E\u0441\u0442\u044C \u0432\u044B\u0441\u043E\u043A\u0430\u044F. 10 \u043C\u0438\u043D \u0440\u0430\u0441\u0442\u044F\u0436\u043A\u0438 + \u041C\u0424\u0420.',
         });
       }
@@ -200,7 +201,7 @@ export default function CoachAdvice() {
       React.createElement(
         'div',
         { style: { display: 'flex', alignItems: 'flex-start', gap: 'var(--spacing-sm)' } },
-        React.createElement('span', { style: { fontSize: '1.3rem' } }, '✓'),
+        React.createElement('span', { style: { fontSize: '1.3rem' } }, React.createElement(Check, { size: 20 })),
         React.createElement(
           'div',
           null,
@@ -222,7 +223,7 @@ export default function CoachAdvice() {
     {
       open,
       onToggle: toggle,
-      title: '\uD83E\uDDE0 \u0421\u043E\u0432\u0435\u0442\u044B \u0442\u0440\u0435\u043D\u0435\u0440\u0430',
+      title: React.createElement(Brain, { size: 20 }) + ' \u0421\u043E\u0432\u0435\u0442\u044B \u0442\u0440\u0435\u043D\u0435\u0440\u0430',
       summary: `${predictive.length + personalized.length + concrete.length} \u0441\u043E\u0432\u0435\u0442\u043E\u0432`,
       contentStyle: { display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)' },
     },
@@ -234,7 +235,7 @@ export default function CoachAdvice() {
       React.createElement(
         'h5',
         { style: { margin: '0 0 var(--spacing-xs)', color: 'var(--yellow)', fontSize: 'var(--font-size-body)' } },
-        '\uD83D\uDD2E \u041F\u0440\u0435\u0434\u0438\u043A\u0442\u0438\u0432\u043D\u044B\u0435 \u043F\u0440\u0435\u0434\u0443\u043F\u0440\u0435\u0436\u0434\u0435\u043D\u0438\u044F'
+        React.createElement(Sparkles, { size: 20 }) + ' \u041F\u0440\u0435\u0434\u0438\u043A\u0442\u0438\u0432\u043D\u044B\u0435 \u043F\u0440\u0435\u0434\u0443\u043F\u0440\u0435\u0436\u0434\u0435\u043D\u0438\u044F'
       ),
       ...predictive.map((w, i) => React.createElement(
         'div',
@@ -264,7 +265,7 @@ export default function CoachAdvice() {
       React.createElement(
         'h5',
         { style: { margin: 'var(--spacing-sm) 0 var(--spacing-xs)', color: 'var(--blue)', fontSize: 'var(--font-size-body)' } },
-        '\uD83D\uDCCA \u041F\u0435\u0440\u0441\u043E\u043D\u0430\u043B\u0438\u0437\u0438\u0440\u043E\u0432\u0430\u043D\u043D\u044B\u0435 \u0441\u043E\u0432\u0435\u0442\u044B'
+        React.createElement(BarChart, { size: 20 }) + ' \u041F\u0435\u0440\u0441\u043E\u043D\u0430\u043B\u0438\u0437\u0438\u0440\u043E\u0432\u0430\u043D\u043D\u044B\u0435 \u0441\u043E\u0432\u0435\u0442\u044B'
       ),
       ...personalized.map((t, i) => React.createElement(
         'div',
@@ -289,7 +290,7 @@ export default function CoachAdvice() {
       React.createElement(
         'h5',
         { style: { margin: 'var(--spacing-sm) 0 var(--spacing-xs)', color: 'var(--green)', fontSize: 'var(--font-size-body)' } },
-        '\uD83C\uDFAF \u041A\u043E\u043D\u043A\u0440\u0435\u0442\u043D\u044B\u0435 \u0440\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0430\u0446\u0438\u0438'
+        React.createElement(Trophy, { size: 20 }) + ' \u041A\u043E\u043D\u043A\u0440\u0435\u0442\u043D\u044B\u0435 \u0440\u0435\u043A\u043E\u043C\u0435\u043D\u0434\u0430\u0446\u0438\u0438'
       ),
       ...concrete.map((r, i) => React.createElement(
         'div',

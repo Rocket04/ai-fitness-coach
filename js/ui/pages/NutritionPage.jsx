@@ -1,4 +1,5 @@
 import React, { } from 'react';
+import { AlertTriangle, Star } from 'lucide-react';
 import { useAppStore } from '../../stores/useAppStore.js';
 import { NUTRITION } from '../../config/constants.js';
 
@@ -63,7 +64,7 @@ export default function NutritionPage() {
       React.createElement(
         'td',
         { style: { padding: 'var(--spacing-sm) var(--spacing-sm)', fontWeight: isHighlighted ? 700 : 400, fontSize: 'var(--font-size-body)' } },
-        isHighlighted ? '\u2B50 ' : '',
+        isHighlighted ? React.createElement(Star, { size: 14, style: { display: 'inline-block', marginRight: '4px' } }) : null,
         item.label
       ),
       React.createElement(
@@ -130,7 +131,10 @@ export default function NutritionPage() {
       React.createElement(
         'p',
         { style: { fontSize: 'var(--font-size-body)', color: 'var(--text2)', margin: 0, lineHeight: 1.6 } },
-        '\u26A0\uFE0F При астме важно получать достаточно белка и магния. Дефицит магния усугубляет бронхоспазм.'
+        React.createElement('span', { style: { display: 'flex', alignItems: 'flex-start', gap: 'var(--spacing-xs)' } },
+          React.createElement(AlertTriangle, { size: 16, style: { flexShrink: 0, marginTop: '2px' } }),
+          'При астме важно получать достаточно белка и магния. Дефицит магния усугубляет бронхоспазм.'
+        )
       )
     )
   );

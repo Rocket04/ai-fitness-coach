@@ -1,5 +1,6 @@
 // js/ui/components/ErrorBoundary.js
 import React from 'react';
+import { AlertTriangle } from 'lucide-react';
 
 export class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -22,7 +23,7 @@ export class ErrorBoundary extends React.Component {
       }
       return (
         <div className="card" style={{ textAlign: 'center', padding: 'var(--spacing-xl)' }}>
-          <div style={{ fontSize: '2rem', marginBottom: 'var(--spacing-md)' }}>⚠️</div>
+          <div style={{ fontSize: '2rem', marginBottom: 'var(--spacing-md)' }}><AlertTriangle size={32} /></div>
           <p style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--spacing-md)' }}>
             Что-то пошло не так. Попробуйте перезагрузить страницу.
           </p>

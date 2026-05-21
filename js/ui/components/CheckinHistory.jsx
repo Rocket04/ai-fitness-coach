@@ -2,10 +2,11 @@
 // Список последних чек-инов с датой, Recovery Score и статусом
 
 import React, { useState } from 'react';
+import { Check, Circle, Moon } from 'lucide-react';
 import { calculateRecoveryScore } from '../../core/recoveryScore.js';
 import Collapsible from './Collapsible.jsx';
 
-const STATUS_ICON = { green: '✓', yellow: '○', red: '●' };
+const STATUS_ICON = { green: React.createElement(Check, { size: 20 }), yellow: React.createElement(Circle, { size: 20 }), red: React.createElement(Circle, { size: 20, fill: 'currentColor' }) };
 
 function CheckinRow({ checkin, allCheckins }) {
   const score = calculateRecoveryScore(checkin, allCheckins);
@@ -17,7 +18,7 @@ function CheckinRow({ checkin, allCheckins }) {
     'div',
     { className: 'checkin-row' },
     React.createElement('span', { className: 'checkin-row__date font-mono font-caption' }, dateStr),
-    React.createElement('span', { className: 'checkin-row__status' }, STATUS_ICON[status] || '⚪'),
+    React.createElement('span', { className: 'checkin-row__status' }, STATUS_ICON[status] || React.createElement(Circle, { size: 20 })),
     React.createElement(
       'span',
       { className: 'checkin-row__score font-mono font-caption', style: { color: scoreColor } },
@@ -26,7 +27,7 @@ function CheckinRow({ checkin, allCheckins }) {
     React.createElement(
       'span',
       { className: 'checkin-row__meta font-caption text-secondary' },
-      checkin.sleepHours > 0 ? `💤 ${checkin.sleepHours}ч` : '',
+      checkin.sleepHours > 0 ? React.createElement(React.Fragment, null, React.createElement(Moon, { size: 20 }), ` ${checkin.sleepHours}ч`) : '',
       checkin.hrv > 0 ? ` HRV ${checkin.hrv}` : ''
     )
   );

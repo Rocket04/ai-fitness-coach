@@ -2,6 +2,7 @@
 // Отображение текущего плана тренировки + APRE объяснение
 
 import React from 'react';
+import { Flask, Check, Zap, Battery, Mountain } from 'lucide-react';
 
 function ExerciseCard({ ex }) {
   const setsReps = ex.s && ex.s !== '—' ? `${ex.s} × ` : '';
@@ -11,7 +12,7 @@ function ExerciseCard({ ex }) {
       className: `exercise ${ex.isTest ? 'exercise-test' : ''}`,
     },
     React.createElement('div', { className: 'exercise-name' },
-      ex.isTest && React.createElement('span', { className: 'text-yellow mr-xs font-weight-700' }, '🔬 '),
+      ex.isTest && React.createElement('span', { className: 'text-yellow mr-xs font-weight-700' }, React.createElement(Flask, { size: 20 }), ' '),
       ex.n
     ),
     React.createElement('div', { className: 'exercise-detail' }, `${setsReps}${ex.r}`),
@@ -21,7 +22,7 @@ function ExerciseCard({ ex }) {
 }
 
 const DAY_NAMES = { A: 'ПН', B: 'СР', C: 'ПТ' };
-const MODE_LABELS = { full: '✅ Полный', yellow: '⚡ Облегчённый', minimum: '🔋 Минимальный' };
+const MODE_LABELS = { full: React.createElement(Check, { size: 20 }) + ' Полный', yellow: React.createElement(Zap, { size: 20 }) + ' Облегчённый', minimum: React.createElement(Battery, { size: 20 }) + ' Минимальный' };
 const MODE_COLORS = { full: 'var(--green)', yellow: 'var(--yellow)', minimum: 'var(--red)' };
 
 export default function SessionPlan({ sessionPlan, trainType, weekLabel, apreReasons }) {
@@ -61,7 +62,7 @@ export default function SessionPlan({ sessionPlan, trainType, weekLabel, apreRea
         ? React.createElement(
             'div',
             { className: 'text-center text-muted', style: { padding: '2rem 0' } },
-            React.createElement('div', { style: { fontSize: '2rem' }, className: 'mb-sm' }, '🏔️'),
+            React.createElement('div', { style: { fontSize: '2rem' }, className: 'mb-sm' }, React.createElement(Mountain, { size: 20 })),
             React.createElement('div', { style: { fontSize: '0.9rem' } }, 'Сегодня восстановление'),
             React.createElement('div', { style: { fontSize: '0.8rem', color: 'var(--text3)', marginTop: 'var(--spacing-xs)' } }, 'Утренняя рутина + прогулка Zone 1 40–50 мин')
           )

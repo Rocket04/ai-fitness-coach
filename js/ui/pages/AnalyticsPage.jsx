@@ -3,11 +3,13 @@
 
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { TrendingUp, BarChart } from 'lucide-react';
 import { useAppStore } from '../../stores/useAppStore.js';
 import TrendChart from './TrendChart.jsx';
 import WarningsList from './WarningsList.jsx';
 import WeeklySummary from './WeeklySummary.jsx';
 import EmptyState from '../components/EmptyState.jsx';
+import { SkeletonLine } from '../components/Skeleton.jsx';
 
 export default function AnalyticsPage() {
   const { t } = useTranslation();
@@ -21,7 +23,7 @@ export default function AnalyticsPage() {
   const {
     trendData7, trendData30, rpeTrend7, rpeTrend30,
     weeklyAverages, trendWarnings, overtrainingWarning,
-    weeklySummary, monthStats,
+    weeklySummary, monthStats, setActiveTab,
   } = state;
 
   const [trendDays, setTrendDays] = useState(7);
@@ -29,23 +31,73 @@ export default function AnalyticsPage() {
   const currentTrend = trendDays === 7 ? trendData7 : trendData30;
   const currentRpe = trendDays === 7 ? rpeTrend7 : rpeTrend30;
 
+  const scoreColor = 'var(--green)';
+  const hrvColor = 'var(--blue)';
+  const hrColor = 'var(--yellow)';
+  const rpeColor = 'var(--accent)';
+
   if (!currentTrend || currentTrend.length < 2) {
     return React.createElement(
       'div',
       { className: 'page-enter' },
       React.createElement('h2', null, t('analytics.title')),
       React.createElement(EmptyState, {
-        icon: '📈',
+        icon: React.createElement(TrendingUp, { size: 20 }),
         title: t('analytics.insufficientData'),
         subtitle: t('analytics.needMinimumCheckins'),
-      })
+      }),
+      React.createElement(
+        'button',
+        {
+          className: 'btn btn-accent w-full mt-md',
+          onClick: () => setActiveTab(1),
+          style: { maxWidth: '300px', margin: 'var(--spacing-md) auto', display: 'block' }
+        },
+        t('analytics.goToCheckin')
+      ),
+      // Skeleton chart placeholders
+      React.createElement(
+        'div',
+        { className: 'card chart-card mt-lg' },
+        React.createElement(
+          'div',
+          { className: 'chart-header' },
+          React.createElement('span', { className: 'chart-title', style: { color: scoreColor } }, t('analytics.recoveryScore'))
+        ),
+        React.createElement(SkeletonLine, { width: '100%', height: '120px', borderRadius: '8px' })
+      ),
+      React.createElement(
+        'div',
+        { className: 'card chart-card mt-md' },
+        React.createElement(
+          'div',
+          { className: 'chart-header' },
+          React.createElement('span', { className: 'chart-title', style: { color: hrvColor } }, t('analytics.hrv'))
+        ),
+        React.createElement(SkeletonLine, { width: '100%', height: '120px', borderRadius: '8px' })
+      ),
+      React.createElement(
+        'div',
+        { className: 'card chart-card mt-md' },
+        React.createElement(
+          'div',
+          { className: 'chart-header' },
+          React.createElement('span', { className: 'chart-title', style: { color: hrColor } }, t('analytics.restHR'))
+        ),
+        React.createElement(SkeletonLine, { width: '100%', height: '120px', borderRadius: '8px' })
+      ),
+      React.createElement(
+        'div',
+        { className: 'card chart-card mt-md' },
+        React.createElement(
+          'div',
+          { className: 'chart-header' },
+          React.createElement('span', { className: 'chart-title', style: { color: rpeColor } }, t('analytics.rpe'))
+        ),
+        React.createElement(SkeletonLine, { width: '100%', height: '120px', borderRadius: '8px' })
+      )
     );
   }
-
-  const scoreColor = 'var(--green)';
-  const hrvColor = 'var(--blue)';
-  const hrColor = 'var(--yellow)';
-  const rpeColor = 'var(--accent)';
 
   return React.createElement(
     'div',
@@ -243,7 +295,7 @@ export default function AnalyticsPage() {
       React.createElement(
         'div',
         { className: 'empty-state' },
-        React.createElement('div', { className: 'empty-state-icon' }, '📊'),
+        React.createElement('div', { className: 'empty-state-icon' }, React.createElement(BarChart, { size: 20 })),
         React.createElement('div', { className: 'empty-state-text' }, 'Пока нет данных для анализа.'),
         React.createElement(
           'div',

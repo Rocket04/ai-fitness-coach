@@ -2,6 +2,7 @@
 // Форма ежедневного чек-ина — premium ленточный стиль
 
 import React, { useState } from 'react';
+import { Moon, Clock, Sparkles, Heart, Activity, Scale, Wind, Brain, Zap, Smile, Dumbbell, AlertTriangle, Armchair, FileText, Check } from 'lucide-react';
 import { useAppStore } from '../../stores/useAppStore.js';
 import { useTranslation } from 'react-i18next';
 import ScaleSelector from '../components/ScaleSelector.jsx';
@@ -156,6 +157,7 @@ export default function CheckinForm() {
     handleSaveCheckin,
     checkins,
     showToast,
+    todayISO,
   } = useAppStore();
   const [showCheckin, setShowCheckin] = useState(true);
   const [validationError, setValidationError] = useState(null);
@@ -163,61 +165,65 @@ export default function CheckinForm() {
 
   const breathingFilled = breathing && breathing !== 'good';
 
+  // Check if today's check-in already exists
+  const isTodayFilled = checkins.some(c => c.date === todayISO);
+  const collapsibleTitle = t('checkin.daily') + (isTodayFilled ? ` (${t('checkin.filled')})` : '');
+
   return React.createElement(
     Collapsible,
-    { open: showCheckin, onToggle: (open) => setShowCheckin(open), title: t('checkin.daily') },
+    { open: showCheckin, onToggle: (open) => setShowCheckin(open), title: collapsibleTitle },
 
     React.createElement(
       'div',
       { className: 'checkin-form' },
 
-      /* ── 💤 Сон ─────────────────────────────────────────────── */
+      /* ── Сон ─────────────────────────────────────────────── */
       React.createElement(
         'div',
         { className: 'checkin-section' },
-        React.createElement(SectionTitle, { icon: '💤', title: 'Сон' }),
+        React.createElement(SectionTitle, { icon: React.createElement(Moon, { size: 20 }), title: 'Сон' }),
         React.createElement(NumberRow, {
-          icon: '🕐', label: 'Длительность', sublabel: 'часов',
+          icon: React.createElement(Clock, { size: 20 }), label: 'Длительность', sublabel: 'часов',
           value: sleepHours, onChange: setSleepHours,
           min: 0, max: 16, step: 0.5,
           filled: sleepHours > 0,
         }),
         React.createElement(ScaleRow, {
-          icon: '✨', label: 'Качество', sublabel: 'как спалось',
+          icon: React.createElement(Sparkles, { size: 20 }), label: 'Качество', sublabel: 'как спалось',
           value: sleepQuality, onChange: setSleepQuality,
           labels: SLEEPQ_LABELS, filled: sleepQuality > 0,
         }),
         React.createElement(SparklineRow, { data: getLast7Values(checkins, 'sleepHours'), label: 'Сон, 7 дней', color: 'var(--blue)' })
       ),
 
-      /* ── 💓 Биометрика ──────────────────────────────────────── */
+      /* ── Биометрика ──────────────────────────────────────── */
       React.createElement(
         'div',
         { className: 'checkin-section' },
-        React.createElement(SectionTitle, { icon: '💓', title: 'Биометрика' }),
+        React.createElement(SectionTitle, { icon: React.createElement(Heart, { size: 20 }), title: 'Биометрика' }),
         React.createElement(NumberRow, {
-          icon: '❤️', label: 'ЧСС покоя', sublabel: 'уд/мин',
+          icon: React.createElement(Heart, { size: 20 }), label: 'ЧСС покоя', sublabel: 'уд/мин',
           value: restHR, onChange: setRestHR,
           min: 30, max: 120,
           filled: restHR > 0,
           trend: React.createElement(TrendIndicator, { current: restHR, history: getLast7Values(checkins, 'restHR'), unit: 'уд/мин', inverse: true }),
         }),
         React.createElement(NumberRow, {
-          icon: '📡', label: 'HRV', sublabel: 'мс',
+          icon: React.createElement(Activity, { size: 20 }), label: 'HRV', sublabel: 'мс',
           value: hrv, onChange: setHrv,
           min: 0, max: 200,
           filled: hrv > 0,
           trend: React.createElement(TrendIndicator, { current: hrv, history: getLast7Values(checkins, 'hrv'), unit: 'мс' }),
         }),
         React.createElement(NumberRow, {
-          icon: '⚖️', label: 'Вес', sublabel: 'кг',
+          icon: React.createElement(Scale, { size: 20 }), label: 'Вес', sublabel: 'кг',
           value: weight, onChange: setWeight,
           min: 0, max: 300, step: 0.5,
           filled: weight > 0,
           trend: React.createElement(TrendIndicator, { current: weight, history: getLast7Values(checkins, 'weight'), unit: 'кг' }),
         }),
         React.createElement(SelectRow, {
-          icon: '🌬️', label: 'Дыхание', sublabel: 'самочувствие',
+          icon: React.createElement(Wind, { size: 20 }), label: 'Дыхание', sublabel: 'самочувствие',
           value: breathing, onChange: setBreathing,
           filled: breathingFilled,
           options: [
@@ -228,38 +234,38 @@ export default function CheckinForm() {
         })
       ),
 
-      /* ── 🧠 Самочувствие ────────────────────────────────────── */
+      /* ── Самочувствие ────────────────────────────────────── */
       React.createElement(
         'div',
         { className: 'checkin-section' },
-        React.createElement(SectionTitle, { icon: '🧠', title: 'Самочувствие' }),
+        React.createElement(SectionTitle, { icon: React.createElement(Brain, { size: 20 }), title: 'Самочувствие' }),
         React.createElement(ScaleRow, {
-          icon: '⚡', label: 'Энергия', sublabel: 'уровень сил',
+          icon: React.createElement(Zap, { size: 20 }), label: 'Энергия', sublabel: 'уровень сил',
           value: energy, onChange: setEnergy,
           labels: ENERGY_LABELS, filled: energy > 0,
         }),
         React.createElement(ScaleRow, {
-          icon: '😊', label: 'Настроение',
+          icon: React.createElement(Smile, { size: 20 }), label: 'Настроение',
           value: mood, onChange: setMood,
           labels: MOOD_LABELS, filled: mood > 0,
         }),
         React.createElement(ScaleRow, {
-          icon: '💪', label: 'Болезненность', sublabel: 'мышц',
+          icon: React.createElement(Dumbbell, { size: 20 }), label: 'Болезненность', sublabel: 'мышц',
           value: muscleSoreness, onChange: setMuscleSoreness,
           labels: SORENESS_LABELS, filled: muscleSoreness > 0, inverse: true,
         }),
         React.createElement(ScaleRow, {
-          icon: '🌀', label: 'Стресс',
+          icon: React.createElement(Activity, { size: 20 }), label: 'Стресс',
           value: stress, onChange: setStress,
           labels: STRESS_LABELS, filled: stress > 0, inverse: true,
         }),
         React.createElement(ScaleRow, {
-          icon: '🦵', label: 'Боль в бедре',
+          icon: React.createElement(AlertTriangle, { size: 20 }), label: 'Боль в бедре',
           value: hipPain, onChange: setHipPain,
           labels: PAIN_LABELS, filled: hipPain > 0, pain: true, inverse: true,
         }),
         React.createElement(ScaleRow, {
-          icon: '🦾', label: 'Боль в плече',
+          icon: React.createElement(Armchair, { size: 20 }), label: 'Боль в плече',
           value: shoulderPain, onChange: setShoulderPain,
           labels: PAIN_LABELS, filled: shoulderPain > 0, pain: true, inverse: true,
         }),
@@ -267,7 +273,7 @@ export default function CheckinForm() {
         React.createElement(SparklineRow, { data: getLast7Values(checkins, 'muscleSoreness'), label: 'Болезненность, 7 дней', color: 'var(--red)' })
       ),
 
-      /* ── 📝 Заметки ─────────────────────────────────────────── */
+      /* ── Заметки ─────────────────────────────────────────── */
       React.createElement(
         'div',
         { className: 'checkin-section checkin-notes-row' },
@@ -275,7 +281,7 @@ export default function CheckinForm() {
           value: notes,
           onChange: e => setNotes(e.target.value),
           rows: 2,
-          placeholder: '📝  Самочувствие, стресс, питание...',
+          placeholder: 'Самочувствие, стресс, питание...',
         })
       ),
 
@@ -291,7 +297,7 @@ export default function CheckinForm() {
         saveSuccess && React.createElement(
           'div',
           { className: 'validation-success', role: 'status' },
-          '✅ Чек-ин сохранён'
+          React.createElement(Check, { size: 20 }), ' Чек-ин сохранён'
         ),
         React.createElement(
           'button',
@@ -304,8 +310,9 @@ export default function CheckinForm() {
               setValidationError(null);
               await handleSaveCheckin();
               setSaveSuccess(true);
-              showToast('✅ Чек-ин сохранён!', 'success');
+              showToast(React.createElement(Check, { size: 20 }), ' Чек-ин сохранён!', 'success');
               setTimeout(() => setSaveSuccess(false), 3000);
+              setTimeout(() => setShowCheckin(false), 500);
             },
           },
           'Сохранить чек-ин'

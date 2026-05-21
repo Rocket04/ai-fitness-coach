@@ -3,6 +3,7 @@
 
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { Moon, TrendingUp } from 'lucide-react';
 import { useAppStore } from '../../stores/useAppStore.js';
 import CheckinForm from './CheckinForm.jsx';
 import SessionLogger from './SessionLogger.jsx';
@@ -28,7 +29,7 @@ function SnapshotPanel({ recoveryScore, sleepHours, readiness, t }) {
     React.createElement(
       'div',
       { className: 'log-snapshot__col' },
-      React.createElement('span', { className: 'log-snapshot__small' }, `💤 ${sleepHours || '—'} ч`)
+      React.createElement('span', { className: 'log-snapshot__small' }, React.createElement(Moon, { size: 20 }), ` ${sleepHours || '—'} ч`)
     ),
     React.createElement(
       'div',
@@ -82,18 +83,29 @@ export default function LogPage() {
     React.createElement(CheckinForm, null),
 
     /* ═══════════════════ 2. ЖИВАЯ АНАЛИТИКА ═══════════════════ */
-    React.createElement(
-      'div',
-      { className: 'card fade-in-up', style: { animationDelay: '0.1s' } },
-      React.createElement('h4', { className: 'mb-sm font-body' }, t('log.habitsImpact')),
-      React.createElement(
+    (() => {
+      const hasMeaningfulData = correlations && correlations.some(c => c.sampleSize >= 3 && c.deltaPercent !== null);
+      if (hasMeaningfulData) {
+        return React.createElement(
+          'div',
+          { className: 'card fade-in-up', style: { animationDelay: '0.1s' } },
+          React.createElement('h4', { className: 'mb-sm font-body' }, t('log.habitsImpact')),
+          React.createElement(
+            'div',
+            { className: 'correlation-grid' },
+            correlations.map((c, i) =>
+              React.createElement(CorrelationCard, { key: i, result: c })
+            )
+          )
+        );
+      }
+      return React.createElement(
         'div',
-        { className: 'correlation-grid' },
-        correlations.map((c, i) =>
-          React.createElement(CorrelationCard, { key: i, result: c })
-        )
-      )
-    ),
+        { className: 'card fade-in-up', style: { animationDelay: '0.1s' } },
+        React.createElement('h4', { className: 'mb-sm font-body' }, t('log.habitsImpact')),
+        React.createElement('p', { className: 'text-muted font-body text-sm' }, React.createElement(TrendingUp, { size: 20 }), ' Корреляции между привычками и Recovery Score появятся после накопления достаточного количества данных. Они покажут, как сон, стресс и питание влияют на восстановление.')
+      );
+    })(),
 
     React.createElement(
       'div',

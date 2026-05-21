@@ -1,15 +1,44 @@
 // js/ui/components/OnboardingWizard.jsx
-// 3-step onboarding wizard: Welcome → Training Days → First Check-in → Recovery Explained
+// 3-step onboarding: Value → Goal+Days → Recovery Score
+// Focus: immediate action, minimal input, value-first
 
 import React, { useState } from 'react';
+import { Dumbbell, Zap, Flame, Check, Rocket, X } from 'lucide-react';
 import { DAYS, DAYS_TO_DOW } from '../../config/constants.js';
 
 const STEPS = {
-  WELCOME: 0,
-  TRAINING_DAYS: 1,
-  FIRST_CHECKIN: 2,
-  RECOVERY_EXPLAINED: 3,
+  VALUE: 0,
+  GOAL: 1,
+  RECOVERY: 2,
 };
+
+/** GOAL OPTIONS with auto-selected APRE protocols */
+const GOALS = [
+  {
+    key: 'strength',
+    title: 'Стать сильнее',
+    subtitle: 'Максимальная сила и мышечная масса',
+    apreProtocol: 'APRE_3',
+    icon: React.createElement(Dumbbell, { size: 20 }),
+    color: '#ef4444',
+  },
+  {
+    key: 'fitness',
+    title: 'Набрать форму',
+    subtitle: 'Сила + выносливость в балансе',
+    apreProtocol: 'APRE_6',
+    icon: React.createElement(Zap, { size: 20 }),
+    color: '#f59e0b',
+  },
+  {
+    key: 'fatloss',
+    title: 'Похудеть и рельеф',
+    subtitle: 'Жиросжигание и мышечный тонус',
+    apreProtocol: 'APRE_10',
+    icon: React.createElement(Flame, { size: 20 }),
+    color: '#10b981',
+  },
+];
 
 function StepIndicator({ current, total }) {
   return React.createElement('div', { className: 'onboarding-steps' },
@@ -22,200 +51,187 @@ function StepIndicator({ current, total }) {
   );
 }
 
-function WelcomeStep({ onNext }) {
-  return React.createElement('div', { className: 'onboarding-content' },
-    React.createElement('div', { className: 'onboarding-icon' }, '🎯'),
-    React.createElement('h2', { className: 'onboarding-title' }, 'Добро пожаловать!'),
-    React.createElement('p', { className: 'onboarding-text' },
-      'Smart Fitness Coach — персональный тренер, который адаптирует нагрузку под ваше состояние.'
+/** STEP 1: Value & Immediate Action */
+function ValueStep({ onNext }) {
+  return React.createElement('div', { className: 'onboarding-content onboarding-content--value' },
+    React.createElement('h1', { className: 'onboarding-headline' },
+      'Твой умный тренер готов к работе'
     ),
-    React.createElement('ul', { className: 'onboarding-features' },
-      React.createElement('li', null, '📊 Recovery Score — комплексная оценка восстановления'),
-      React.createElement('li', null, '🤖 Автоматическая корректировка тренировок'),
-      React.createElement('li', null, '📈 APRE — научная прогрессия весов'),
-      React.createElement('li', null, '🔒 Все данные на устройстве, без облака')
+    React.createElement('p', { className: 'onboarding-tagline' },
+      'Recovery Score • Авторегуляция APRE • Приватность'
     ),
-    React.createElement('button', {
-      className: 'btn btn-accent onboarding-btn',
-      onClick: onNext,
-    }, 'Начать настройку →')
-  );
-}
-
-function TrainingDaysStep({ selectedDays, onToggleDay, onNext, onBack }) {
-  return React.createElement('div', { className: 'onboarding-content' },
-    React.createElement('div', { className: 'onboarding-icon' }, '📅'),
-    React.createElement('h2', { className: 'onboarding-title' }, 'Выберите дни тренировок'),
-    React.createElement('p', { className: 'onboarding-text' },
-      'Рекомендуем 3 дня в неделю с перерывом между тренировками. Порядок: A → B → C.'
-    ),
-    React.createElement('div', { className: 'onboarding-days' },
-      DAYS.map((day, i) => {
-        const dow = DAYS_TO_DOW[i];
-        const isSelected = selectedDays.includes(dow);
-        return React.createElement('button', {
-          key: i,
-          className: `onboarding-day${isSelected ? ' onboarding-day--selected' : ''}`,
-          onClick: () => onToggleDay(dow),
-        },
-          day,
-          isSelected && React.createElement('span', { className: 'onboarding-day-check' }, '✓')
-        );
-      })
-    ),
-    React.createElement('p', { className: 'onboarding-hint' },
-      selectedDays.length === 0
-        ? 'Выберите хотя бы один день'
-        : `Выбрано: ${selectedDays.length} дня(дней)`
-    ),
-    React.createElement('div', { className: 'onboarding-actions' },
+    React.createElement('div', { className: 'onboarding-value-cta' },
       React.createElement('button', {
-        className: 'btn btn-outline',
-        onClick: onBack,
-      }, '← Назад'),
-      React.createElement('button', {
-        className: 'btn btn-accent',
+        className: 'btn btn-accent onboarding-btn--primary',
         onClick: onNext,
-        disabled: selectedDays.length === 0,
-      }, 'Далее →')
+      }, 'Начать первую тренировку')
     )
   );
 }
 
-function FirstCheckinStep({ checkinData, onUpdate, onNext, onBack, onSkip }) {
-  const fields = [
-    { key: 'weight', label: 'Вес', unit: 'кг', min: 30, max: 200, step: 0.1 },
-    { key: 'restHR', label: 'ЧСС покоя', unit: 'уд/мин', min: 30, max: 120 },
-    { key: 'hrv', label: 'HRV', unit: 'мс', min: 20, max: 150 },
-    { key: 'sleepHours', label: 'Сон', unit: 'ч', min: 0, max: 14, step: 0.5 },
-  ];
+/** STEP 2: Goal Selection + Training Days */
+function GoalStep({ selectedGoal, onSelectGoal, selectedDays, onToggleDay, onNext, onBack }) {
+  const canProceed = selectedGoal && selectedDays.length > 0;
 
-  return React.createElement('div', { className: 'onboarding-content' },
-    React.createElement('div', { className: 'onboarding-icon' }, '💤'),
-    React.createElement('h2', { className: 'onboarding-title' }, 'Первый чек-ин'),
-    React.createElement('p', { className: 'onboarding-text' },
-      'Эти данные нужны для расчёта Recovery Score. Можно заполнить позже.'
-    ),
-    React.createElement('div', { className: 'onboarding-fields' },
-      fields.map(field =>
-        React.createElement('label', { key: field.key, className: 'onboarding-field' },
-          React.createElement('span', { className: 'onboarding-field-label' }, field.label),
-          React.createElement('input', {
-            type: 'number',
-            className: 'onboarding-field-input',
-            min: field.min,
-            max: field.max,
-            step: field.step || 1,
-            value: checkinData[field.key] || '',
-            placeholder: '—',
-            onChange: e => onUpdate(field.key, parseFloat(e.target.value) || 0),
-          }),
-          React.createElement('span', { className: 'onboarding-field-unit' }, field.unit)
+  return React.createElement('div', { className: 'onboarding-content onboarding-content--goal' },
+    React.createElement('h2', { className: 'onboarding-title' }, 'Выбери свою цель'),
+
+    // Goal Cards
+    React.createElement('div', { className: 'onboarding-goal-cards' },
+      GOALS.map(goal =>
+        React.createElement('button', {
+          key: goal.key,
+          className: `onboarding-goal-card${selectedGoal === goal.key ? ' onboarding-goal-card--selected' : ''}`,
+          onClick: () => onSelectGoal(goal.key),
+          style: { '--goal-color': goal.color },
+        },
+          React.createElement('span', { className: 'onboarding-goal-icon' }, goal.icon),
+          React.createElement('span', { className: 'onboarding-goal-title' }, goal.title),
+          React.createElement('span', { className: 'onboarding-goal-subtitle' }, goal.subtitle),
+          selectedGoal === goal.key && React.createElement('span', { className: 'onboarding-goal-check' }, React.createElement(Check, { size: 20 }))
         )
       )
     ),
+
+    // Training Days Chips
+    React.createElement('div', { className: 'onboarding-days-section' },
+      React.createElement('p', { className: 'onboarding-section-label' }, 'Дни тренировок'),
+      React.createElement('div', { className: 'onboarding-days-chips' },
+        DAYS.map((day, i) => {
+          const dow = DAYS_TO_DOW[i];
+          const isSelected = selectedDays.includes(dow);
+          return React.createElement('button', {
+            key: i,
+            className: `onboarding-day-chip${isSelected ? ' onboarding-day-chip--selected' : ''}`,
+            onClick: () => onToggleDay(dow),
+            disabled: !isSelected && selectedDays.length >= 3,
+          }, day);
+        })
+      ),
+      React.createElement('p', { className: 'onboarding-hint' },
+        selectedDays.length === 0
+          ? 'Выбери хотя бы один день'
+          : `Выбрано: ${selectedDays.length} из 3 дней`
+      )
+    ),
+
+    // Actions
     React.createElement('div', { className: 'onboarding-actions' },
       React.createElement('button', {
         className: 'btn btn-outline',
         onClick: onBack,
-      }, '← Назад'),
-      React.createElement('button', {
-        className: 'btn',
-        onClick: onSkip,
-      }, 'Пропустить'),
+      }, '←'),
       React.createElement('button', {
         className: 'btn btn-accent',
         onClick: onNext,
+        disabled: !canProceed,
       }, 'Далее →')
     )
   );
 }
 
-function RecoveryExplainedStep({ onFinish }) {
-  return React.createElement('div', { className: 'onboarding-content' },
-    React.createElement('div', { className: 'onboarding-icon' }, '💚'),
+/** STEP 3: Recovery Score with Personal Ring */
+function RecoveryStep({ onFinish }) {
+  // Empty ring - 0% filled, waiting for data
+  const radius = 60;
+  const circumference = 2 * Math.PI * radius;
+  const color = 'var(--accent)';
+
+  return React.createElement('div', { className: 'onboarding-content onboarding-content--recovery' },
     React.createElement('h2', { className: 'onboarding-title' }, 'Recovery Score'),
-    React.createElement('p', { className: 'onboarding-text' },
-      'Комплексный индекс восстановления (0–100%), основанный на:'
-    ),
-    React.createElement('div', { className: 'onboarding-recovery-grid' },
-      React.createElement('div', { className: 'onboarding-recovery-item' },
-        React.createElement('div', { className: 'onboarding-recovery-icon', style: { color: 'var(--blue)' } }, '💓'),
-        React.createElement('div', { className: 'onboarding-recovery-label' }, 'HRV'),
-        React.createElement('div', { className: 'onboarding-recovery-value' }, '40%')
-      ),
-      React.createElement('div', { className: 'onboarding-recovery-item' },
-        React.createElement('div', { className: 'onboarding-recovery-icon', style: { color: 'var(--green)' } }, '😴'),
-        React.createElement('div', { className: 'onboarding-recovery-label' }, 'Сон'),
-        React.createElement('div', { className: 'onboarding-recovery-value' }, '30%')
-      ),
-      React.createElement('div', { className: 'onboarding-recovery-item' },
-        React.createElement('div', { className: 'onboarding-recovery-icon', style: { color: 'var(--yellow)' } }, '💓'),
-        React.createElement('div', { className: 'onboarding-recovery-label' }, 'ЧСС'),
-        React.createElement('div', { className: 'onboarding-recovery-value' }, '10%')
-      ),
-      React.createElement('div', { className: 'onboarding-recovery-item' },
-        React.createElement('div', { className: 'onboarding-recovery-icon', style: { color: 'var(--purple)' } }, '😊'),
-        React.createElement('div', { className: 'onboarding-recovery-label' }, 'Субъективно'),
-        React.createElement('div', { className: 'onboarding-recovery-value' }, '20%')
+
+    // Personal empty ring
+    React.createElement('div', { className: 'onboarding-recovery-ring' },
+      React.createElement('svg', { width: '140', height: '140', viewBox: '0 0 140 140' },
+        // Background ring
+        React.createElement('circle', {
+          cx: 70, cy: 70, r: radius,
+          fill: 'none',
+          stroke: 'var(--surface3)',
+          strokeWidth: 6,
+        }),
+        // Empty progress ring (0%)
+        React.createElement('circle', {
+          cx: 70, cy: 70, r: radius,
+          fill: 'none',
+          stroke: color,
+          strokeWidth: 6,
+          strokeDasharray: circumference,
+          strokeDashoffset: circumference, // Fully empty
+          strokeLinecap: 'round',
+          transform: `rotate(-90 70 70)`,
+          opacity: 0.3,
+        }),
+        // Center text
+        React.createElement('text', {
+          x: 70, y: 65,
+          textAnchor: 'middle',
+          dominantBaseline: 'central',
+          fill: 'var(--text2)',
+          fontSize: '14',
+          fontWeight: '600',
+        }, '—'),
+        React.createElement('text', {
+          x: 70, y: 85,
+          textAnchor: 'middle',
+          dominantBaseline: 'central',
+          fill: 'var(--text3)',
+          fontSize: '10',
+        }, 'Ваш показатель')
       )
     ),
-    React.createElement('div', { className: 'onboarding-status-legend' },
-      React.createElement('div', { className: 'onboarding-status-item' },
-        React.createElement('span', { className: 'pill green' }, 'Зелёный'),
-        React.createElement('span', null, '— готов к полной нагрузке')
-      ),
-      React.createElement('div', { className: 'onboarding-status-item' },
-        React.createElement('span', { className: 'pill yellow' }, 'Жёлтый'),
-        React.createElement('span', null, '— умеренная нагрузка')
-      ),
-      React.createElement('div', { className: 'onboarding-status-item' },
-        React.createElement('span', { className: 'pill red' }, 'Красный'),
-        React.createElement('span', null, '— восстановление')
-      )
+
+    // Key message
+    React.createElement('p', { className: 'onboarding-recovery-message' },
+      'Мы будем анализировать твоё состояние и подсказывать, когда тренироваться, а когда восстанавливаться.',
+      React.createElement('br'),
+      React.createElement('strong', null, 'Вся магия будет здесь.')
     ),
+
+    // CTA
     React.createElement('button', {
-      className: 'btn btn-accent onboarding-btn',
+      className: 'btn btn-accent onboarding-btn--primary',
       onClick: onFinish,
-    }, 'Начать тренироваться 🚀')
+    }, React.createElement(Rocket, { size: 20 }), ' Перейти к тренировке')
   );
 }
 
 /**
- * @param {{ isOpen: boolean, onComplete: (data: { trainDays: number[], checkin: object }) => void, onClose?: () => void }} props
+ * @param {{ isOpen: boolean, onComplete: (data: { trainDays: number[], selectedGoal: string, apreProtocol: string }) => void, onClose?: () => void }} props
  */
 export default function OnboardingWizard({ isOpen, onComplete, onClose }) {
-  const [step, setStep] = useState(STEPS.WELCOME);
+  const [step, setStep] = useState(STEPS.VALUE);
   const [trainDays, setTrainDays] = useState([1, 3, 5]); // Default Mon/Wed/Fri
-  const [checkinData, setCheckinData] = useState({
-    weight: 0,
-    restHR: 0,
-    hrv: 0,
-    sleepHours: 0,
-  });
+  const [selectedGoal, setSelectedGoal] = useState(null);
 
   if (!isOpen) return null;
 
   const handleToggleDay = (dow) => {
-    setTrainDays(prev =>
-      prev.includes(dow)
-        ? prev.filter(d => d !== dow)
-        : [...prev, dow].sort((a, b) => a - b)
-    );
-  };
-
-  const handleUpdateCheckin = (key, value) => {
-    setCheckinData(prev => ({ ...prev, [key]: value }));
-  };
-
-  const handleFinish = () => {
-    onComplete({
-      trainDays,
-      checkin: checkinData,
+    setTrainDays(prev => {
+      const isSelected = prev.includes(dow);
+      if (isSelected) {
+        return prev.filter(d => d !== dow).sort((a, b) => a - b);
+      }
+      // Max 3 days
+      if (prev.length >= 3) return prev;
+      return [...prev, dow].sort((a, b) => a - b);
     });
   };
 
-  const totalSteps = 4;
+  const handleSelectGoal = (goalKey) => {
+    setSelectedGoal(goalKey);
+  };
+
+  const handleFinish = () => {
+    const goal = GOALS.find(g => g.key === selectedGoal);
+    onComplete({
+      trainDays,
+      selectedGoal: selectedGoal || 'fitness',
+      apreProtocol: goal?.apreProtocol || 'APRE_6',
+    });
+  };
+
+  const totalSteps = 3;
 
   return React.createElement('div', { className: 'onboarding-overlay', onClick: onClose },
     React.createElement('div', { className: 'onboarding-modal', onClick: e => e.stopPropagation() },
@@ -223,29 +239,23 @@ export default function OnboardingWizard({ isOpen, onComplete, onClose }) {
         className: 'onboarding-close',
         onClick: onClose,
         'aria-label': 'Close',
-      }, '✕'),
+      }, React.createElement(X, { size: 20 })),
       React.createElement(StepIndicator, { current: step, total: totalSteps }),
 
-      step === STEPS.WELCOME && React.createElement(WelcomeStep, {
-        onNext: () => setStep(STEPS.TRAINING_DAYS),
+      step === STEPS.VALUE && React.createElement(ValueStep, {
+        onNext: () => setStep(STEPS.GOAL),
       }),
 
-      step === STEPS.TRAINING_DAYS && React.createElement(TrainingDaysStep, {
+      step === STEPS.GOAL && React.createElement(GoalStep, {
+        selectedGoal,
+        onSelectGoal: handleSelectGoal,
         selectedDays: trainDays,
         onToggleDay: handleToggleDay,
-        onNext: () => setStep(STEPS.FIRST_CHECKIN),
-        onBack: () => setStep(STEPS.WELCOME),
+        onNext: () => setStep(STEPS.RECOVERY),
+        onBack: () => setStep(STEPS.VALUE),
       }),
 
-      step === STEPS.FIRST_CHECKIN && React.createElement(FirstCheckinStep, {
-        checkinData,
-        onUpdate: handleUpdateCheckin,
-        onNext: () => setStep(STEPS.RECOVERY_EXPLAINED),
-        onBack: () => setStep(STEPS.TRAINING_DAYS),
-        onSkip: () => setStep(STEPS.RECOVERY_EXPLAINED),
-      }),
-
-      step === STEPS.RECOVERY_EXPLAINED && React.createElement(RecoveryExplainedStep, {
+      step === STEPS.RECOVERY && React.createElement(RecoveryStep, {
         onFinish: handleFinish,
       })
     )

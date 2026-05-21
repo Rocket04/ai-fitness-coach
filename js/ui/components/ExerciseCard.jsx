@@ -3,6 +3,7 @@
 // Фаза 3 — полная реализация.
 
 import React, { useState, useEffect } from 'react';
+import { Settings, Dumbbell } from 'lucide-react';
 import { calcApreSets, calcNextWeekRM, CALISTHENICS_PROGRESSIONS } from '../../core/apre/engine.js';
 import { useTranslation } from 'react-i18next';
 import HelpIcon from './HelpIcon.jsx';
@@ -86,6 +87,32 @@ export default function ExerciseCard({ ex, recoveryScore = 100, onApreResult, on
     setSet4Reps(null);
   }, [ex?.n]);
 
+  // ── Уведомление родителя о результате set4 ──────────────────────────────
+  useEffect(() => {
+    if (!isApre || set4Reps === null) return;
+
+    const nextRM = calcNextWeekRM(
+      ex.protocol,
+      ex.currentRM,
+      set4Reps,
+      ex.unit ?? 'kg',
+      ex.isCalisthenics ?? false
+    );
+
+    if (typeof onApreResult === 'function') {
+      onApreResult({
+        exerciseName: ex.n,
+        protocol: ex.protocol,
+        nextRM,
+        unit: ex.unit ?? 'kg',
+        isCalisthenics: ex.isCalisthenics ?? false,
+        lastSet3Reps: set3Reps ?? 0,
+        lastSet4Reps: set4Reps,
+        calisthenicLevel: ex.isCalisthenics ? nextRM : undefined,
+      });
+    }
+  }, [set4Reps, isApre, ex.protocol, ex.currentRM, ex.unit, ex.isCalisthenics, set3Reps, onApreResult, ex.n]);
+
   // ── Оверлей не настроенного упражнения ─────────────────────────────────
   if (isApre && !isConfigured) {
     return React.createElement('div', { className: 'exercise-row exercise-row--apre exercise-row--unconfigured' },
@@ -94,7 +121,7 @@ export default function ExerciseCard({ ex, recoveryScore = 100, onApreResult, on
         React.createElement('span', { className: 'apre-badge apre-badge--muted' }, 'APRE')
       ),
       React.createElement('div', { className: 'unconfigured-overlay' },
-        React.createElement('div', { className: 'unconfigured-icon' }, '⚙️'),
+        React.createElement('div', { className: 'unconfigured-icon' }, React.createElement(Settings, { size: 20 })),
         React.createElement('p', { className: 'unconfigured-text' },
           t('exercise.unconfigured')
         ),
@@ -118,32 +145,6 @@ export default function ExerciseCard({ ex, recoveryScore = 100, onApreResult, on
       })
     : null;
 
-  // ── Уведомление родителя о результате set4 ──────────────────────────────
-  useEffect(() => {
-    if (!isApre || !sets || set4Reps === null) return;
-
-    const nextRM = calcNextWeekRM(
-      ex.protocol,
-      ex.currentRM,
-      set4Reps,
-      ex.unit ?? 'kg',
-      ex.isCalisthenics ?? false
-    );
-
-    if (typeof onApreResult === 'function') {
-      onApreResult({
-        exerciseName: ex.n,
-        protocol: ex.protocol,
-        nextRM,
-        unit: ex.unit ?? 'kg',
-        isCalisthenics: ex.isCalisthenics ?? false,
-        lastSet3Reps: set3Reps ?? 0,
-        lastSet4Reps: set4Reps,
-        calisthenicLevel: ex.isCalisthenics ? nextRM : undefined,
-      });
-    }
-  }, [set4Reps]); // eslint-disable-line react-hooks/exhaustive-deps
-
   // ── Обычная карточка (не APRE) ──────────────────────────────────────────
   if (!isApre || !sets) {
     const setsReps = ex.s && ex.s !== '—' ? `${ex.s} × ` : '';
@@ -151,7 +152,7 @@ export default function ExerciseCard({ ex, recoveryScore = 100, onApreResult, on
       className: `exercise-row${ex.isTest ? ' exercise-row--test' : ''}`,
     },
       React.createElement('span', { className: 'exercise-name' },
-        ex.isTest && React.createElement('span', { className: 'text-yellow mr-xs', 'aria-hidden': 'true' }, '🔬 '),
+        ex.isTest && React.createElement('span', { className: 'text-yellow mr-xs', 'aria-hidden': 'true' }, React.createElement(Dumbbell, { size: 20 }), ' '),
         ex.n
       ),
       React.createElement('span', { className: 'exercise-sets' }, `${setsReps}${ex.r}`),

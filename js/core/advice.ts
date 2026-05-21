@@ -82,30 +82,30 @@ export function getApreExplanation(mode: SessionMode, readiness: ReadinessStatus
   const reasons = [];
 
   if (mode === 'minimum') {
-    reasons.push('🔴 Режим «Минимальный»: только восстановительные упражнения (мобильность, растяжка, дыхание). Причина: красный readiness.');
+    reasons.push('[RED] Режим «Минимальный»: только восстановительные упражнения (мобильность, растяжка, дыхание). Причина: красный readiness.');
   } else if (mode === 'yellow') {
     const cause = readiness === 'yellow'
       ? 'жёлтый readiness — организм не полностью восстановился'
       : 'накопленная усталость (recovery debt) за последние 3 дня';
-    reasons.push(`🟡 Режим «Облегчённый»: подходов уменьшено на 1. Причина: ${cause}.`);
+    reasons.push(`[YELLOW] Режим «Облегчённый»: подходов уменьшено на 1. Причина: ${cause}.`);
   } else {
-    reasons.push('✓ Полный режим: готовность зелёная, признаков усталости нет.');
+    reasons.push('[GREEN] Полный режим: готовность зелёная, признаков усталости нет.');
   }
 
   if (multiplier > 1.05) {
-    reasons.push(`📈 Множитель нагрузки ×${multiplier.toFixed(1)}: отличные результаты прошлой недели — повторения увеличены.`);
+    reasons.push(`[UP] Множитель нагрузки ×${multiplier.toFixed(1)}: отличные результаты прошлой недели — повторения увеличены.`);
   } else if (multiplier < 0.95) {
-    reasons.push(`📉 Множитель нагрузки ×${multiplier.toFixed(1)}: тяжёлая неделя — повторения снижены для профилактики.`);
+    reasons.push(`[DOWN] Множитель нагрузки ×${multiplier.toFixed(1)}: тяжёлая неделя — повторения снижены для профилактики.`);
   }
 
   if (apreSession && mode === 'full') {
     const rpe = Number(apreSession.rpe);
     if (rpe <= 4 && rpe > 0) {
-      reasons.push(`🔄 APRE: RPE последней тренировки ${rpe} (легко) → +1 повтор к упражнениям.`);
+      reasons.push(`[SYNC] APRE: RPE последней тренировки ${rpe} (легко) → +1 повтор к упражнениям.`);
     } else if (rpe >= 8) {
-      reasons.push(`🔄 APRE: RPE последней тренировки ${rpe} (тяжело) → −1 повтор к упражнениям.`);
+      reasons.push(`[SYNC] APRE: RPE последней тренировки ${rpe} (тяжело) → −1 повтор к упражнениям.`);
     } else if (rpe > 0) {
-      reasons.push(`🔄 APRE: RPE последней тренировки ${rpe} — оптимальная нагрузка, изменений не требуется.`);
+      reasons.push(`[SYNC] APRE: RPE последней тренировки ${rpe} — оптимальная нагрузка, изменений не требуется.`);
     }
   }
 

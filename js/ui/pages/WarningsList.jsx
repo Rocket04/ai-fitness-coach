@@ -2,6 +2,7 @@
 // Секция предупреждений/алертов аналитики
 
 import React from 'react';
+import { AlertTriangle, Lightbulb, Settings } from 'lucide-react';
 
 export default function WarningsList({ overtrainingWarning, trendWarnings }) {
   const warning = overtrainingWarning;
@@ -20,8 +21,8 @@ export default function WarningsList({ overtrainingWarning, trendWarnings }) {
         className: `severity-badge ${warning && warning.severity === 'critical' ? 'critical' : 'warning'}`,
       },
       warning && warning.severity === 'critical'
-        ? '⚠️ Критический'
-        : '⚠️ Внимание'
+        ? React.createElement(AlertTriangle, { size: 20 }) + ' Критический'
+        : React.createElement(AlertTriangle, { size: 20 }) + ' Внимание'
     ),
     warning &&
       React.createElement('h4', null, warning.title),
@@ -35,13 +36,13 @@ export default function WarningsList({ overtrainingWarning, trendWarnings }) {
       React.createElement(
         'p',
         { className: 'warning-recommendation' },
-        '💡 ', warning.recommendation
+        React.createElement(Lightbulb, { size: 20 }), ' ', warning.recommendation
       ),
     warning && warning.apreOverride &&
       React.createElement(
         'p',
         { className: 'warning-apre' },
-        '⚙️ ', warning.apreOverride
+        React.createElement(Settings, { size: 20 }), ' ', warning.apreOverride
       ),
     // Additional warnings (when no overtraining warning)
     !warning && warnings.map((w, i) =>
@@ -56,12 +57,12 @@ export default function WarningsList({ overtrainingWarning, trendWarnings }) {
         React.createElement(
           'p',
           { className: 'warning-recommendation mb-xs' },
-          '💡 ', w.recommendation
+          React.createElement(Lightbulb, { size: 20 }), ' ', w.recommendation
         ),
         React.createElement(
           'p',
           { className: 'warning-apre mb-0' },
-          '⚙️ ', w.apreAction
+          React.createElement(Settings, { size: 20 }), ' ', w.apreAction
         )
       )
     )

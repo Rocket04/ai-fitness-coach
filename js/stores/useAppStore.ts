@@ -339,7 +339,7 @@ interface AppStore {
   confirmResetData: () => Promise<void>;
 
   // ── Onboarding ──
-  completeOnboarding: (data: { trainDays: number[]; checkin: Partial<Checkin> }) => Promise<void>;
+  completeOnboarding: (data: { trainDays: number[]; selectedGoal?: string; apreProtocol?: string }) => Promise<void>;
 
   // ── Internal ──
   _recompute: () => void;
@@ -722,27 +722,12 @@ export const useAppStore = create<AppStore>((set, get) => ({
       // Save training days
       await saveSettings({ startDate: todayISO, trainDays: data.trainDays });
 
-      // Save checkin if data provided
-      if (data.checkin && (data.checkin.weight || data.checkin.hrv || data.checkin.sleepHours)) {
-        const checkin: Checkin = {
-          date: todayISO,
-          sleepHours: data.checkin.sleepHours || 0,
-          restHR: data.checkin.restHR || 0,
-          hrv: data.checkin.hrv || 0,
-          hipPain: 0,
-          shoulderPain: 0,
-          breathing: 'good',
-          weight: data.checkin.weight || 0,
-          notes: 'Первый чек-ин (онбординг)',
-          muscleSoreness: 0,
-          energy: 0,
-          mood: 0,
-          sleepQuality: 0,
-          stress: 0,
-          readiness: 'green',
-          ts: Date.now(),
-        };
-        await saveCheckin(checkin);
+      // Save goal and APRE protocol preference to localStorage for future use
+      if (data.selectedGoal) {
+        localStorage.setItem('fitness-tracker-goal', data.selectedGoal);
+      }
+      if (data.apreProtocol) {
+        localStorage.setItem('fitness-tracker-apre-protocol', data.apreProtocol);
       }
 
       // Update store state
