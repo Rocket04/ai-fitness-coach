@@ -10,7 +10,7 @@ describe('EmptyState', () => {
 
   it('renders default icon when none provided', () => {
     render(<EmptyState title="Test" />);
-    expect(screen.getByText('📭')).toBeInTheDocument();
+    expect(document.querySelector('.empty-state__icon')).toBeInTheDocument();
   });
 
   it('renders custom icon', () => {

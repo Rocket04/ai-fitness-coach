@@ -158,6 +158,7 @@ export default function CheckinForm() {
     checkins,
     showToast,
     todayISO,
+    checkinTier,
   } = useAppStore();
   const [showCheckin, setShowCheckin] = useState(true);
   const [validationError, setValidationError] = useState(null);
@@ -201,14 +202,14 @@ export default function CheckinForm() {
         'div',
         { className: 'checkin-section' },
         React.createElement(SectionTitle, { icon: React.createElement(Heart, { size: 20 }), title: 'Биометрика' }),
-        React.createElement(NumberRow, {
+        checkinTier !== 'light' && React.createElement(NumberRow, {
           icon: React.createElement(Heart, { size: 20 }), label: 'ЧСС покоя', sublabel: 'уд/мин',
           value: restHR, onChange: setRestHR,
           min: 30, max: 120,
           filled: restHR > 0,
           trend: React.createElement(TrendIndicator, { current: restHR, history: getLast7Values(checkins, 'restHR'), unit: 'уд/мин', inverse: true }),
         }),
-        React.createElement(NumberRow, {
+        checkinTier === 'full' && React.createElement(NumberRow, {
           icon: React.createElement(Activity, { size: 20 }), label: 'HRV', sublabel: 'мс',
           value: hrv, onChange: setHrv,
           min: 0, max: 200,

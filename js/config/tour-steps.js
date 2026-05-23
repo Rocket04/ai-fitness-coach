@@ -1,15 +1,5 @@
 // js/config/tour-steps.js
 // Guided tour step definitions
-// Each step targets a CSS selector and provides i18n keys for content
-
-/**
- * @typedef {Object} TourStep
- * @property {string} target - CSS selector for the element to highlight
- * @property {string} i18nTitle - i18n key for the step title
- * @property {string} i18nContent - i18n key for the step description
- * @property {'top'|'bottom'|'left'|'right'} position - Tooltip position relative to target
- * @property {boolean} [allowInteraction] - Whether user can interact with the highlighted element
- */
 
 /** @type {TourStep[]} */
 export const TOUR_STEPS = [
@@ -17,8 +7,9 @@ export const TOUR_STEPS = [
     target: '.card--hero',
     i18nTitle: 'tour.step1.title',
     i18nContent: 'tour.step1.content',
-    position: 'bottom',
+    position: 'top',           // FIX: was 'bottom' — now above the ring
     allowInteraction: true,
+    pulseTarget: true,         // FIX: add pulse animation to ring
   },
   {
     target: '.sparkline-card',
@@ -26,6 +17,9 @@ export const TOUR_STEPS = [
     i18nContent: 'tour.step2.content',
     position: 'bottom',
     allowInteraction: false,
+    demoData: true,
+    highlightBorder: true,
+    softDrop: true,
   },
   {
     target: '.training-header, .rest-day-card',
@@ -33,6 +27,8 @@ export const TOUR_STEPS = [
     i18nContent: 'tour.step3.content',
     position: 'bottom',
     allowInteraction: true,
+    demoData: true,
+    highlightBorder: true,
   },
   {
     target: '.exercise-row--apre, .exercise-card',
@@ -54,6 +50,7 @@ export const TOUR_STEPS = [
     i18nContent: 'tour.step6.content',
     position: 'top',
     allowInteraction: true,
+    noScroll: true,            // FIX: prevent scroll disruption
   },
   {
     target: '.tomorrow-card',
@@ -71,28 +68,14 @@ export const TOUR_STEPS = [
   },
 ];
 
-/**
- * Get total number of tour steps
- * @returns {number}
- */
 export function getTotalSteps() {
   return TOUR_STEPS.length;
 }
 
-/**
- * Get a specific step by index
- * @param {number} index - Step index (0-based)
- * @returns {TourStep | undefined}
- */
 export function getStep(index) {
   return TOUR_STEPS[index];
 }
 
-/**
- * Get step number formatted for display (1-based)
- * @param {number} index - Step index (0-based)
- * @returns {string}
- */
 export function getStepNumber(index) {
   return `${index + 1} / ${TOUR_STEPS.length}`;
 }

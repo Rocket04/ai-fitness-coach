@@ -2,11 +2,12 @@
 // Главная страница «Сегодня» — премиум-дашборд в стиле Whoop/Athlytic
 // 6 слоёв прогрессивного раскрытия
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next'; 
 import { Check, Sun, Moon, Flame, PersonStanding, Lightbulb } from 'lucide-react';
 import { useAppStore } from '../../stores/useAppStore.js';
 import { useFitnessData, isExerciseConfigured } from '../../hooks/useFitnessData.js';
+import { detectOptimalTier } from '../../core/recoveryScore.js';
 import Collapsible from '../components/Collapsible.jsx';
 import ExerciseCard from '../components/ExerciseCard.jsx';
 import ExerciseConfigModal from '../components/ExerciseConfigModal.jsx';
@@ -249,6 +250,34 @@ function buildBalances(checkin, trendData7, t) {
   return balances;
 }
 
+/* ---------- Demo data for tour ---------- */
+const DEMO_TREND_DATA = [
+  { date: '2026-05-18', recoveryScore: 62, hrv: 48, restHR: 64, sleepHours: 6.5 },
+  { date: '2026-05-19', recoveryScore: 68, hrv: 52, restHR: 62, sleepHours: 7.0 },
+  { date: '2026-05-20', recoveryScore: 55, hrv: 45, restHR: 66, sleepHours: 6.0 },
+  { date: '2026-05-21', recoveryScore: 72, hrv: 56, restHR: 60, sleepHours: 8.0 },
+  { date: '2026-05-22', recoveryScore: 78, hrv: 60, restHR: 58, sleepHours: 7.5 },
+  { date: '2026-05-23', recoveryScore: 70, hrv: 54, restHR: 61, sleepHours: 7.0 },
+  { date: '2026-05-24', recoveryScore: 74, hrv: 57, restHR: 59, sleepHours: 8.0 },
+];
+const DEMO_RPE_DATA = [
+  { date: '2026-05-18', rpe: 6, type: 'A' },
+  { date: '2026-05-20', rpe: 7, type: 'B' },
+  { date: '2026-05-22', rpe: 5, type: 'A' },
+  { date: '2026-05-24', rpe: 7, type: 'A' },
+];
+const DEMO_SESSION = {
+  type: 'A',
+  exercises: [
+    { n: 'Подтягивания параллельным хватом', s: '3', r: '6-8', w: 'НЕ до отказа', isApre: true, protocol: 'APRE_6', currentRM: 0 },
+    { n: 'Австралийские подтягивания', s: '3', r: '8-10', w: 'Контроль негативной фазы' },
+    { n: 'W-подъём лёжа на животе', s: '3', r: '10 медленно', w: 'Нижние трапеции' },
+  ],
+  mode: 'full',
+  monthColor: '#4a7c59',
+  label: 'Бег Z2 + Тяга',
+};
+
 /* ---------- Main Component: 6-Layer Premium Dashboard ---------- */
 export default function TodayPage() {
   const { t } = useTranslation();
@@ -259,8 +288,36 @@ export default function TodayPage() {
     durationMinutes, lastCheckin, streak, trendData7, rpeTrend7,
     setRpe, setSessionNote, setDurationMinutes, setTestPullUps, setTestPushUps, setTestPlank,
     handleToggleTraining, handleMarkMorning, handleMarkEvening,
-    coachAdvice, updateApreResult,
+    coachAdvice, updateApreResult, checkinTier, checkins,
   } = useAppStore();
+
+  // Inject demo data for guided tour
+  useEffect(() => {
+    const handler = (e) => {
+      const step = e.detail?.step;
+      if (step === 2 && DEMO_SESSION) {
+        // Step 3: inject demo workout plan
+        useAppStore.setState({
+          sessionPlan: DEMO_SESSION,
+          trainType: 'A',
+          weekLabel: 'Неделя 3',
+          weekNumber: 3,
+        });
+      }
+      if (step === 1 && DEMO_TREND_DATA.length > 0) {
+        // Step 2: inject demo trend + RPE data + sparklines visible
+        useAppStore.setState({
+          trendData7: DEMO_TREND_DATA,
+          rpeTrend7: DEMO_RPE_DATA,
+          lastCheckin: { ...DEMO_TREND_DATA[DEMO_TREND_DATA.length - 1], date: '2026-05-24' },
+          recoveryScore: 74,
+          readiness: 'green',
+        });
+      }
+    };
+    window.addEventListener('tour-demo-data', handler);
+    return () => window.removeEventListener('tour-demo-data', handler);
+  }, []);
 
   // Exercise configuration state
   const { exercises: configs, updateExerciseById } = useFitnessData();
@@ -332,9 +389,62 @@ export default function TodayPage() {
 
   const todayStr = new Date().toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
 
+  // Adaptive tier suggestion
+  const suggestedTier = detectOptimalTier(checkins || []);
+  const showTierSuggestion = suggestedTier && suggestedTier !== checkinTier;
+
+  // Weekly 7-day strip
+  const DAY_NAMES = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+  const todayDow = new Date().getDay();
+  const mondayOff = todayDow === 0 ? -6 : 1 - todayDow;
+  const WEEK_DAYS = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(); d.setDate(d.getDate() + mondayOff + i);
+    const dow = d.getDay(); const isTod = i === (todayDow === 0 ? 6 : todayDow - 1);
+    const td = [1,3,5]; const hasW = td.includes(dow === 0 ? 7 : dow);
+    return { date: d.getDate(), name: DAY_NAMES[i], isTod, type: hasW ? (dow===1||dow===5?'A':dow===3?'B':'C') : null };
+  });
+
   return React.createElement('div', { className: 'today-page' },
 
     // ═══════════════════════════════════════════════════════════════════
+    // LAYER 0: Adaptive Tier Suggestion Banner
+    // ═══════════════════════════════════════════════════════════════════
+    showTierSuggestion && React.createElement('div', {
+      className: 'card tier-suggestion-banner',
+      style: { padding: 'var(--spacing-sm) var(--spacing-md)', display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', fontSize: 'var(--font-size-caption)' },
+    },
+      React.createElement(Lightbulb, { size: 16, style: { flexShrink: 0, color: 'var(--yellow)' } }),
+      React.createElement('span', null, `Совет: переключите уровень чек-ина на "${suggestedTier === 'full' ? 'Полный' : suggestedTier === 'medium' ? 'Средний' : 'Лёгкий'}" — вы редко заполняете текущие метрики.`),
+      React.createElement('button', {
+        className: 'btn btn-sm',
+        style: { marginLeft: 'auto', flexShrink: 0 },
+        onClick: () => {
+          const { setCheckinTier } = useAppStore.getState();
+          setCheckinTier(suggestedTier);
+        },
+      }, 'Переключить')
+    ),
+
+    // ═══════════════════════════════════════════════════════════════════
+    // LAYER 0.5: Weekly 7-Day Strip
+    React.createElement('div', { className: 'weekly-strip' },
+      WEEK_DAYS.map((d, i) =>
+        React.createElement('button', {
+          key: i, className: 'weekly-day-card' + (d.isTod ? ' is-today' : ''),
+          onClick: () => {
+            const off = d.isTod ? 0 : (d.date - new Date().getDate());
+            useAppStore.getState().setVirtualTodayOffset(off);
+          },
+        },
+          React.createElement('span', { className: 'weekly-day-name' }, d.name),
+          React.createElement('span', { className: 'weekly-day-date' }, d.date),
+          d.type
+            ? React.createElement('span', { className: 'type-badge' }, d.type)
+            : React.createElement('span', { className: 'rest-label' }, 'Отдых')
+        )
+      )
+    ),
+
     // LAYER 1: Hero Ring (always visible)
     // ═══════════════════════════════════════════════════════════════════
     React.createElement('div', {

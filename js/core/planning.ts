@@ -2,11 +2,20 @@
 // Определение тренировки по дате и построение сессии
 
 import { MONTHS, TRAIN_ORDER } from '../config/constants.js';
+import { RUNNING_PLAN } from '../plans/running.js';
+import { STRENGTH_PLAN } from '../plans/strength.js';
 import type { Session, ReadinessStatus, SessionPlan } from './types.js';
 import { applyMultiplierToExercises, applyApreAdjustment, adjustExercisesForMode } from './loadAdjustments.js';
 import { annotateExercisesWithApre } from './apre/engine.js';
 
 type WorkoutType = 'A' | 'B' | 'C';
+
+/** Resolve plan months array based on sport key (backward-compatible default) */
+function getPlanForSport(sport?: string | null) {
+  if (sport === 'running') return RUNNING_PLAN;
+  if (sport === 'strength') return STRENGTH_PLAN;
+  return MONTHS; // default
+}
 
 /**
  * Определяет тип тренировки (A/B/C) на основе дня недели и расписания.
@@ -28,11 +37,12 @@ export function getWorkoutType(date: Date, trainDays: number[]): WorkoutType | n
  * @param {string|null} trainType — 'A'|'B'|'C'|null
  * @returns {{ month: Object|null, dayIndex: number|null }}
  */
-export function getMonthAndDayIndex(weekNumber: number, trainType: WorkoutType | null): { month: any; dayIndex: number | null } {
+export function getMonthAndDayIndex(weekNumber: number, trainType: WorkoutType | null, sport?: string | null): { month: any; dayIndex: number | null } {
   if (!weekNumber || !trainType) return { month: null, dayIndex: null };
 
+  const planMonths = getPlanForSport(sport);
   const monthIndex = weekNumber <= 4 ? 0 : weekNumber <= 8 ? 1 : 2;
-  const month = MONTHS[monthIndex];
+  const month = planMonths[monthIndex];
   if (!month) return { month: null, dayIndex: null };
 
   let dayIndex: number;

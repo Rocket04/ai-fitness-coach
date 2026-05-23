@@ -2,7 +2,6 @@
 // Tests for useAppStore - critical path: handleSaveCheckin -> derived recalculation
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import type { Checkin, Session } from '../../core/types.js';
 
 // Mock Dexie/storage module to avoid IndexedDB dependencies in tests
 vi.mock('../../core/storage.js', () => ({
@@ -17,8 +16,9 @@ vi.mock('../../core/storage.js', () => ({
   clearAllData: vi.fn().mockResolvedValue(undefined),
   getAllSessions: vi.fn().mockResolvedValue([]),
   getAllCheckins: vi.fn().mockResolvedValue([]),
-  getSettings: vi.fn().mockResolvedValue({ startDate: null, trainDays: null }),
+  getSettings: vi.fn().mockResolvedValue({ startDate: null, trainDays: null, checkinTier: null, selectedGadgets: null, selectedSports: null }),
   saveSettings: vi.fn().mockResolvedValue(undefined),
+  saveSetting: vi.fn().mockResolvedValue(undefined),
   getManualStatus: vi.fn().mockResolvedValue(null),
   saveManualStatus: vi.fn().mockResolvedValue(undefined),
 }));
@@ -202,9 +202,6 @@ describe('useAppStore - Critical Path Tests', () => {
 
 describe('SessionPlan Mode - Deload Integration', () => {
   it('deload mode should be defined in SessionMode type', async () => {
-    // Import types to verify deload is included
-    const types = await import('../../core/types.js');
-    
     // This test verifies the type system accepts 'deload' as valid SessionMode
     const testMode: import('../../core/types.js').SessionMode = 'deload';
     expect(testMode).toBe('deload');

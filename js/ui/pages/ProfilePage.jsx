@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Target, User, BarChart, Circle, Sun, Moon, Star, AlertTriangle, Dumbbell, Play } from 'lucide-react';
 import { useAppStore } from '../../stores/useAppStore.js';
+import { useTourStore } from '../../stores/useTourStore.js';
 import { changeLanguage, getCurrentLanguage } from '../../i18n/index.js';
 import { ZONES, HRV_GUIDE, NUTRITION, MORNING_ROUTINE, EVENING_ROUTINE, DAYS, DAYS_TO_DOW } from '../../config/constants.js';
 import { useFitnessData, isExerciseConfigured, DEFAULT_EXERCISES } from '../../hooks/useFitnessData.js';
@@ -57,6 +58,8 @@ export default function ProfilePage() {
     setShowSettings, setShowResetConfirm, setEditStartDate, setEditTrainDays,
     toggleDay, handleSaveSettings, setActiveTab,
     handleExportData, handleImportData, handleResetAll, confirmResetData,
+    checkinTier, setCheckinTier,
+    virtualTodayOffset,
   } = useAppStore();
 
   // Exercise configuration
@@ -128,7 +131,7 @@ export default function ProfilePage() {
     ),
 
     // ── Rehab section ──
-    React.createElement(ProfileSection, { title: t('profile.rehab.title') },
+    React.createElement(ProfileSection, { title: '🩹 ' + t('profile.rehab.title') },
       React.createElement('p', null, t('profile.rehab.description')),
       React.createElement('p', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text3)', marginTop: 'var(--spacing-xs)' } }, t('profile.rehab.subtitle')),
       React.createElement('button', {
@@ -148,7 +151,7 @@ export default function ProfilePage() {
     ),
 
     // ── Methodology section ──
-    React.createElement(ProfileSection, { title: t('profile.methodology.title') },
+    React.createElement(ProfileSection, { title: '📚 ' + t('profile.methodology.title') },
       React.createElement('p', null, t('profile.methodology.description')),
       React.createElement('p', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text3)', marginTop: 'var(--spacing-xs)' } }, t('profile.methodology.subtitle')),
       React.createElement('button', {
@@ -193,6 +196,39 @@ export default function ProfilePage() {
       )
     ),
 
+    // ── Check-in Tier section ──
+    React.createElement(ProfileSection, { title: '🎯 Уровень чек-ина' },
+      React.createElement('p', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text2)', marginBottom: 'var(--spacing-sm)' } },
+        'Определяет, какие данные собираются для Recovery Score'
+      ),
+      React.createElement('div', { className: 'flex gap-sm flex-wrap' },
+        React.createElement('button', {
+          className: `btn ${checkinTier === 'light' ? 'btn-accent' : ''}`,
+          onClick: () => setCheckinTier('light'),
+          style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', padding: '8px 14px' },
+        },
+          React.createElement('span', { style: { fontWeight: 600 } }, 'Лёгкий'),
+          React.createElement('span', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text3)' } }, 'Субъективные')
+        ),
+        React.createElement('button', {
+          className: `btn ${checkinTier === 'medium' ? 'btn-accent' : ''}`,
+          onClick: () => setCheckinTier('medium'),
+          style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', padding: '8px 14px' },
+        },
+          React.createElement('span', { style: { fontWeight: 600 } }, 'Средний'),
+          React.createElement('span', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text3)' } }, 'ЧСС + сон')
+        ),
+        React.createElement('button', {
+          className: `btn ${checkinTier === 'full' ? 'btn-accent' : ''}`,
+          onClick: () => setCheckinTier('full'),
+          style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', padding: '8px 14px' },
+        },
+          React.createElement('span', { style: { fontWeight: 600 } }, 'Полный'),
+          React.createElement('span', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text3)' } }, 'HRV + ЧСС + сон')
+        )
+      )
+    ),
+
     // ── Tour section ──
     React.createElement(ProfileSection, { title: t('profile.tour.title') },
       React.createElement('p', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text2)', marginBottom: 'var(--spacing-sm)' } },
@@ -201,8 +237,8 @@ export default function ProfilePage() {
       React.createElement('button', {
         className: 'tour-start-btn',
         onClick: () => {
-          window.location.hash = 'tour';
           setActiveTab(0);
+          useTourStore.getState().startTour();
         },
       },
         React.createElement('span', { className: 'tour-start-btn__icon' }, React.createElement(Target, { size: 20 })),

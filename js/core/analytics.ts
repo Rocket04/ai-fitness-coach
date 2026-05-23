@@ -235,3 +235,78 @@ export function getOvertrainingWarning(trendData: any[], weeklyAverages: any[], 
     apreOverride: primary.apreAction,
   };
 }
+
+/** Metric comparison result for a single metric */
+export interface MetricComparison {
+  current: number;
+  previous: number;
+  change: number;
+  changePercent: number;
+  direction: 'up' | 'down' | 'flat';
+}
+
+/** Period comparison result */
+export interface PeriodComparison {
+  recoveryScore: MetricComparison;
+  hrv: MetricComparison;
+  restHR: MetricComparison;
+  sleepHours: MetricComparison;
+  rpe: MetricComparison;
+  sessionsCompleted: { current: number; previous: number; change: number };
+}
+
+/**
+ * Compare current week vs previous week metrics.
+ * Splits trend data into two halves and compares averages.
+ *
+ * @param trendData — array of trend points (sorted by date)
+ * @param sessions — array of completed sessions
+ * @returns PeriodComparison or null if insufficient data
+ */
+export function getPeriodComparison(trendData: any[], sessions: any[]): PeriodComparison | null {
+  if (!trendData || trendData.length < 4) return null;
+
+  const mid = Math.floor(trendData.length / 2);
+  const previousHalf = trendData.slice(0, mid);
+  const currentHalf = trendData.slice(mid);
+
+  if (previousHalf.length < 2 || currentHalf.length < 2) return null;
+
+  const avg = (arr: any[], key: number) => {
+    const values = arr.map(d => Number(d[key])).filter(v => v > 0);
+    if (!values.length) return 0;
+    return values.reduce((a, b) => a + b, 0) / values.length;
+  };
+
+  const compareMetric = (key: string): MetricComparison => {
+    const current = avg(currentHalf, key as any);
+    const previous = avg(previousHalf, key as any);
+    const change = current - previous;
+    const changePercent = previous > 0 ? Math.round((change / previous) * 100) : 0;
+    const direction = change > 0.5 ? 'up' as const : change < -0.5 ? 'down' as const : 'flat' as const;
+    return { current: Math.round(current), previous: Math.round(previous), change: Math.round(change), changePercent, direction };
+  };
+
+  // Compare sessions completed in each half
+  const now = new Date();
+  const twoWeeksAgo = new Date(now); twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+  const oneWeekAgo = new Date(now); oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+  const prevSessions = (sessions || []).filter((s: any) => {
+    const d = s.date || '';
+    return d >= twoWeeksAgo.toISOString().slice(0, 10) && d < oneWeekAgo.toISOString().slice(0, 10) && s.completed;
+  }).length;
+  const currSessions = (sessions || []).filter((s: any) => {
+    const d = s.date || '';
+    return d >= oneWeekAgo.toISOString().slice(0, 10) && s.completed;
+  }).length;
+
+  return {
+    recoveryScore: compareMetric('recoveryScore'),
+    hrv: compareMetric('hrv'),
+    restHR: compareMetric('restHR'),
+    sleepHours: compareMetric('sleepHours'),
+    rpe: compareMetric('rpe'),
+    sessionsCompleted: { current: currSessions, previous: prevSessions, change: currSessions - prevSessions },
+  };
+}

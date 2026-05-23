@@ -5,15 +5,15 @@ This document describes the internationalization (i18n) implementation for Smart
 ## Overview
 
 The app uses **react-i18next** for internationalization with support for:
-- Russian (ru) - default
-- English (en)
+- Russian (ru) — default
+- English (en) — translations complete, UI switcher pending
 
 ## Installation
 
-Install the required dependencies:
+Dependencies are already installed:
 
 ```bash
-npm install react-i18next i18next i18next-browser-languagedetector
+npm install  # react-i18next, i18next, i18next-browser-languagedetector
 ```
 
 ## File Structure
@@ -23,8 +23,8 @@ js/
 ├── i18n/
 │   ├── index.ts          # i18n configuration
 │   └── locales/
-│       ├── ru.json       # Russian translations
-│       └── en.json       # English translations
+│       ├── ru.json       # Russian translations (24 KB)
+│       └── en.json       # English translations (16 KB)
 ```
 
 ## Usage
@@ -74,6 +74,8 @@ changeLanguage('ru');
   },
   "nav": {
     "today": "Today",
+    "log": "Log",
+    "analytics": "Analytics",
     "profile": "Profile"
   },
   "today": {
@@ -96,8 +98,14 @@ changeLanguage('ru');
 The app detects language in this order:
 1. `localStorage` (saved preference)
 2. Browser language (`navigator.language`)
-3. HTML tag (`<html lang="en">`)
+3. HTML tag (`<html lang="ru">`)
 4. Fallback: Russian
+
+## Current Status
+
+- **Russian (ru):** ✅ Complete — all UI strings translated
+- **English (en):** ✅ Complete — all UI strings translated
+- **Language switcher in UI:** ⏳ Not yet activated (translations are ready)
 
 ## Adding New Languages
 
@@ -138,13 +146,10 @@ const { t } = useTranslation();
 <h1>{t('today.title')}</h1>
 ```
 
-## Language Switcher
-
-A language switcher is already implemented in ProfilePage at `js/ui/pages/ProfilePage.jsx`.
-
 ## Notes
 
 - All user-facing strings should be translated
 - Keep translation keys organized by feature/page
 - Use nested keys for better organization (e.g., `today.title`)
 - Interpolation values should match between languages
+- The `index.ts` config is the single source of truth for i18n setup

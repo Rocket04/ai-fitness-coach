@@ -1,26 +1,39 @@
 // js/ui/components/GuidedTour.jsx
 // Guided tour component with spotlight overlay and step navigation
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import ReactDOM from 'react-dom';
 import { useTourStore } from '../../stores/useTourStore.js';
 import { TOUR_STEPS, getStepNumber } from '../../config/tour-steps.js';
 
-/**
- * Calculate position for the tooltip card
- * @param {DOMRect} targetRect
- * @param {string} position - 'top' | 'bottom' | 'left' | 'right'
- * @param {number} tooltipWidth
- * @param {number} tooltipHeight
- * @returns {{top: number, left: number}}
- */
+// Demo data for tour display
+const DEMO_TREND_DATA = [
+  { date: '2026-05-18', recoveryScore: 62, hrv: 48, restHR: 64, sleepHours: 6.5 },
+  { date: '2026-05-19', recoveryScore: 68, hrv: 52, restHR: 62, sleepHours: 7.0 },
+  { date: '2026-05-20', recoveryScore: 55, hrv: 45, restHR: 66, sleepHours: 6.0 },
+  { date: '2026-05-21', recoveryScore: 72, hrv: 56, restHR: 60, sleepHours: 8.0 },
+  { date: '2026-05-22', recoveryScore: 78, hrv: 60, restHR: 58, sleepHours: 7.5 },
+  { date: '2026-05-23', recoveryScore: 70, hrv: 54, restHR: 61, sleepHours: 7.0 },
+  { date: '2026-05-24', recoveryScore: 74, hrv: 57, restHR: 59, sleepHours: 8.0 },
+];
+
+const DEMO_SESSION = {
+  type: 'A',
+  exercises: [
+    { n: 'Подтягивания параллельным хватом', s: '3', r: '6-8', w: 'НЕ до отказа', isApre: true, protocol: 'APRE_6', currentRM: 0 },
+    { n: 'Австралийские подтягивания', s: '3', r: '8-10', w: 'Контроль негативной фазы' },
+    { n: 'W-подъём лёжа на животе', s: '3', r: '10 медленно', w: 'Нижние трапеции' },
+  ],
+  mode: 'full',
+  monthColor: '#4a7c59',
+  label: 'Бег Z2 + Тяга',
+};
+
 function calculatePosition(targetRect, position, tooltipWidth, tooltipHeight) {
   const margin = 16;
   const scrollY = window.scrollY || window.pageYOffset;
   const scrollX = window.scrollX || window.pageXOffset;
-  
   let top, left;
-  
   switch (position) {
     case 'top':
       top = targetRect.top + scrollY - tooltipHeight - margin;
@@ -42,99 +55,43 @@ function calculatePosition(targetRect, position, tooltipWidth, tooltipHeight) {
       top = targetRect.bottom + scrollY + margin;
       left = targetRect.left + scrollX;
   }
-  
-  // Ensure tooltip stays within viewport
   const viewportWidth = window.innerWidth;
   const viewportHeight = window.innerHeight;
-  
   if (left < margin) left = margin;
-  if (left + tooltipWidth > viewportWidth - margin) {
-    left = viewportWidth - tooltipWidth - margin;
-  }
+  if (left + tooltipWidth > viewportWidth - margin) left = viewportWidth - tooltipWidth - margin;
   if (top < scrollY + margin) top = targetRect.bottom + scrollY + margin;
-  if (top + tooltipHeight > scrollY + viewportHeight - margin) {
-    top = targetRect.top + scrollY - tooltipHeight - margin;
-  }
-  
+  if (top + tooltipHeight > scrollY + viewportHeight - margin) top = targetRect.top + scrollY - tooltipHeight - margin;
   return { top, left };
 }
 
-/**
- * Spotlight overlay that highlights the target element
- */
 function Spotlight({ target, allowInteraction }) {
   const [rect, setRect] = useState(null);
-  
   useEffect(() => {
     const updateRect = () => {
-      const element = document.querySelector(target);
-      if (element) {
-        const rect = element.getBoundingClientRect();
-        const scrollY = window.scrollY || window.pageYOffset;
-        const scrollX = window.scrollX || window.pageXOffset;
-        setRect({
-          top: rect.top + scrollY,
-          left: rect.left + scrollX,
-          width: rect.width,
-          height: rect.height,
-        });
+      const el = document.querySelector(target);
+      if (el) {
+        const r = el.getBoundingClientRect();
+        setRect({ top: r.top + window.scrollY, left: r.left + window.scrollX, width: r.width, height: r.height });
       }
     };
-    
     updateRect();
     window.addEventListener('scroll', updateRect, { passive: true });
     window.addEventListener('resize', updateRect);
-    
-    return () => {
-      window.removeEventListener('scroll', updateRect);
-      window.removeEventListener('resize', updateRect);
-    };
+    return () => { window.removeEventListener('scroll', updateRect); window.removeEventListener('resize', updateRect); };
   }, [target]);
-  
   if (!rect) return null;
-  
-  const padding = 8;
-  const spotlightStyle = {
-    position: 'absolute',
-    top: rect.top - padding,
-    left: rect.left - padding,
-    width: rect.width + (padding * 2),
-    height: rect.height + (padding * 2),
-    borderRadius: 'var(--radius-lg)',
-    boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.75)',
-    pointerEvents: allowInteraction ? 'none' : 'auto',
-    zIndex: 9998,
-    transition: 'all 0.3s ease-out',
-  };
-  
-  return React.createElement('div', {
-    className: 'tour-spotlight',
-    style: spotlightStyle,
-  });
+  const p = 8;
+  return React.createElement('div', { className: 'tour-spotlight', style: { position: 'absolute', top: rect.top - p, left: rect.left - p, width: rect.width + p * 2, height: rect.height + p * 2, borderRadius: 'var(--radius-lg)', boxShadow: '0 0 0 9999px rgba(0,0,0,0.75)', pointerEvents: allowInteraction ? 'none' : 'auto', zIndex: 9998, transition: 'all 0.3s ease-out' } });
 }
 
-/**
- * Tour tooltip card with navigation
- */
-function TourTooltip({ t }) {
+function TourTooltip({ t, onDemoData }) {
   const tooltipRef = useRef(null);
   const [position, setPosition] = useState({ top: 0, left: 0 });
   const [tooltipSize, setTooltipSize] = useState({ width: 320, height: 200 });
-  
-  const { 
-    isActive, 
-    currentStep, 
-    totalSteps, 
-    nextStep, 
-    prevStep, 
-    skipTour, 
-    endTour 
-  } = useTourStore();
-  
+  const { isActive, currentStep, totalSteps, nextStep, prevStep, skipTour, endTour } = useTourStore();
   const step = TOUR_STEPS[currentStep];
   if (!step || !isActive) return null;
-  
-  // Calculate tooltip position
+
   useEffect(() => {
     const updatePosition = () => {
       const target = document.querySelector(step.target);
@@ -142,114 +99,91 @@ function TourTooltip({ t }) {
         const targetRect = target.getBoundingClientRect();
         const tooltipRect = tooltipRef.current.getBoundingClientRect();
         setTooltipSize({ width: tooltipRect.width, height: tooltipRect.height });
-        
-        const pos = calculatePosition(
-          targetRect, 
-          step.position, 
-          tooltipRect.width || 320, 
-          tooltipRect.height || 200
-        );
-        setPosition(pos);
-        
-        // Scroll target into view if needed
-        const scrollY = window.scrollY || window.pageYOffset;
-        const viewportHeight = window.innerHeight;
-        if (targetRect.top < 0 || targetRect.bottom > viewportHeight) {
-          target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setPosition(calculatePosition(targetRect, step.position, tooltipRect.width || 320, tooltipRect.height || 200));
+        // FIX Step 6: Use 'nearest' to prevent scroll jump
+        if (!step.noScroll) {
+          const vh = window.innerHeight;
+          if (targetRect.top < 0 || targetRect.bottom > vh) target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
       }
     };
-    
-    // Delay to allow tooltip to render first
     const timer = setTimeout(updatePosition, 50);
-    
     window.addEventListener('scroll', updatePosition, { passive: true });
     window.addEventListener('resize', updatePosition);
-    
-    return () => {
-      clearTimeout(timer);
-      window.removeEventListener('scroll', updatePosition);
-      window.removeEventListener('resize', updatePosition);
-    };
+    return () => { clearTimeout(timer); window.removeEventListener('scroll', updatePosition); window.removeEventListener('resize', updatePosition); };
   }, [currentStep, step]);
-  
-  const isFirstStep = currentStep === 0;
-  const isLastStep = currentStep === totalSteps - 1;
-  
-  const tooltipContent = React.createElement('div', {
-    ref: tooltipRef,
-    className: 'tour-tooltip',
-    style: {
-      position: 'absolute',
-      top: position.top,
-      left: position.left,
-      zIndex: 10000,
-    },
-  },
-    // Step counter
-    React.createElement('div', { className: 'tour-step-counter' },
-      getStepNumber(currentStep)
-    ),
-    
-    // Title
-    React.createElement('h3', { className: 'tour-title' },
-      t ? t(step.i18nTitle) : 'Tour Step'
-    ),
-    
-    // Content
-    React.createElement('p', { className: 'tour-content' },
-      t ? t(step.i18nContent) : ''
-    ),
-    
-    // Navigation buttons
-    React.createElement('div', { className: 'tour-actions' },
-      !isFirstStep && React.createElement('button', {
-        className: 'tour-btn tour-btn--secondary',
-        onClick: prevStep,
-      }, t ? t('tour.back') : '← Back'),
-      
-      React.createElement('button', {
-        className: 'tour-btn tour-btn--primary',
-        onClick: isLastStep ? endTour : nextStep,
-      }, isLastStep 
-        ? (t ? t('tour.finish') : 'Finish') 
-        : (t ? t('tour.next') : 'Next →')
-      ),
-      
-      React.createElement('button', {
-        className: 'tour-btn tour-btn--text',
-        onClick: skipTour,
-      }, t ? t('tour.skip') : 'Skip')
-    )
-  );
-  
+
+  // Inject demo data for tour steps
+  useEffect(() => {
+    if (step.demoData && onDemoData) onDemoData(currentStep);
+  }, [currentStep, step.demoData, onDemoData]);
+
+  // Pulse highlight on target element (Step 1)
+  useEffect(() => {
+    const el = document.querySelector(step.target);
+    if (el && step.pulseTarget) {
+      el.classList.add('tour-pulse-highlight');
+      return () => el.classList.remove('tour-pulse-highlight');
+    }
+  }, [currentStep, step.pulseTarget]);
+
+  // Highlight border for focused sections (Steps 2, 3)
+  useEffect(() => {
+    if (!step.highlightBorder) return;
+    const el = document.querySelector(step.target);
+    if (el) {
+      el.classList.add('tour-highlight-border');
+      return () => el.classList.remove('tour-highlight-border');
+    }
+  }, [currentStep, step.highlightBorder]);
+
+  // Soft-drop animation for sparkline cards (Step 2)
+  useEffect(() => {
+    if (!step.softDrop) return;
+    const container = document.querySelector('.card-appear');
+    if (container) {
+      container.classList.add('tour-sparkline-highlight');
+      return () => container.classList.remove('tour-sparkline-highlight');
+    }
+  }, [currentStep, step.softDrop]);
+
+  const isFirst = currentStep === 0;
+  const isLast = currentStep === totalSteps - 1;
+
   return ReactDOM.createPortal(
     React.createElement(React.Fragment, null,
-      // Backdrop overlay
-      React.createElement('div', {
-        className: 'tour-backdrop',
-        onClick: skipTour,
-      }),
-      // Spotlight
-      React.createElement(Spotlight, {
-        target: step.target,
-        allowInteraction: step.allowInteraction,
-      }),
-      // Tooltip
-      tooltipContent
-    ),
-    document.body
+      React.createElement('div', { className: 'tour-backdrop', onClick: skipTour }),
+      React.createElement(Spotlight, { target: step.target, allowInteraction: step.allowInteraction }),
+      React.createElement('div', { ref: tooltipRef, className: 'tour-tooltip', style: { position: 'absolute', top: position.top, left: position.left, zIndex: 10000 } },
+        React.createElement('div', { className: 'tour-step-counter' }, getStepNumber(currentStep)),
+        React.createElement('h3', { className: 'tour-title' }, t ? t(step.i18nTitle) : 'Tour Step'),
+        React.createElement('p', { className: 'tour-content' }, t ? t(step.i18nContent) : ''),
+        React.createElement('div', { className: 'tour-actions' },
+          !isFirst && React.createElement('button', { className: 'tour-btn tour-btn--secondary', onClick: prevStep }, t ? t('tour.back') : '← Back'),
+          React.createElement('button', { className: 'tour-btn tour-btn--primary', onClick: isLast ? endTour : nextStep }, isLast ? (t ? t('tour.finish') : 'Finish') : (t ? t('tour.next') : 'Next →')),
+          React.createElement('button', { className: 'tour-btn tour-btn--text', onClick: skipTour }, t ? t('tour.skip') : 'Skip')
+        )
+      )
+    ), document.body
   );
 }
 
-/**
- * Main GuidedTour component
- * @param {{t: Function}} props - i18n translation function
- */
 export default function GuidedTour({ t }) {
-  const { isActive } = useTourStore();
-  
+  const { isActive, startTour } = useTourStore();
+
+  // Demo data injection callback
+  const handleDemoData = useCallback((stepIndex) => {
+    // Dispatch custom event for pages to listen to
+    window.dispatchEvent(new CustomEvent('tour-demo-data', { detail: { step: stepIndex } }));
+  }, []);
+
+  useEffect(() => {
+    const handleHash = () => { if (window.location.hash === '#tour' && !isActive) startTour(); };
+    handleHash();
+    window.addEventListener('hashchange', handleHash);
+    return () => window.removeEventListener('hashchange', handleHash);
+  }, [isActive, startTour]);
+
   if (!isActive) return null;
-  
-  return React.createElement(TourTooltip, { t });
+  return React.createElement(TourTooltip, { t, onDemoData: handleDemoData });
 }

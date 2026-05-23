@@ -221,7 +221,7 @@ export async function getSetting(key: string): Promise<unknown> {
 /**
  * Сохраняет группу настроек приложения.
  */
-export async function saveSettings(settings: Partial<Settings>): Promise<void> {
+export async function saveSettings(settings: Partial<Settings> & { checkinTier?: string; selectedGadgets?: string[]; selectedSports?: string[] }): Promise<void> {
   const ops = [];
   if (settings.startDate !== undefined) {
     ops.push(saveSetting('startDate', settings.startDate));
@@ -229,19 +229,31 @@ export async function saveSettings(settings: Partial<Settings>): Promise<void> {
   if (settings.trainDays !== undefined) {
     ops.push(saveSetting('trainDays', settings.trainDays));
   }
+  if (settings.checkinTier !== undefined) {
+    ops.push(saveSetting('checkinTier', settings.checkinTier));
+  }
+  if (settings.selectedGadgets !== undefined) {
+    ops.push(saveSetting('selectedGadgets', settings.selectedGadgets));
+  }
+  if (settings.selectedSports !== undefined) {
+    ops.push(saveSetting('selectedSports', settings.selectedSports));
+  }
   await Promise.all(ops);
 }
 
 /**
  * Загружает все настройки приложения.
- * @returns {Promise<{ startDate: string|null, trainDays: number[]|null }>}
+ * @returns {Promise<{ startDate: string|null, trainDays: number[]|null, checkinTier: string|null, selectedGadgets: string[]|null, selectedSports: string[]|null }>}
  */
 export async function getSettings() {
-  const [startDate, trainDays] = await Promise.all([
+  const [startDate, trainDays, checkinTier, selectedGadgets, selectedSports] = await Promise.all([
     getSetting('startDate'),
     getSetting('trainDays'),
+    getSetting('checkinTier'),
+    getSetting('selectedGadgets'),
+    getSetting('selectedSports'),
   ]);
-  return { startDate, trainDays };
+  return { startDate, trainDays, checkinTier, selectedGadgets, selectedSports };
 }
 
 /* =================================================================

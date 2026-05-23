@@ -304,3 +304,69 @@ export const CALISTHENICS_PROGRESSIONS = {
   4: 'Hard',
   5: 'Elite',
 };
+
+
+/* ───────────────────────────────────────────────────────────
+ * СПОРТЫ — категории для выбора в онбординге
+ * ─────────────────────────────────────────────────────────── */
+export const SPORT_CATEGORIES = [
+  {
+    key: 'cardio',
+    label: 'Кардио',
+    emoji: '🏃',
+    sports: [
+      { key: 'running', label: 'Бег' },
+      { key: 'cycling', label: 'Велосипед' },
+      { key: 'swimming', label: 'Плавание' },
+      { key: 'walking', label: 'Ходьба' },
+    ],
+  },
+  {
+    key: 'strength',
+    label: 'Силовые',
+    emoji: '💪',
+    sports: [
+      { key: 'strength_gym', label: 'Тренажёрный зал' },
+      { key: 'calisthenics', label: 'Калистеника' },
+      { key: 'powerlifting', label: 'Пауэрлифтинг' },
+    ],
+  },
+  {
+    key: 'mindbody',
+    label: 'Тело и разум',
+    emoji: '🧘',
+    sports: [
+      { key: 'yoga', label: 'Йога' },
+      { key: 'pilates', label: 'Пилатес' },
+      { key: 'stretching', label: 'Растяжка' },
+    ],
+  },
+  {
+    key: 'combat',
+    label: 'Единоборства',
+    emoji: '🥊',
+    sports: [
+      { key: 'boxing', label: 'Бокс' },
+      { key: 'mma', label: 'ММА' },
+      { key: 'bjj', label: 'БЖЖ' },
+    ],
+  },
+];
+
+/* ───────────────────────────────────────────────────────────
+ * ГАДЖЕТЫ — устройства для сбора данных
+ * ─────────────────────────────────────────────────────────── */
+export const GADGETS = [
+  { key: 'manual', label: 'Ручной ввод', desc: 'Без устройств, только субъективные данные', tier: 'light', exclusive: true },
+  { key: 'smart_watch', label: 'Смарт-часы', desc: 'ЧСС покоя, сон (Apple Watch, Galaxy Watch, Garmin)', tier: 'medium' },
+  { key: 'heart_rate_monitor', label: 'Пульсометр', desc: 'Точный ЧСС покоя (Polar, Wahoo)', tier: 'medium' },
+  { key: 'hrv_monitor', label: 'HRV-монитор', desc: 'Вариабельность сердечного ритма (Polar H10, Whoop)', tier: 'full' },
+];
+
+/** Автоматический вывод уровня чек-ина по выбранным гаджетам */
+export function deriveTierFromGadgets(gadgets) {
+  if (gadgets.includes('manual')) return 'light';
+  if (gadgets.includes('hrv_monitor')) return 'full';
+  if (gadgets.includes('smart_watch') || gadgets.includes('heart_rate_monitor')) return 'medium';
+  return 'light';
+}

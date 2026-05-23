@@ -3038,6 +3038,36 @@ input[type='range']::-moz-range-track {
   color: var(--text);
 }
 
+/* ── Tour: Step 1 pulse highlight on ring ── */
+@keyframes tour-ring-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(79, 124, 68, 0.4); }
+  50% { box-shadow: 0 0 0 12px rgba(79, 124, 68, 0); }
+}
+.tour-pulse-highlight {
+  animation: tour-ring-pulse 2s ease-in-out infinite;
+  border-radius: var(--radius-lg);
+  position: relative;
+  z-index: 9999;
+}
+
+/* ── Tour: Step 2 sparkline soft-drop animation ── */
+@keyframes tour-soft-drop {
+  from { opacity: 0; transform: translateY(-12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.tour-sparkline-highlight .sparkline-card {
+  animation: tour-soft-drop 0.4s ease-out both;
+}
+.tour-sparkline-highlight .sparkline-card:nth-child(2) { animation-delay: 0.1s; }
+.tour-sparkline-highlight .sparkline-card:nth-child(3) { animation-delay: 0.2s; }
+
+/* ── Tour: highlight border for focused sections ── */
+.tour-highlight-border {
+  outline: 2px solid var(--accent) !important;
+  outline-offset: 2px;
+  border-radius: var(--radius);
+}
+
 /* Tooltip wrapper styles */
 .tooltip-wrapper {
   display: inline-flex;
@@ -3070,3 +3100,163 @@ input[type='range']::-moz-range-track {
 .tour-start-btn__icon {
   font-size: 1.2rem;
 }
+
+
+/* ── Onboarding: Sports Selection ── */
+.onboarding-sports-categories {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.onboarding-sports-category {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.onboarding-sports-category__header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-size-caption);
+  color: var(--text2);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.onboarding-sports-category__emoji {
+  font-size: 16px;
+}
+
+.onboarding-sports-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.onboarding-sport-chip {
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text2);
+  font-size: var(--font-size-body);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.onboarding-sport-chip:hover {
+  border-color: var(--accent);
+  background: var(--surface2);
+}
+
+.onboarding-sport-chip--selected {
+  border-color: var(--accent);
+  background: rgba(79, 124, 68, 0.15);
+  color: var(--accent);
+  font-weight: 500;
+}
+
+/* ── Onboarding: Gadgets Selection ── */
+.onboarding-gadgets-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.onboarding-gadget-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-align: left;
+}
+
+.onboarding-gadget-card:hover {
+  border-color: var(--accent);
+  background: var(--surface2);
+}
+
+.onboarding-gadget-card--selected {
+  border-color: var(--accent);
+  background: rgba(79, 124, 68, 0.15);
+}
+
+.onboarding-gadget-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.onboarding-gadget-label {
+  font-size: var(--font-size-body);
+  font-weight: 500;
+  color: var(--text);
+}
+
+.onboarding-gadget-desc {
+  font-size: var(--font-size-caption);
+  color: var(--text3);
+}
+
+.onboarding-gadget-check {
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.onboarding-tier-recommendation {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: var(--spacing-sm) var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.onboarding-tier-label {
+  font-size: var(--font-size-caption);
+  color: var(--text3);
+}
+
+.onboarding-tier-value {
+  font-size: var(--font-size-caption);
+  font-weight: 600;
+}
+
+.onboarding-btn--primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* ── Weekly 7-Day Strip ── */
+.weekly-strip {
+  display: flex; gap: 6px; overflow-x: auto; padding: 4px 0 8px;
+  -webkit-overflow-scrolling: touch; scrollbar-width: none;
+}
+.weekly-strip::-webkit-scrollbar { display: none; }
+.weekly-day-card {
+  flex: 0 0 44px; display: flex; flex-direction: column; align-items: center;
+  gap: 2px; padding: 6px 4px; border-radius: var(--radius-sm);
+  background: var(--surface); border: 1px solid var(--border); cursor: pointer;
+  transition: all 0.2s ease; min-height: 52px;
+}
+.weekly-day-card:hover { background: var(--surface2); border-color: var(--accent); }
+.weekly-day-card.is-today { border-color: var(--accent); background: rgba(79,124,68,0.12); }
+.weekly-day-name { font-size: 10px; color: var(--text3); font-weight: 600; text-transform: uppercase; }
+.weekly-day-date { font-size: 14px; color: var(--text); font-weight: 700; }
+.type-badge { font-size: 10px; font-weight: 700; color: var(--accent); background: rgba(79,124,68,0.15); padding: 1px 4px; border-radius: 4px; }
+.rest-label { font-size: 9px; color: var(--text3); }

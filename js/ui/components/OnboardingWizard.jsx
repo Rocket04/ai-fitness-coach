@@ -1,15 +1,17 @@
 // js/ui/components/OnboardingWizard.jsx
-// 3-step onboarding: Value → Goal+Days → Recovery Score
+// 5-step onboarding: Value → Goal → Sports → Gadgets → Recovery
 // Focus: immediate action, minimal input, value-first
 
 import React, { useState } from 'react';
 import { Dumbbell, Zap, Flame, Check, Rocket, X } from 'lucide-react';
-import { DAYS, DAYS_TO_DOW } from '../../config/constants.js';
+import { DAYS, DAYS_TO_DOW, SPORT_CATEGORIES, GADGETS, deriveTierFromGadgets } from '../../config/constants.js';
 
 const STEPS = {
   VALUE: 0,
   GOAL: 1,
-  RECOVERY: 2,
+  SPORTS: 2,
+  GADGETS: 3,
+  RECOVERY: 4,
 };
 
 /** GOAL OPTIONS with auto-selected APRE protocols */
@@ -130,9 +132,102 @@ function GoalStep({ selectedGoal, onSelectGoal, selectedDays, onToggleDay, onNex
   );
 }
 
-/** STEP 3: Recovery Score with Personal Ring */
+/** STEP 3: Sport Selection */
+function SportsStep({ selectedSports, onToggleSport, onNext, onBack }) {
+  const canProceed = selectedSports.length > 0;
+
+  return React.createElement('div', { className: 'onboarding-content onboarding-content--sports' },
+    React.createElement('h2', { className: 'onboarding-title' }, 'Каким спортом занимаешься?'),
+    React.createElement('p', { className: 'onboarding-hint' }, 'Можно выбрать несколько'),
+
+    React.createElement('div', { className: 'onboarding-sports-categories' },
+      SPORT_CATEGORIES.map(category =>
+        React.createElement('div', { key: category.key, className: 'onboarding-sports-category' },
+          React.createElement('div', { className: 'onboarding-sports-category__header' },
+            React.createElement('span', { className: 'onboarding-sports-category__emoji' }, category.emoji),
+            React.createElement('span', { className: 'onboarding-sports-category__label' }, category.label)
+          ),
+          React.createElement('div', { className: 'onboarding-sports-chips' },
+            category.sports.map(sport => {
+              const isSelected = selectedSports.includes(sport.key);
+              return React.createElement('button', {
+                key: sport.key,
+                className: `onboarding-sport-chip${isSelected ? ' onboarding-sport-chip--selected' : ''}`,
+                onClick: () => onToggleSport(sport.key),
+              }, sport.label);
+            })
+          )
+        )
+      )
+    ),
+
+    React.createElement('div', { className: 'onboarding-actions' },
+      React.createElement('button', {
+        className: 'btn btn-outline',
+        onClick: onBack,
+      }, '←'),
+      React.createElement('button', {
+        className: 'btn btn-accent',
+        onClick: onNext,
+        disabled: !canProceed,
+      }, 'Далее →')
+    )
+  );
+}
+
+/** STEP 4: Gadget Selection */
+function GadgetsStep({ selectedGadgets, onToggleGadget, derivedTier, onNext, onBack }) {
+  const canProceed = selectedGadgets.length > 0;
+
+  const tierLabels = { full: 'Полный (HRV + ЧСС + Сон)', medium: 'Средний (ЧСС + Сон)', light: 'Лёгкий (субъективный)' };
+  const tierColors = { full: 'var(--green)', medium: 'var(--yellow)', light: 'var(--text3)' };
+
+  return React.createElement('div', { className: 'onboarding-content onboarding-content--gadgets' },
+    React.createElement('h2', { className: 'onboarding-title' }, 'Какие устройства используешь?'),
+    React.createElement('p', { className: 'onboarding-hint' }, 'Определяет точность Recovery Score'),
+
+    React.createElement('div', { className: 'onboarding-gadgets-list' },
+      GADGETS.map(gadget => {
+        const isSelected = selectedGadgets.includes(gadget.key);
+        return React.createElement('button', {
+          key: gadget.key,
+          className: `onboarding-gadget-card${isSelected ? ' onboarding-gadget-card--selected' : ''}`,
+          onClick: () => onToggleGadget(gadget.key),
+        },
+          React.createElement('div', { className: 'onboarding-gadget-info' },
+            React.createElement('span', { className: 'onboarding-gadget-label' }, gadget.label),
+            React.createElement('span', { className: 'onboarding-gadget-desc' }, gadget.desc)
+          ),
+          isSelected && React.createElement('span', { className: 'onboarding-gadget-check' }, React.createElement(Check, { size: 18 }))
+        );
+      })
+    ),
+
+    // Tier recommendation
+    derivedTier && React.createElement('div', { className: 'onboarding-tier-recommendation' },
+      React.createElement('span', { className: 'onboarding-tier-label' }, 'Уровень чек-ина:'),
+      React.createElement('span', {
+        className: 'onboarding-tier-value',
+        style: { color: tierColors[derivedTier] },
+      }, tierLabels[derivedTier])
+    ),
+
+    React.createElement('div', { className: 'onboarding-actions' },
+      React.createElement('button', {
+        className: 'btn btn-outline',
+        onClick: onBack,
+      }, '←'),
+      React.createElement('button', {
+        className: 'btn btn-accent',
+        onClick: onNext,
+        disabled: !canProceed,
+      }, 'Далее →')
+    )
+  );
+}
+
+/** STEP 5: Recovery Score with Personal Ring */
 function RecoveryStep({ onFinish }) {
-  // Empty ring - 0% filled, waiting for data
   const radius = 60;
   const circumference = 2 * Math.PI * radius;
   const color = 'var(--accent)';
@@ -140,29 +235,25 @@ function RecoveryStep({ onFinish }) {
   return React.createElement('div', { className: 'onboarding-content onboarding-content--recovery' },
     React.createElement('h2', { className: 'onboarding-title' }, 'Recovery Score'),
 
-    // Personal empty ring
     React.createElement('div', { className: 'onboarding-recovery-ring' },
       React.createElement('svg', { width: '140', height: '140', viewBox: '0 0 140 140' },
-        // Background ring
         React.createElement('circle', {
           cx: 70, cy: 70, r: radius,
           fill: 'none',
           stroke: 'var(--surface3)',
           strokeWidth: 6,
         }),
-        // Empty progress ring (0%)
         React.createElement('circle', {
           cx: 70, cy: 70, r: radius,
           fill: 'none',
           stroke: color,
           strokeWidth: 6,
           strokeDasharray: circumference,
-          strokeDashoffset: circumference, // Fully empty
+          strokeDashoffset: circumference,
           strokeLinecap: 'round',
           transform: `rotate(-90 70 70)`,
           opacity: 0.3,
         }),
-        // Center text
         React.createElement('text', {
           x: 70, y: 65,
           textAnchor: 'middle',
@@ -181,14 +272,12 @@ function RecoveryStep({ onFinish }) {
       )
     ),
 
-    // Key message
     React.createElement('p', { className: 'onboarding-recovery-message' },
       'Мы будем анализировать твоё состояние и подсказывать, когда тренироваться, а когда восстанавливаться.',
       React.createElement('br'),
       React.createElement('strong', null, 'Вся магия будет здесь.')
     ),
 
-    // CTA
     React.createElement('button', {
       className: 'btn btn-accent onboarding-btn--primary',
       onClick: onFinish,
@@ -197,14 +286,18 @@ function RecoveryStep({ onFinish }) {
 }
 
 /**
- * @param {{ isOpen: boolean, onComplete: (data: { trainDays: number[], selectedGoal: string, apreProtocol: string }) => void, onClose?: () => void }} props
+ * @param {{ isOpen: boolean, onComplete: (data: { trainDays: number[], selectedGoal: string, apreProtocol: string, selectedSports: string[], selectedGadgets: string[], checkinTier: string }) => void, onClose?: () => void }} props
  */
 export default function OnboardingWizard({ isOpen, onComplete, onClose }) {
   const [step, setStep] = useState(STEPS.VALUE);
   const [trainDays, setTrainDays] = useState([1, 3, 5]); // Default Mon/Wed/Fri
   const [selectedGoal, setSelectedGoal] = useState(null);
+  const [selectedSports, setSelectedSports] = useState([]);
+  const [selectedGadgets, setSelectedGadgets] = useState([]);
 
   if (!isOpen) return null;
+
+  const derivedTier = deriveTierFromGadgets(selectedGadgets);
 
   const handleToggleDay = (dow) => {
     setTrainDays(prev => {
@@ -212,14 +305,33 @@ export default function OnboardingWizard({ isOpen, onComplete, onClose }) {
       if (isSelected) {
         return prev.filter(d => d !== dow).sort((a, b) => a - b);
       }
-      // Max 3 days
       if (prev.length >= 3) return prev;
       return [...prev, dow].sort((a, b) => a - b);
     });
   };
 
-  const handleSelectGoal = (goalKey) => {
-    setSelectedGoal(goalKey);
+  const handleToggleSport = (sportKey) => {
+    setSelectedSports(prev =>
+      prev.includes(sportKey)
+        ? prev.filter(s => s !== sportKey)
+        : [...prev, sportKey]
+    );
+  };
+
+  const handleToggleGadget = (gadgetKey) => {
+    setSelectedGadgets(prev => {
+      const gadget = GADGETS.find(g => g.key === gadgetKey);
+      if (gadget?.exclusive) {
+        // Manual is exclusive — deselect all others
+        return prev.includes(gadgetKey) ? [] : [gadgetKey];
+      }
+      // If manual was selected, remove it when selecting a real gadget
+      const withoutManual = prev.filter(g => g !== 'manual');
+      if (withoutManual.includes(gadgetKey)) {
+        return withoutManual.filter(g => g !== gadgetKey);
+      }
+      return [...withoutManual, gadgetKey];
+    });
   };
 
   const handleFinish = () => {
@@ -228,10 +340,13 @@ export default function OnboardingWizard({ isOpen, onComplete, onClose }) {
       trainDays,
       selectedGoal: selectedGoal || 'fitness',
       apreProtocol: goal?.apreProtocol || 'APRE_6',
+      selectedSports,
+      selectedGadgets,
+      checkinTier: derivedTier,
     });
   };
 
-  const totalSteps = 3;
+  const totalSteps = 5;
 
   return React.createElement('div', { className: 'onboarding-overlay', onClick: onClose },
     React.createElement('div', { className: 'onboarding-modal', onClick: e => e.stopPropagation() },
@@ -248,11 +363,26 @@ export default function OnboardingWizard({ isOpen, onComplete, onClose }) {
 
       step === STEPS.GOAL && React.createElement(GoalStep, {
         selectedGoal,
-        onSelectGoal: handleSelectGoal,
+        onSelectGoal: setSelectedGoal,
         selectedDays: trainDays,
         onToggleDay: handleToggleDay,
-        onNext: () => setStep(STEPS.RECOVERY),
+        onNext: () => setStep(STEPS.SPORTS),
         onBack: () => setStep(STEPS.VALUE),
+      }),
+
+      step === STEPS.SPORTS && React.createElement(SportsStep, {
+        selectedSports,
+        onToggleSport: handleToggleSport,
+        onNext: () => setStep(STEPS.GADGETS),
+        onBack: () => setStep(STEPS.GOAL),
+      }),
+
+      step === STEPS.GADGETS && React.createElement(GadgetsStep, {
+        selectedGadgets,
+        onToggleGadget: handleToggleGadget,
+        derivedTier,
+        onNext: () => setStep(STEPS.RECOVERY),
+        onBack: () => setStep(STEPS.SPORTS),
       }),
 
       step === STEPS.RECOVERY && React.createElement(RecoveryStep, {

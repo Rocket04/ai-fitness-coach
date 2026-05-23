@@ -64,3 +64,40 @@ export function clamp(n: number, min: number, max: number): number {
 export function safeJSONParse<T>(raw: any, fallback: T): T {
   try { return raw ? JSON.parse(raw) : fallback; } catch { return fallback; }
 }
+
+
+/**
+ * Module-level offset — set by the store on init and on change.
+ * All date-sensitive logic reads this via getAppDate().
+ */
+let _virtualTodayOffset = 0;
+
+/** Set the virtual date offset (called by the store). */
+export function setVirtualTodayOffset(offset: number): void {
+  _virtualTodayOffset = offset;
+}
+
+/** Get the current virtual date offset. */
+export function getVirtualTodayOffset(): number {
+  return _virtualTodayOffset;
+}
+
+/**
+ * Returns the "application date" — real today offset by virtualTodayOffset days.
+ * All date-sensitive logic should use this instead of new Date().
+ */
+export function getAppDate(): Date {
+  const d = new Date();
+  d.setDate(d.getDate() + _virtualTodayOffset);
+  return d;
+}
+
+/**
+ * Synchronous version that uses an explicit offset parameter.
+ * Use this when the offset is already known (e.g. from store state in computeDerived).
+ */
+export function getAppDateSync(offset: number = 0): Date {
+  const d = new Date();
+  d.setDate(d.getDate() + offset);
+  return d;
+}

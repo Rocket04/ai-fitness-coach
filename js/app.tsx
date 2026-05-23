@@ -182,7 +182,7 @@ function AppContent() {
       <OnboardingWizard
         isOpen={showOnboarding}
         onComplete={(data) => {
-          completeOnboarding(data);
+          completeOnboarding(data as Parameters<typeof completeOnboarding>[0]);
           setShowOnboarding(false);
         }}
         onClose={() => setShowOnboarding(false)}

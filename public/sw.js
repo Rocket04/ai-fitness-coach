@@ -1,86 +1,86 @@
-// sw.js
-importScripts('https://storage.googleapis.com/workbox-cdn/releases/7.3.0/workbox-sw.js');
+// sw.js — Service Worker for Smart Fitness Coach PWA
+// Caches core assets for offline use, network-first for API-like requests
 
-if (workbox) {
-  console.log('Workbox загрузился, чувак 🚀');
+const CACHE_NAME = 'fitcoach-v1';
 
-  // Предварительное кэширование критически важных ресурсов
-  workbox.precaching.precacheAndRoute([
-    { url: '/', revision: null },
-    { url: '/index.html', revision: null },
-  ]);
+// Core app shell assets — cached on install
+const CORE_ASSETS = [
+  '/',
+  '/index.html',
+  '/css/styles.css',
+  '/manifest.json',
+];
 
-  // Стратегия StaleWhileRevalidate для наших файлов (HTML, CSS, JS)
-  // Сначала показываем из кэша, потом обновляем в фоне — работает офлайн
-  workbox.routing.registerRoute(
-    ({ url }) => url.origin === self.location.origin &&
-                 (url.pathname.endsWith('.html') ||
-                  url.pathname.endsWith('.css') ||
-                  url.pathname.endsWith('.js')),
-    new workbox.strategies.StaleWhileRevalidate({
-      cacheName: 'local-resources',
-      plugins: [
-        new workbox.expiration.ExpirationPlugin({
-          maxEntries: 50,
-          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 дней
-        })
-      ]
-    })
+// ── Install: pre-cache core assets ──────────────────────────────
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then((cache) => cache.addAll(CORE_ASSETS))
+      .then(() => self.skipWaiting())
   );
+});
 
-  // Стратегия CacheFirst для CDN‑библиотек (React, Dexie, Babel и т.д.)
-  workbox.routing.registerRoute(
-    ({ url }) => url.hostname.includes('cdn') ||
-                 url.hostname.includes('unpkg.com') ||
-                 url.hostname.includes('cdnjs.cloudflare.com'),
-    new workbox.strategies.CacheFirst({
-      cacheName: 'cdn-resources',
-      plugins: [
-        new workbox.expiration.ExpirationPlugin({
-          maxEntries: 30,
-          maxAgeSeconds: 60 * 24 * 60 * 60, // 60 дней
-        })
-      ]
-    })
+// ── Activate: clean old caches ─────────────────────────────────
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(
+        keys
+          .filter((key) => key !== CACHE_NAME)
+          .map((key) => caches.delete(key))
+      )
+    ).then(() => self.clients.claim())
   );
+});
 
-  // Стратегия StaleWhileRevalidate для манифеста и иконок
-  workbox.routing.registerRoute(
-    ({ url }) => url.pathname.endsWith('.json') ||
-                 url.pathname.endsWith('.png') ||
-                 url.pathname.endsWith('.ico') ||
-                 url.pathname.endsWith('.svg'),
-    new workbox.strategies.StaleWhileRevalidate({
-      cacheName: 'assets-cache',
-      plugins: [
-        new workbox.expiration.ExpirationPlugin({
-          maxEntries: 20,
-          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 дней
-        })
-      ]
-    })
-  );
+// ── Fetch: cache-first for same-origin, network-first for others ─
+self.addEventListener('fetch', (event) => {
+  const { request } = event;
+  const url = new URL(request.url);
 
-  // Обработчик установки Service Worker
-  self.addEventListener('install', (event) => {
-    self.skipWaiting(); // активировать новый SW сразу
-    console.log('СВ установлен, бро 💪');
-  });
+  // Only handle GET requests
+  if (request.method !== 'GET') return;
 
-  // Обработчик активации
-  self.addEventListener('activate', (event) => {
-    const currentCaches = ['local-resources', 'cdn-resources', 'assets-cache'];
-    event.waitUntil(
-      caches.keys().then(cacheNames =>
-        Promise.all(
-          cacheNames
-            .filter(name => !currentCaches.includes(name))
-            .map(name => caches.delete(name))
-        )
-      ).then(() => self.clients.claim())
+  // Same-origin: cache-first strategy
+  if (url.origin === self.location.origin) {
+    event.respondWith(
+      caches.match(request).then((cached) => {
+        if (cached) return cached;
+        return fetch(request)
+          .then((response) => {
+            // Cache successful responses for CSS/JS/images
+            if (response.ok && response.status === 200) {
+              const clone = response.clone();
+              caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+            }
+            return response;
+          })
+          .catch(() => {
+            // Fallback: return cached index.html for navigation requests
+            if (request.headers.get('accept')?.includes('text/html')) {
+              return caches.match('/index.html');
+            }
+            return new Response('Offline', { status: 503 });
+          });
+      })
     );
-    console.log('СВ активирован, lets go!');
-  });
-} else {
-  console.error('Ой, Workbox не загрузился 😢');
-}
+    return;
+  }
+
+  // External (CDN / unpkg) — stale-while-revalidate
+  event.respondWith(
+    caches.match(request).then((cached) => {
+      const fetchPromise = fetch(request)
+        .then((response) => {
+          if (response.ok) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          }
+          return response;
+        })
+        .catch(() => cached);
+
+      return cached || fetchPromise;
+    })
+  );
+});

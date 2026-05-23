@@ -19,6 +19,7 @@ import type {
   OvertrainingWarning,
   ApreExerciseResult,
 } from '../core/types.js';
+import type { CheckinTier } from '../core/recoveryScore.js';
 import {
   init,
   saveSession,
@@ -33,10 +34,11 @@ import {
   getAllCheckins,
   getSettings,
   saveSettings,
+  saveSetting,
   getManualStatus,
   saveManualStatus,
 } from '../core/storage.js';
-import { isOnboardingCompleted, markOnboardingCompleted } from '../core/onboardingStorage.js';
+import { markOnboardingCompleted } from '../core/onboardingStorage.js';
 import { calcReadiness, getEffectiveReadiness, detectRecoveryDebt } from '../core/readiness.js';
 import { calculateRecoveryScore } from '../core/recoveryScore.js';
 import { calculateSessionLoad } from '../core/sessionLoad.js';
@@ -58,16 +60,16 @@ import {
   getOvertrainingWarning,
 } from '../core/analytics.js';
 import { getAllCorrelations } from '../core/correlations.js';
-import { parseLocalDate, formatISO } from '../core/helpers.js';
+import { parseLocalDate, formatISO, getAppDateSync, setVirtualTodayOffset } from '../core/helpers.js';
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
-function makeTodayISO() {
-  return formatISO(new Date());
+function makeTodayISO(virtualOffset: number = 0) {
+  return formatISO(getAppDateSync(virtualOffset));
 }
 
-function makeTomorrowDate(todayISO: string): Date {
-  const d = parseLocalDate(todayISO) ?? new Date();
+function makeTomorrowDate(todayISO: string, virtualOffset: number = 0): Date {
+  const d = parseLocalDate(todayISO) ?? getAppDateSync(virtualOffset);
   d.setDate(d.getDate() + 1);
   return d;
 }
@@ -80,10 +82,12 @@ function computeDerived(
   startDate: string | null,
   trainDays: number[],
   manualOverride: ManualStatus,
-  todayISO: string
+  todayISO: string,
+  checkinTier: CheckinTier = 'medium',
+  virtualTodayOffset: number = 0
 ) {
-  const todayDate = parseLocalDate(todayISO) ?? new Date();
-  const tomorrowDate = makeTomorrowDate(todayISO);
+  const todayDate = parseLocalDate(todayISO) ?? getAppDateSync(virtualTodayOffset);
+  const tomorrowDate = makeTomorrowDate(todayISO, virtualTodayOffset);
 
   // Readiness
   const sorted = [...checkins].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
@@ -91,7 +95,7 @@ function computeDerived(
   const autoReadiness: ReadinessStatus = lastCheckin ? calcReadiness(lastCheckin) : 'green';
   const readiness: ReadinessStatus = getEffectiveReadiness(autoReadiness, manualOverride);
   const recoveryDebt = detectRecoveryDebt(sorted.slice(0, 3));
-  const recoveryScore = lastCheckin ? calculateRecoveryScore(lastCheckin, checkins) : 0;
+  const recoveryScore = lastCheckin ? calculateRecoveryScore(lastCheckin, checkins, checkinTier) : 0;
 
   // Week
   let weekNumber = 1;
@@ -224,6 +228,10 @@ interface AppStore {
   // ── Settings ──
   startDate: string | null;
   trainDays: number[];
+  checkinTier: CheckinTier;
+  selectedGadgets: string[];
+  selectedSports: string[];
+  virtualTodayOffset: number;
   showSettings: boolean;
   showResetConfirm: boolean;
   editStartDate: string;
@@ -323,6 +331,10 @@ interface AppStore {
   setShowResetConfirm: (v: boolean) => void;
   setEditStartDate: (v: string) => void;
   setEditTrainDays: (v: number[]) => void;
+  setCheckinTier: (v: CheckinTier) => Promise<void>;
+  setVirtualTodayOffset: (v: number) => Promise<void>;
+  setSelectedGadgets: (v: string[]) => Promise<void>;
+  setSelectedSports: (v: string[]) => Promise<void>;
   showToast: (message: string, type?: ToastType, duration?: number) => void;
   openSettings: () => void;
   toggleDay: (day: number) => void;
@@ -339,7 +351,7 @@ interface AppStore {
   confirmResetData: () => Promise<void>;
 
   // ── Onboarding ──
-  completeOnboarding: (data: { trainDays: number[]; selectedGoal?: string; apreProtocol?: string }) => Promise<void>;
+  completeOnboarding: (data: { trainDays: number[]; selectedGoal?: string; apreProtocol?: string; checkinTier?: CheckinTier; selectedGadgets?: string[]; selectedSports?: string[] }) => Promise<void>;
 
   // ── Internal ──
   _recompute: () => void;
@@ -348,7 +360,7 @@ interface AppStore {
 // ─── initial derived snapshot ─────────────────────────────────────────────────
 
 const todayISO0 = makeTodayISO();
-const initialDerived = computeDerived([], [], null, [1, 3, 5], 'unknown', todayISO0);
+const initialDerived = computeDerived([], [], null, [1, 3, 5], 'unknown', todayISO0, 'medium', 0);
 
 // ─── store ────────────────────────────────────────────────────────────────────
 
@@ -362,6 +374,10 @@ export const useAppStore = create<AppStore>((set, get) => ({
   // Settings
   startDate: null,
   trainDays: [1, 3, 5],
+  checkinTier: 'medium',
+  selectedGadgets: [],
+  selectedSports: [],
+  virtualTodayOffset: 0,
   showSettings: false,
   showResetConfirm: false,
   editStartDate: '',
@@ -419,7 +435,9 @@ export const useAppStore = create<AppStore>((set, get) => ({
       s.startDate,
       s.trainDays,
       s.manualOverride,
-      s.todayISO
+      s.todayISO,
+      s.checkinTier,
+      s.virtualTodayOffset
     );
     set(derived);
   },
@@ -437,6 +455,9 @@ export const useAppStore = create<AppStore>((set, get) => ({
 
       const sd = (settings.startDate as string | null) || todayISO;
       const td = (settings.trainDays as number[] | null) || [1, 3, 5];
+      const ct = (settings.checkinTier as CheckinTier | null) || 'medium';
+      const sg = (settings.selectedGadgets as string[] | null) || [];
+      const ss = (settings.selectedSports as string[] | null) || [];
 
       if (!settings.startDate || !settings.trainDays) {
         await saveSettings({ startDate: sd, trainDays: td });
@@ -446,11 +467,9 @@ export const useAppStore = create<AppStore>((set, get) => ({
       const ms = await getManualStatus(todayISO);
       const lt = await getLatestTestResults();
 
+      const vto = ((settings as any).virtualTodayOffset as number | null) || 0;
       const manualStatus = (ms || 'unknown') as ManualStatus;
-      const derived = computeDerived(allSessions, allCheckins, sd, td, manualStatus, todayISO);
-
-      // Check if this is a new user (no checkins ever, no sessions)
-      const isNewUser = allCheckins.length === 0 && allSessions.length === 0;
+      const derived = computeDerived(allSessions, allCheckins, sd, td, manualStatus, todayISO, ct, vto);
 
       set({
         todayISO,
@@ -458,6 +477,10 @@ export const useAppStore = create<AppStore>((set, get) => ({
         checkins: allCheckins,
         startDate: sd,
         trainDays: td,
+        checkinTier: ct,
+        selectedGadgets: sg,
+        selectedSports: ss,
+        virtualTodayOffset: vto,
         manualOverride: manualStatus,
         weight: tc?.weight ?? 0,
         restHR: tc?.restHR ?? 0,
@@ -478,6 +501,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
         ...derived,
         dataLoaded: true,
       });
+      setVirtualTodayOffset(vto);
     } catch (err) {
       console.error('Failed to load data:', err);
       set({ dataLoaded: true, todayISO });
@@ -512,6 +536,28 @@ export const useAppStore = create<AppStore>((set, get) => ({
   setShowResetConfirm: v => set({ showResetConfirm: v }),
   setEditStartDate: v => set({ editStartDate: v }),
   setEditTrainDays: v => set({ editTrainDays: v }),
+  setVirtualTodayOffset: async (v: number) => {
+    const s = get();
+    await saveSetting('virtualTodayOffset', v);
+    setVirtualTodayOffset(v);
+    const derived = computeDerived(s.sessions, s.checkins, s.startDate, s.trainDays, s.manualOverride, s.todayISO, s.checkinTier, s.virtualTodayOffset);
+    set({ virtualTodayOffset: v, ...derived });
+  },
+
+  setCheckinTier: async (v) => {
+    const s = get();
+    await saveSetting('checkinTier', v);
+    const derived = computeDerived(s.sessions, s.checkins, s.startDate, s.trainDays, s.manualOverride, s.todayISO, v);
+    set({ checkinTier: v, ...derived });
+  },
+  setSelectedGadgets: async (v) => {
+    await saveSetting('selectedGadgets', v);
+    set({ selectedGadgets: v });
+  },
+  setSelectedSports: async (v) => {
+    await saveSetting('selectedSports', v);
+    set({ selectedSports: v });
+  },
 
   showToast: (message, type = 'success', duration = 2000) => {
     set({ toast: { message, type, visible: true } });
@@ -534,10 +580,10 @@ export const useAppStore = create<AppStore>((set, get) => ({
 
   // ── Async actions ──
   handleSaveSettings: async () => {
-    const { editStartDate, editTrainDays, showToast: toast, sessions, checkins, manualOverride, todayISO } = get();
+    const { editStartDate, editTrainDays, showToast: toast, sessions, checkins, manualOverride, todayISO, checkinTier } = get();
     try {
       await saveSettings({ startDate: editStartDate, trainDays: editTrainDays });
-      const derived = computeDerived(sessions, checkins, editStartDate, editTrainDays, manualOverride, todayISO);
+      const derived = computeDerived(sessions, checkins, editStartDate, editTrainDays, manualOverride, todayISO, checkinTier);
       set({ startDate: editStartDate, trainDays: editTrainDays, showSettings: false, ...derived });
       toast('Настройки сохранены');
     } catch (err) {
@@ -569,7 +615,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
     try {
       await saveCheckin(checkin);
       const newCheckins = [...s.checkins.filter(c => c.date !== s.todayISO), checkin];
-      const derived = computeDerived(s.sessions, newCheckins, s.startDate, s.trainDays, s.manualOverride, s.todayISO);
+      const derived = computeDerived(s.sessions, newCheckins, s.startDate, s.trainDays, s.manualOverride, s.todayISO, s.checkinTier, s.virtualTodayOffset);
       set({ checkins: newCheckins, ...derived });
       s.showToast('Чек-ин сохранён');
     } catch (err) {
@@ -579,14 +625,14 @@ export const useAppStore = create<AppStore>((set, get) => ({
   },
 
   handleManualOverrideChange: async status => {
-    const { todayISO, sessions, checkins, startDate, trainDays } = get();
+    const { todayISO, sessions, checkins, startDate, trainDays, checkinTier } = get();
     await saveManualStatus(todayISO, status);
-    const derived = computeDerived(sessions, checkins, startDate, trainDays, status, todayISO);
+    const derived = computeDerived(sessions, checkins, startDate, trainDays, status, todayISO, checkinTier);
     set({ manualOverride: status, ...derived });
   },
 
   handleMarkMorning: async () => {
-    const { todayISO, sessions, checkins, startDate, trainDays, manualOverride, autoReadiness } = get();
+    const { todayISO, sessions, checkins, startDate, trainDays, manualOverride, autoReadiness, checkinTier } = get();
     const key = `${todayISO}_morning`;
     const existing = sessions.find(s => s.key === key);
     let newSessions: Session[];
@@ -598,12 +644,12 @@ export const useAppStore = create<AppStore>((set, get) => ({
       await saveSession(session);
       newSessions = [...sessions.filter(s => s.key !== key), session];
     }
-    const derived = computeDerived(newSessions, checkins, startDate, trainDays, manualOverride, todayISO);
+    const derived = computeDerived(newSessions, checkins, startDate, trainDays, manualOverride, todayISO, checkinTier);
     set({ sessions: newSessions, ...derived });
   },
 
   handleMarkEvening: async () => {
-    const { todayISO, sessions, checkins, startDate, trainDays, manualOverride, autoReadiness } = get();
+    const { todayISO, sessions, checkins, startDate, trainDays, manualOverride, autoReadiness, checkinTier } = get();
     const key = `${todayISO}_evening`;
     const existing = sessions.find(s => s.key === key);
     let newSessions: Session[];
@@ -615,7 +661,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
       await saveSession(session);
       newSessions = [...sessions.filter(s => s.key !== key), session];
     }
-    const derived = computeDerived(newSessions, checkins, startDate, trainDays, manualOverride, todayISO);
+    const derived = computeDerived(newSessions, checkins, startDate, trainDays, manualOverride, todayISO, checkinTier);
     set({ sessions: newSessions, ...derived });
   },
 
@@ -651,7 +697,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
       newSessions = [...s.sessions.filter(sess => sess.key !== key), session];
       s.showToast('Тренировка сохранена');
     }
-    const derived = computeDerived(newSessions, s.checkins, s.startDate, s.trainDays, s.manualOverride, s.todayISO);
+    const derived = computeDerived(newSessions, s.checkins, s.startDate, s.trainDays, s.manualOverride, s.todayISO, s.checkinTier, s.virtualTodayOffset);
     set({ sessions: newSessions, rpe: 0, sessionNote: '', durationMinutes: 45, pendingApreResults: [], ...derived });
   },
 
@@ -672,13 +718,13 @@ export const useAppStore = create<AppStore>((set, get) => ({
   },
 
   handleImportData: async file => {
-    const { showToast: toast, startDate, trainDays, manualOverride, todayISO } = get();
+    const { showToast: toast, startDate, trainDays, manualOverride, todayISO, checkinTier } = get();
     try {
       const text = await file.text();
       const data = JSON.parse(text);
       await importAllData(data);
       const [allSessions, allCheckins] = await Promise.all([getAllSessions(), getAllCheckins()]);
-      const derived = computeDerived(allSessions, allCheckins, startDate, trainDays, manualOverride, todayISO);
+      const derived = computeDerived(allSessions, allCheckins, startDate, trainDays, manualOverride, todayISO, checkinTier);
       set({ sessions: allSessions, checkins: allCheckins, ...derived });
       toast('Данные импортированы');
     } catch (err) {
@@ -697,7 +743,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
     try {
       await clearAllData();
       await saveSettings({ startDate: todayISO, trainDays: [1, 3, 5] });
-      const derived = computeDerived([], [], todayISO, [1, 3, 5], 'unknown', todayISO);
+      const derived = computeDerived([], [], todayISO, [1, 3, 5], 'unknown', todayISO, 'medium');
       set({
         sessions: [],
         checkins: [],
@@ -719,8 +765,15 @@ export const useAppStore = create<AppStore>((set, get) => ({
   completeOnboarding: async data => {
     const { todayISO, showToast } = get();
     try {
-      // Save training days
-      await saveSettings({ startDate: todayISO, trainDays: data.trainDays });
+      // Save training days + tier + gadgets + sports to settings DB
+      const tier = data.checkinTier || 'medium';
+      await saveSettings({
+        startDate: todayISO,
+        trainDays: data.trainDays,
+        checkinTier: tier,
+        selectedGadgets: data.selectedGadgets || [],
+        selectedSports: data.selectedSports || [],
+      });
 
       // Save goal and APRE protocol preference to localStorage for future use
       if (data.selectedGoal) {
@@ -738,7 +791,8 @@ export const useAppStore = create<AppStore>((set, get) => ({
         todayISO,
         data.trainDays,
         'unknown',
-        todayISO
+        todayISO,
+        tier
       );
 
       set({
@@ -746,6 +800,9 @@ export const useAppStore = create<AppStore>((set, get) => ({
         startDate: todayISO,
         editTrainDays: data.trainDays,
         editStartDate: todayISO,
+        checkinTier: tier,
+        selectedGadgets: data.selectedGadgets || [],
+        selectedSports: data.selectedSports || [],
         checkins: allCheckins,
         ...derived,
       });
