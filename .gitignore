@@ -10,3 +10,7 @@ package.json
 .aider.chat.history.md
 .aider.input.history
 .aider*
+Thumbs.db
+tmp*
+dev-dist/
+dist/

@@ -1,2 +1,0 @@
-import{n as e}from"./rolldown-runtime-jpDsebLB.js";import{i as t}from"./react-vendor-B9Plibi8.js";var n=e(t(),1);function r({icon:e=`📭`,title:t,subtitle:r,action:i}){return n.createElement(`div`,{className:`empty-state`},n.createElement(`div`,{className:`empty-state__icon`},e),n.createElement(`div`,{className:`empty-state__title`},t),r&&n.createElement(`div`,{className:`empty-state__subtitle`},r),i&&n.createElement(`button`,{className:`btn btn-sm mt-sm`,onClick:i.onClick},i.label))}export{r as t};
-//# sourceMappingURL=EmptyState-B8lcG64P.js.map
