@@ -52,7 +52,7 @@ db.version(2).stores({
  */
 export async function init() {
   try {
-    await db.open();
+    await _db().open();
   } catch (err) {
     throw new Error(`Не удалось открыть базу данных: ${(err as Error).message}`);
   }
@@ -70,7 +70,7 @@ export async function saveSession(session: Session): Promise<string> {
     if (session.key === undefined || session.key === null) {
       throw new Error('Для сессии обязательно поле key');
     }
-    await db.sessions.put({ ...session });
+    await _db().sessions.put({ ...session });
     return session.key;
   } catch (err) {
     throw new Error(`Ошибка при сохранении сессии: ${(err as Error).message}`);
@@ -84,7 +84,7 @@ export async function saveSession(session: Session): Promise<string> {
  */
 export async function deleteSession(key: string): Promise<void> {
   try {
-    await db.sessions.delete(key);
+    await _db().sessions.delete(key);
   } catch (err) {
     throw new Error(`Ошибка при удалении сессии ${key}: ${(err as Error).message}`);
   }
@@ -99,7 +99,7 @@ export async function deleteSession(key: string): Promise<void> {
  */
 export async function getAllSessions() {
   try {
-    return await db.sessions.toArray();
+    return await _db().sessions.toArray();
   } catch (err) {
     throw new Error(`Ошибка при получении всех сессий: ${(err as Error).message}`);
   }
@@ -133,7 +133,7 @@ export async function saveCheckin(checkin: Checkin): Promise<string> {
     if (checkin.date === undefined || checkin.date === null) {
       throw new Error('Для чек-ина обязательно поле date');
     }
-    await db.checkins.put({ ...checkin });
+    await _db().checkins.put({ ...checkin });
     return checkin.date;
   } catch (err) {
     throw new Error(`Ошибка при сохранении чек-ина: ${(err as Error).message}`);
@@ -147,7 +147,7 @@ export async function saveCheckin(checkin: Checkin): Promise<string> {
  */
 export async function getCheckin(date: string): Promise<Checkin | null> {
   try {
-    return (await db.checkins.get(date)) ?? null;
+    return (await _db().checkins.get(date)) ?? null;
   } catch (err) {
     throw new Error(`Ошибка при получении чек-ина за ${date}: ${(err as Error).message}`);
   }
@@ -158,7 +158,7 @@ export async function getCheckin(date: string): Promise<Checkin | null> {
  */
 export async function getAllCheckins(): Promise<Checkin[]> {
   try {
-    return await db.checkins.toArray();
+    return await _db().checkins.toArray();
   } catch (err) {
     throw new Error(`Ошибка при получении всех чек-инов: ${(err as Error).message}`);
   }
@@ -196,7 +196,7 @@ export async function getCheckinsForLastDays(days: number): Promise<Checkin[]> {
 export async function saveSetting(key: string, value: unknown): Promise<void> {
   try {
     const serialized = JSON.stringify(value);
-    await db.settings.put({ key, value: serialized });
+    await _db().settings.put({ key, value: serialized });
   } catch (err) {
     throw new Error(`Ошибка при сохранении настройки ${key}: ${(err as Error).message}`);
   }
@@ -209,7 +209,7 @@ export async function saveSetting(key: string, value: unknown): Promise<void> {
  */
 export async function getSetting(key: string): Promise<unknown> {
   try {
-    const record = await db.settings.get(key);
+    const record = await _db().settings.get(key);
     if (!record) return null;
     // Пытаемся распарсить как JSON, иначе возвращаем строку
     try { return JSON.parse(record.value); } catch { return record.value; }
@@ -221,7 +221,7 @@ export async function getSetting(key: string): Promise<unknown> {
 /**
  * Сохраняет группу настроек приложения.
  */
-export async function saveSettings(settings: Partial<Settings> & { checkinTier?: string; selectedGadgets?: string[]; selectedSports?: string[] }): Promise<void> {
+export async function saveSettings(settings: Partial<Settings> & { checkinTier?: string; selectedGadgets?: string[]; selectedSports?: string[]; rehabIssues?: string[]; rehabExercises?: string[]; level?: string; goals?: string[]; equipment?: string }): Promise<void> {
   const ops = [];
   if (settings.startDate !== undefined) {
     ops.push(saveSetting('startDate', settings.startDate));
@@ -238,6 +238,21 @@ export async function saveSettings(settings: Partial<Settings> & { checkinTier?:
   if (settings.selectedSports !== undefined) {
     ops.push(saveSetting('selectedSports', settings.selectedSports));
   }
+  if (settings.rehabIssues !== undefined) {
+    ops.push(saveSetting('rehabIssues', settings.rehabIssues));
+  }
+  if (settings.rehabExercises !== undefined) {
+    ops.push(saveSetting('rehabExercises', settings.rehabExercises));
+  }
+  if (settings.level !== undefined) {
+    ops.push(saveSetting('level', settings.level));
+  }
+  if (settings.goals !== undefined) {
+    ops.push(saveSetting('goals', settings.goals));
+  }
+  if (settings.equipment !== undefined) {
+    ops.push(saveSetting('equipment', settings.equipment));
+  }
   await Promise.all(ops);
 }
 
@@ -246,14 +261,19 @@ export async function saveSettings(settings: Partial<Settings> & { checkinTier?:
  * @returns {Promise<{ startDate: string|null, trainDays: number[]|null, checkinTier: string|null, selectedGadgets: string[]|null, selectedSports: string[]|null }>}
  */
 export async function getSettings() {
-  const [startDate, trainDays, checkinTier, selectedGadgets, selectedSports] = await Promise.all([
+  const [startDate, trainDays, checkinTier, selectedGadgets, selectedSports, rehabIssues, rehabExercises, level, goals, equipment] = await Promise.all([
     getSetting('startDate'),
     getSetting('trainDays'),
     getSetting('checkinTier'),
     getSetting('selectedGadgets'),
     getSetting('selectedSports'),
+    getSetting('rehabIssues'),
+    getSetting('rehabExercises'),
+    getSetting('level'),
+    getSetting('goals'),
+    getSetting('equipment'),
   ]);
-  return { startDate, trainDays, checkinTier, selectedGadgets, selectedSports };
+  return { startDate, trainDays, checkinTier, selectedGadgets, selectedSports, rehabIssues, rehabExercises, level, goals, equipment };
 }
 
 /* =================================================================
@@ -286,10 +306,10 @@ export async function getManualStatus(date: string): Promise<ManualStatus | null
  */
 export async function exportAllData(): Promise<any> {
   const [sessions, checkins, achievements, settings] = await Promise.all([
-    db.sessions.toArray(),
-    db.checkins.toArray(),
-    db.achievements.toArray(),
-    db.settings.toArray(),
+    _db().sessions.toArray(),
+    _db().checkins.toArray(),
+    _db().achievements.toArray(),
+    _db().settings.toArray(),
   ]);
   return {
     version: 2,
@@ -347,7 +367,7 @@ export async function importAllData(data: any): Promise<void> {
   }
 
   // ── Транзакция: очистка + запись ──
-  await db.transaction(
+  await _db().transaction(
     'rw',
     db.sessions,
     db.checkins,
@@ -356,28 +376,28 @@ export async function importAllData(data: any): Promise<void> {
     async () => {
       // Очищаем всё
       await Promise.all([
-        db.sessions.clear(),
-        db.checkins.clear(),
-        db.achievements.clear(),
-        db.settings.clear(),
+        _db().sessions.clear(),
+        _db().checkins.clear(),
+        _db().achievements.clear(),
+        _db().settings.clear(),
       ]);
 
       // Записываем
       const writeOps = [];
-      if (sessions.length) writeOps.push(db.sessions.bulkPut(sessions));
-      if (checkins.length) writeOps.push(db.checkins.bulkPut(checkins));
+      if (sessions.length) writeOps.push(_db().sessions.bulkPut(sessions));
+      if (checkins.length) writeOps.push(_db().checkins.bulkPut(checkins));
       if (Array.isArray(data.achievements) && data.achievements.length) {
         // achievements используют ++id — strips ids для избежания конфликтов
         const cleanAchievements = data.achievements.map((a: any) => ({
           achievementKey: a.achievementKey ?? a.key,
           earnedAt: a.earnedAt ?? Date.now(),
         }));
-        writeOps.push(db.achievements.bulkAdd(cleanAchievements));
+        writeOps.push(_db().achievements.bulkAdd(cleanAchievements));
       }
 
       const settingsArr = Object.values(settingsMap);
       if (settingsArr.length) {
-        writeOps.push(db.settings.bulkPut(settingsArr));
+        writeOps.push(_db().settings.bulkPut(settingsArr));
       }
 
       await Promise.all(writeOps);
@@ -389,7 +409,7 @@ export async function importAllData(data: any): Promise<void> {
  * Полностью очищает все данные из IndexedDB.
  */
 export async function clearAllData(): Promise<void> {
-  await db.transaction(
+  await _db().transaction(
     'rw',
     db.sessions,
     db.checkins,
@@ -397,10 +417,10 @@ export async function clearAllData(): Promise<void> {
     db.settings,
     async () => {
       await Promise.all([
-        db.sessions.clear(),
-        db.checkins.clear(),
-        db.achievements.clear(),
-        db.settings.clear(),
+        _db().sessions.clear(),
+        _db().checkins.clear(),
+        _db().achievements.clear(),
+        _db().settings.clear(),
       ]);
     }
   );
@@ -409,4 +429,89 @@ export async function clearAllData(): Promise<void> {
 /* =================================================================
  * НИЗКОУРОВНЕВЫЙ ДОСТУП (для экстренных случаев / миграций)
  * ================================================================= */
+/* =================================================================
+ * DEMO MODE — separate IndexedDB instance
+ * ================================================================= */
+
+let _demoMode = false;
+let _demoDb: Dexie & {
+  sessions: Dexie.Table<Session, string>;
+  checkins: Dexie.Table<Checkin, string>;
+  settings: Dexie.Table<{ key: string; value: string }, string>;
+  achievements: Dexie.Table<{ id?: number; achievementKey: string; earnedAt: number }, number>;
+  waitlist: Dexie.Table<{ id?: number; email: string; provider: string; createdAt: number }, number>;
+} | null = null;
+
+function getActiveDb() {
+  if (_demoMode && _demoDb) return _demoDb;
+  return db;
+}
+
+/** Check if demo mode is currently active. */
+export function isDemoMode(): boolean {
+  return _demoMode;
+}
+
+/** Get the active database instance (real or demo). */
+export function getActiveDatabase() {
+  return _demoMode && _demoDb ? _demoDb : db;
+}
+
+/**
+ * Activate demo mode: create a separate IndexedDB, populate with synthetic data,
+ * and switch all subsequent operations to use it.
+ */
+export async function activateDemoData(demoData: { sessions: Session[]; checkins: Checkin[]; settings: Partial<Settings> }) {
+  // Create separate demo database
+  _demoDb = new Dexie('SmartFitnessCoachDemo') as any;
+  _demoDb!.version(2).stores({
+    sessions: 'key, date, type',
+    checkins: 'date',
+    settings: 'key',
+    achievements: '++id, achievementKey, earnedAt',
+  });
+  await _demoDb!.open();
+
+  // Populate with demo data
+  await _demoDb!.transaction('rw', _demoDb!.sessions, _demoDb!.checkins, _demoDb!.settings, async () => {
+    if (demoData.sessions.length) await _demoDb!.sessions.bulkPut(demoData.sessions);
+    if (demoData.checkins.length) await _demoDb!.checkins.bulkPut(demoData.checkins);
+    const settingsArr: Array<{ key: string; value: string }> = [];
+    if (demoData.settings.startDate) settingsArr.push({ key: 'startDate', value: JSON.stringify(demoData.settings.startDate) });
+    if (demoData.settings.trainDays) settingsArr.push({ key: 'trainDays', value: JSON.stringify(demoData.settings.trainDays) });
+    if (settingsArr.length) await _demoDb!.settings.bulkPut(settingsArr);
+  });
+
+  _demoMode = true;
+  localStorage.setItem('fitness-tracker-demo-mode', '1');
+}
+
+/** Deactivate demo mode: clear demo DB, switch back to real DB. */
+export async function deactivateDemoData() {
+  if (_demoDb) {
+    await _demoDb.transaction('rw', _demoDb.sessions, _demoDb.checkins, _demoDb.settings, _demoDb.achievements, async () => {
+      await Promise.all([_demoDb!.sessions.clear(), _demoDb!.checkins.clear(), _demoDb!.settings.clear(), _demoDb!.achievements.clear()]);
+    });
+    _demoDb.close();
+    _demoDb = null;
+  }
+  _demoMode = false;
+  localStorage.removeItem('fitness-tracker-demo-mode');
+}
+
+/** Check localStorage for persisted demo mode on module load. */
+export function loadDemoModeState(): boolean {
+  return localStorage.getItem('fitness-tracker-demo-mode') === '1';
+}
+
+// ── Waitlist ──
+export async function saveWaitlistEntry(email: string, provider: string) {
+  try { await (getActiveDb() as any).waitlist?.put({ email, provider, createdAt: Date.now() }); } catch(e) { console.warn('Waitlist not available:', e); }
+}
+export async function getWaitlistEntries() {
+  try { return await (getActiveDb() as any).waitlist?.toArray() ?? []; } catch(e) { return []; }
+}
+
+// Internal: get active DB (demo or real)
+function _db() { return getActiveDb(); }
 export { db };

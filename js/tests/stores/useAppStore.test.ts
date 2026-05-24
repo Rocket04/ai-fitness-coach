@@ -59,7 +59,7 @@ describe('useAppStore - Critical Path Tests', () => {
       // Verify initial derived state structure
       expect(state.recoveryScore).toBe(0);
       expect(state.readiness).toBe('green');
-      expect(state.weekNumber).toBe(1);
+      expect(state.totalWeek).toBe(1);
       expect(state.trainDays).toEqual([1, 3, 5]);
       expect(state.sessions).toEqual([]);
       expect(state.checkins).toEqual([]);

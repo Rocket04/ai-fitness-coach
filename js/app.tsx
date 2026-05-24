@@ -1,5 +1,4 @@
-// js/app.tsx
-import { useEffect, lazy, Suspense, useState } from 'react';
+import React, { useEffect, lazy, Suspense, useState } from 'react';
 import ReactDOM from 'react-dom/client';
 import { I18nextProvider, useTranslation } from 'react-i18next';
 import { Home, BookOpen, TrendingUp, User, X, Check } from 'lucide-react';
@@ -11,6 +10,7 @@ import ErrorBoundary from './ui/components/ErrorBoundary.jsx';
 import { SkeletonCard } from './ui/components/Skeleton.jsx';
 import OnboardingWizard from './ui/components/OnboardingWizard.jsx';
 import GuidedTour from './ui/components/GuidedTour.jsx';
+import AchievementToast from './ui/components/AchievementToast.jsx';
 import { isOnboardingCompleted } from './core/onboardingStorage.js';
 
 const TodayPage = lazy(() => import('./ui/pages/TodayPage.jsx'));
@@ -56,7 +56,7 @@ function BottomNav({ activeTab, setActiveTab }: BottomNavProps) {
 function AppContent() {
   const { t } = useTranslation();
   const {
-    dataLoaded, toast, showSettings, editStartDate, editTrainDays, activeTab,
+    dataLoaded, toast, showSettings, editStartDate, editTrainDays, activeTab, demoMode,
     setActiveTab, setShowSettings, setEditStartDate, toggleDay, handleSaveSettings,
     initApp, completeOnboarding,
   } = useAppStore();
@@ -113,6 +113,16 @@ function AppContent() {
           </div>
         </Suspense>
       </main>
+
+      {/* Demo Mode Badge */}
+      {demoMode && React.createElement('div', {
+        className: 'demo-badge',
+        style: {
+          position: 'fixed', top: 0, left: 0, right: 0, zIndex: 2000,
+          background: 'var(--accent)', color: '#fff', textAlign: 'center',
+          padding: '4px 0', fontSize: '11px', fontWeight: 600, letterSpacing: '0.5px',
+        },
+      }, '🎮 ДЕМО-РЕЖИМ')}
 
       {/* Bottom navigation */}
       <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
@@ -190,6 +200,9 @@ function AppContent() {
 
       {/* Guided Tour */}
       <GuidedTour t={t} />
+
+      {/* Achievement Toast */}
+      <AchievementToast />
     </>
   );
 }

@@ -1,6 +1,7 @@
 ﻿# ANALYSIS REPORT — Smart Fitness Coach
 
 **Generated:** 2026-05-23
+**Last Updated:** 2026-05-27
 **Scope:** Full architecture audit, feature inventory, code quality assessment
 
 ---
@@ -11,7 +12,7 @@
 
 | Layer | Technology |
 |-------|-----------|
-| Frontend Framework | React 18.2.0 + TypeScript 6 (strict) |
+| Frontend Framework | React 18.2.0 + TypeScript 5.x (strict) |
 | Build Tool | Vite 8 |
 | State Management | Zustand 5 (single store: `useAppStore`) |
 | Database | IndexedDB via Dexie.js 4 |
@@ -33,11 +34,41 @@ js/
     tooltips.js              # Tooltip configuration
     tour-steps.js            # Guided tour steps
   core/
-    types.ts                 # All TypeScript types
+    types.ts                 # All TypeScript types (incl. UserProfile, Equipment)
     storage.ts               # Dexie CRUD operations
     readiness.ts             # calcReadiness, detectRecoveryDebt
-    recoveryScore.ts         # Tiered Recovery Score (full/medium/light)
-    planning.ts              # Workout planning, session building
+    recoveryScore.ts         # Tiered Recovery Score
+    planning.ts              # Workout planning + profile adaptation
+    exerciseDatabase.ts      # Exercise library with rehab/equipment metadata 🆕
+    apre/engine.js           # APRE autoregulation engine
+    analytics.ts             # Trends, warnings
+    stats.ts                 # Statistics, streak
+    advice.ts                # AI coach advice
+    helpers.ts               # Date utilities
+    demoData.ts              # Synthetic data generator
+  plans/                     # Sport plan modules (8 files) 🆕
+    running.ts               # RunningPlanModule
+    strength.ts              # StrengthGymPlanModule
+    cycling.ts               # CyclingPlanModule
+    swimming.ts              # SwimmingPlanModule
+    calisthenics.ts           # CalisthenicsPlanModule
+    yoga.ts                  # YogaPlanModule
+    stretching.ts            # StretchingPlanModule
+    walking.ts               # WalkingPlanModule
+  stores/
+    useAppStore.ts           # Central Zustand store
+  ui/
+    pages/
+      TodayPage.jsx          # Dashboard (React.createElement)
+      ProfilePage.jsx        # Settings, rehab config, demo
+      CheckinForm.jsx        # Tier-adaptive check-in form
+      AnalyticsPage.jsx      # Trends, period comparison
+    components/
+      OnboardingWizard.jsx   # 5-step onboarding
+      UserProfileEditor.jsx  # Profile config (level/goals/equipment) 🆕
+      GuidedTour.jsx         # Spotlight tour
+      ...
+```
     loadAdjustments.ts       # Load multipliers, APRE adjustments
     sessionLoad.ts           # Session load calculation
     stats.ts                 # Weekly/monthly stats, streak
@@ -134,21 +165,21 @@ storage.ts
 | IndexedDB Persistence | ✅ | `core/storage.ts` |
 | Data Export/Import (JSON) | ✅ | `core/storage.ts` |
 | Dark Theme | ✅ | `css/design-tokens.css` + `css/styles.css` |
+| **30-Day Date Strip with Navigation** | ✅ | `js/ui/pages/TodayPage.jsx` |
+| **Virtual Date Offset System** | ✅ | `js/core/helpers.ts`, `js/stores/useAppStore.ts` |
+| **Demo Mode** | ✅ | `js/core/demoData.ts`, `js/stores/useAppStore.ts` |
 
 ### 2.2 Partially Implemented / In Progress
 
 | Feature | Status | Notes |
 |---------|--------|-------|
 | Modular Plan Integration | ~40% | Templates exist, not connected to `planning.ts` |
-| Adaptive Recovery Score | ~0% | Tier selection exists, auto-adaptation not started |
 | English UI Activation | ~90% | Translations ready, switcher not yet in UI |
 
 ### 2.3 Not Implemented (Future)
 
 - Apple Health / Google Fit Integration
 - PDF Report Export
-- Push Notifications
-- Cloud Sync
 
 ---
 
@@ -244,7 +275,7 @@ checkinTier: "full" | "medium" | "light"
 
 ## 6. TEST COVERAGE
 
-**203 tests across 19 files** (0 failures).
+**225+ tests across 20 files** (0 failures).
 
 | Category | Files | Tests |
 |----------|-------|-------|
@@ -263,8 +294,8 @@ Core modules with best coverage: `apre/engine.js` (56 tests), `recoveryScore.ts`
 | Metric | Value |
 |--------|-------|
 | Total source files | ~90 (JS/TS/JSX/TSX/CSS) |
-| Test count | 203 (19 files) |
-| Test status | **203 passed, 0 failed** |
+| Test count | 225+ (24 files) |
+| Test status | **225+ passed, 0 failed** |
 | Bundle output | `dist/` (Vite, code-split) |
 | PWA | ✅ Workbox 7 |
 | i18n | ✅ ru + en |
@@ -278,7 +309,5 @@ The project is a well-architected, feature-complete fitness coaching PWA with:
 
 - **Phase 1** (Foundation): 100%
 - **Phase 2** (Personalization): 100% — tiered check-in, modular plans, onboarding wizard, sport/gadget selection
-- **Phase 3** (Adaptability): 100% — adaptive recovery score, period comparison, chart tooltips
+- **Phase 3** (Adaptability): 100% — virtual date offset, 30-day date strip with navigation, demo mode, AI suggestions
 - **Phase 4** (Ecosystem): 0% — Apple Health / Google Fit, PDF reports (planned)
-
-The codebase is ready for Phase 3 work: connecting modular plans to `planning.ts`, implementing adaptive Recovery Score, and enhancing analytics visualization.

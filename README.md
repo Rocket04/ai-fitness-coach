@@ -5,7 +5,7 @@
 
 [![PWA Ready](https://img.shields.io/badge/PWA-ready-brightgreen)]()
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)]()
-[![Tests](https://img.shields.io/badge/tests-182%20passed%20(15%20files)-brightgreen)]()
+[![Tests](https://img.shields.io/badge/tests-240%2B%20passed%20(26%20files)-brightgreen)]()
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue)]()
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)]()
 
@@ -22,6 +22,8 @@
 Адаптирует план в реальном времени на основе сна, HRV, пульса, боли, настроения.
 
 **Три уровня чек-ина** (Full / Medium / Light) — приложение адаптируется под твои устройства или работает полностью на субъективных данных.
+
+**Восемь видов спорта** — Running, Strength, Cycling, Swimming, Calisthenics, Yoga, Stretching, Walking — каждый с 12-недельной периодизацией.
 
 ---
 
@@ -41,9 +43,11 @@
 
 - **APRE** (Autoregulatory Progressive Resistance Exercise) — нагрузка меняется на основе RPE по таблицам Mann
 - **Recovery Score** — тиерированная система: Full (HRV 40% + Sleep 30% + RHR 10% + Subjective 20%), Medium, Light (100% субъективный)
-- **Модульные планы** — беговые и силовые планы (js/plans/running.ts, js/plans/strength.ts) |
-    - **12-недельные планы** для бега и силовых с APRE-протоколами |
-    - Подключены к planning.ts через getPlanForSport() |
+- **Мульти-спорт планы** — 8 видов спорта с 12-недельной периодизацией (base → build → peak → deload)
+  - `js/plans/` — running.ts, strength.ts, cycling.ts, swimming.ts, calisthenics.ts, yoga.ts, stretching.ts, walking.ts
+  - Комбинация видов спорта через `combineSportPlans()` с автоматическим разрешением конфликтов
+- **Профиль пользователя** — уровень (beginner/intermediate/advanced), цели (hypertrophy/strength/endurance/rehabilitation), инвентарь
+- **Реабилитационный фильтр** — автоматическое исключение противопоказанных упражнений, замена на реабилитационные
 - **19 достижений** и система streak-трекинга
 
 ---
@@ -96,7 +100,7 @@ npm run dev
 ```bash
 npm run type-check   # TypeScript проверка
 npm run lint         # ESLint
-npm test             # 153 теста (11 файлов)
+npm test             # 225+ тестов (24 файлов)
 npm run build        # Production сборка
 ```
 
@@ -230,7 +234,7 @@ npm run build        # Production сборка
 |------|--------|----------|
 | Фаза 1 — Фундамент | ✅ 100% | Архитектура, хранилище, стор, APRE, Recovery Score |
 | Фаза 2 — Персонализация | ✅ 100% | Модульные планы, онбординг (5 шагов), tiered check-in, геймификация, мульти-спорт |
-| Фаза 3 — Адаптивность | ✅ 100% | Адаптивный Recovery Score, сравнение периодов, тултипы графиков |
+| Фаза 3 — Адаптивность | ✅ 100% | Виртуальная дата, 30-дневный лента дат с навигацией, Demo Mode, AI-советы |
 | Фаза 4 — Экосистема | ⏳ 0% | Apple Health / Google Fit, PDF-отчёты |
 
 Детальная дорожная карта в `docs/rnd-report.md`.

@@ -1,7 +1,7 @@
 // js/ui/pages/ProfilePage.js
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Target, User, BarChart, Circle, Sun, Moon, Star, AlertTriangle, Dumbbell, Play } from 'lucide-react';
+import { Target, User, BarChart, Circle, Sun, Moon, Star, AlertTriangle, Dumbbell, Play, Trophy, Flame } from 'lucide-react';
 import { useAppStore } from '../../stores/useAppStore.js';
 import { useTourStore } from '../../stores/useTourStore.js';
 import { changeLanguage, getCurrentLanguage } from '../../i18n/index.js';
@@ -9,6 +9,8 @@ import { ZONES, HRV_GUIDE, NUTRITION, MORNING_ROUTINE, EVENING_ROUTINE, DAYS, DA
 import { useFitnessData, isExerciseConfigured, DEFAULT_EXERCISES } from '../../hooks/useFitnessData.js';
 import Modal from '../components/Modal.jsx';
 import ExerciseConfigModal from '../components/ExerciseConfigModal.jsx';
+import { getUnlockedAchievements } from '../../core/achievements.js';
+import { saveSetting } from '../../core/storage.js';
 
 function findHrvRange(hrv, guide) {
   if (!hrv || hrv <= 0) return null;
@@ -60,6 +62,14 @@ export default function ProfilePage() {
     handleExportData, handleImportData, handleResetAll, confirmResetData,
     checkinTier, setCheckinTier,
     virtualTodayOffset,
+    demoMode,
+    sessions,
+    checkins,
+    trainDays,
+    startDate,
+    streak,
+    rehabIssues,
+    rehabExercises,
   } = useAppStore();
 
   // Exercise configuration
@@ -72,6 +82,8 @@ export default function ProfilePage() {
   const [showNutrition, setShowNutrition] = useState(false);
   const [showExerciseConfigurator, setShowExerciseConfigurator] = useState(false);
   const [showExerciseResetConfirm, setShowExerciseResetConfirm] = useState(false);
+  const [integrationModal, setIntegrationModal] = useState(null);
+  const [integrationEmail, setIntegrationEmail] = useState('');
 
   const handleOpenConfig = (ex) => {
     setSelectedExercise(ex);
@@ -85,6 +97,22 @@ export default function ProfilePage() {
   const hrv = lastCheckin?.hrv ? Number(lastCheckin.hrv) : 0;
   const restHr = lastCheckin?.restHR ? Number(lastCheckin.restHR) : 0;
   const activeHrvRange = findHrvRange(hrv, HRV_GUIDE);
+
+  // ── Achievements state ──
+  const [unlockedAchievements, setUnlockedAchievements] = useState([]);
+  const [achievementsLoading, setAchievementsLoading] = useState(true);
+  useEffect(() => {
+    let cancelled = false;
+    getUnlockedAchievements().then(list => {
+      if (!cancelled) {
+        setUnlockedAchievements(list);
+        setAchievementsLoading(false);
+      }
+    }).catch(() => {
+      if (!cancelled) setAchievementsLoading(false);
+    });
+    return () => { cancelled = true; };
+  }, [sessions, checkins, trainDays, startDate]);
 
   return React.createElement(
     'div',
@@ -229,6 +257,116 @@ export default function ProfilePage() {
       )
     ),
 
+    // ── Developer Testing ──
+    React.createElement(ProfileSection, { title: '🛠 Тестирование', defaultOpen: false },
+      React.createElement('p', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text2)', marginBottom: 'var(--spacing-sm)' } },
+        'Виртуальная дата и демо-режим для тестирования'
+      ),
+      React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', marginBottom: 'var(--spacing-sm)' } },
+        React.createElement('button', { className: 'btn', style: { minWidth: '40px' },
+          onClick: () => { useAppStore.getState().setVirtualTodayOffset((virtualTodayOffset || 0) - 7); },
+        }, '−7'),
+        React.createElement('button', { className: 'btn', style: { minWidth: '40px' },
+          onClick: () => { useAppStore.getState().setVirtualTodayOffset((virtualTodayOffset || 0) - 1); },
+        }, '−1'),
+        React.createElement('button', { className: 'btn', style: { minWidth: '60px' },
+          onClick: () => { useAppStore.getState().setVirtualTodayOffset(0); },
+        }, 'Сегодня'),
+        React.createElement('button', { className: 'btn', style: { minWidth: '40px' },
+          onClick: () => { useAppStore.getState().setVirtualTodayOffset((virtualTodayOffset || 0) + 1); },
+        }, '+1'),
+        React.createElement('button', { className: 'btn', style: { minWidth: '40px' },
+          onClick: () => { useAppStore.getState().setVirtualTodayOffset((virtualTodayOffset || 0) + 7); },
+        }, '+7'),
+      ),
+      React.createElement('p', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text3)', marginBottom: 'var(--spacing-sm)' } },
+        'Сдвиг: ' + (virtualTodayOffset || 0) + ' дн.'
+      ),
+      React.createElement('div', { style: { display: 'flex', gap: 'var(--spacing-sm)', marginBottom: 'var(--spacing-sm)' } },
+        React.createElement('button', {
+          className: 'btn' + (demoMode ? ' btn-red' : ' btn-accent'),
+          onClick: async () => {
+            const s = useAppStore.getState();
+            if (s.demoMode) {
+              await s.deactivateDemoMode();
+            } else {
+              await s.activateDemoMode();
+            }
+          },
+        }, demoMode ? '✕ Выйти из демо' : '▶ Демо-режим'),
+        demoMode && React.createElement('button', {
+          className: 'btn btn-blue',
+          onClick: () => {
+            let currentOffset = useAppStore.getState().virtualTodayOffset || -15;
+            const interval = setInterval(() => {
+              currentOffset += 1;
+              useAppStore.getState().setVirtualTodayOffset(currentOffset);
+              if (currentOffset >= 15) {
+                clearInterval(interval);
+              }
+            }, 500);
+          },
+        }, 'Симуляция')
+      )
+    ),
+
+    // ── Achievements ──
+    React.createElement(ProfileSection, { title: '🏆 Достижения', defaultOpen: false },
+      React.createElement('div', { style: { marginBottom: 'var(--spacing-sm)' } },
+        React.createElement('span', { style: { fontSize: 'var(--font-size-sm)', color: 'var(--text2)' } },
+          achievementsLoading ? 'Загрузка...' : `${unlockedAchievements.length} разблокировано`
+        )
+      ),
+      !achievementsLoading && unlockedAchievements.length > 0 && React.createElement('div', { style: { display: 'flex', flexWrap: 'wrap', gap: 'var(--spacing-xs)' } },
+        unlockedAchievements.map(a =>
+          React.createElement('span', {
+            key: a.achievementKey,
+            style: {
+              display: 'inline-flex', alignItems: 'center', gap: '4px',
+              padding: '2px 8px', borderRadius: '9999px',
+              background: 'var(--surface2)', fontSize: 'var(--font-size-sm)',
+            },
+            title: a.achievementKey,
+          }, '🏅 ', a.achievementKey)
+        )
+      ),
+      !achievementsLoading && unlockedAchievements.length === 0 && React.createElement('p', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text3)' } },
+        'Выполняйте чек-ины и тренировки для получения достижений'
+      ),
+      React.createElement('div', { style: { marginTop: 'var(--spacing-sm)', display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)' } },
+        React.createElement(Flame, { size: 16, color: 'var(--warning)' }),
+        React.createElement('span', { style: { fontSize: 'var(--font-size-sm)', color: 'var(--text2)' } },
+          `Текущая серия: ${streak || 0} дн.`
+        )
+      )
+    ),
+
+    // ── Integrations ──
+    React.createElement(ProfileSection, { title: '🔗 Интеграции', defaultOpen: false },
+      React.createElement('div', { className: 'integration-cards' },
+        React.createElement('div', { className: 'integration-card' },
+          React.createElement('span', { className: 'integration-icon' }, '⌚'),
+          React.createElement('span', { className: 'integration-name' }, 'Garmin'),
+          React.createElement('button', { className: 'btn btn-sm', onClick: () => setIntegrationModal('Garmin') } , 'Подключить →')
+        ),
+        React.createElement('div', { className: 'integration-card' },
+          React.createElement('span', { className: 'integration-icon' }, '🍎'),
+          React.createElement('span', { className: 'integration-name' }, 'Apple Health'),
+          React.createElement('button', { className: 'btn btn-sm', onClick: () => setIntegrationModal('Apple Health') }, 'Подключить →')
+        ),
+        React.createElement('div', { className: 'integration-card' },
+          React.createElement('span', { className: 'integration-icon' }, '🔵'),
+          React.createElement('span', { className: 'integration-name' }, 'Google Fit'),
+          React.createElement('button', { className: 'btn btn-sm', onClick: () => setIntegrationModal('Google Fit') }, 'Подключить →')
+        ),
+        React.createElement('div', { className: 'integration-card' },
+          React.createElement('span', { className: 'integration-icon' }, '🔴'),
+          React.createElement('span', { className: 'integration-name' }, 'Huawei Health'),
+          React.createElement('button', { className: 'btn btn-sm', onClick: () => setIntegrationModal('Huawei Health') }, 'Подключить →')
+        ),
+      )
+    ),
+
     // ── Tour section ──
     React.createElement(ProfileSection, { title: t('profile.tour.title') },
       React.createElement('p', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text2)', marginBottom: 'var(--spacing-sm)' } },
@@ -335,26 +473,73 @@ export default function ProfilePage() {
     showRehab && React.createElement(Modal, {
       isOpen: true,
       onClose: () => setShowRehab(false),
-      title: t('profile.rehab.title'),
+      title: '🩹 ' + t('profile.rehab.title'),
     },
-      React.createElement('div', null,
-        React.createElement('h4', { className: 'text-yellow mt-0' }, React.createElement(Sun, { size: 20 }), ' Утренняя активация'),
-        React.createElement('ul', null,
-          MORNING_ROUTINE.map((item, i) =>
-            React.createElement('li', { key: i },
-              React.createElement('strong', null, item.name),
-              ` \u2014 ${item.reps}: ${item.why}`
+      React.createElement('div', { className: 'flex flex-column gap-md' },
+        React.createElement('p', null, t('profile.rehab.description')),
+        React.createElement('p', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text3)' } }, t('profile.rehab.subtitle')),
+
+        // Rehab issues multi-select
+        React.createElement('div', null,
+          React.createElement('h4', { className: 'mt-0' }, t('profile.rehab.issuesTitle')),
+          React.createElement('div', { className: 'grid-2 gap-sm' },
+            ['hips', 'shoulder', 'back', 'knees', 'neck', 'elbow', 'wrist'].map(issue =>
+              React.createElement('label', { key: issue, className: 'flex items-center gap-xs' },
+                React.createElement('input', {
+                  type: 'checkbox',
+                  checked: (rehabIssues || []).includes(issue),
+                  onChange: (e) => {
+                    const current = rehabIssues || [];
+                    const updated = e.target.checked
+                      ? [...current, issue]
+                      : current.filter(i => i !== issue);
+                    setRehabIssues(updated);
+                    saveSetting('rehabIssues', updated);
+                  }
+                }),
+                React.createElement('span', null, t('profile.rehab.' + issue))
+              )
             )
           )
         ),
-        React.createElement('h4', { className: 'text-blue' }, React.createElement(Moon, { size: 20 }), ' Вечернее расслабление'),
-        React.createElement('ul', null,
-          EVENING_ROUTINE.map((item, i) =>
-            React.createElement('li', { key: i },
-              React.createElement('strong', null, item.name),
-              ` \u2014 ${item.reps}: ${item.why}`
-            )
+
+        // Rehab exercises text field
+        React.createElement('div', null,
+          React.createElement('h4', null, t('profile.rehab.exercisesTitle')),
+          React.createElement('p', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text3)' } }, t('profile.rehab.exercisesHint')),
+          React.createElement('input', {
+            type: 'text',
+            value: (rehabExercises || []).join(', '),
+            onChange: (e) => {
+              const val = e.target.value;
+              const ids = val.split(',').map(s => s.trim()).filter(Boolean);
+              setRehabExercises(ids);
+            },
+            onBlur: () => {
+              const ids = (rehabExercises || []).filter(Boolean);
+              saveSetting('rehabExercises', ids);
+            },
+            placeholder: 'squat, deadlift, ...',
+            className: 'w-full',
+            style: { padding: '0.5rem', marginTop: '0.25rem' }
+          })
+        ),
+
+        // Current adaptation status
+        rehabIssues && rehabIssues.length > 0 && React.createElement('div', {
+          style: { padding: 'var(--spacing-sm)', backgroundColor: 'var(--surface2)', borderRadius: 'var(--radius-sm)' }
+        },
+          React.createElement('p', { style: { margin: 0, fontSize: 'var(--font-size-caption)' } },
+            '✅ ' + t('profile.rehab.active') + ': ' + rehabIssues.map(i => t('profile.rehab.' + i)).join(', ')
           )
+        ),
+
+        // Close button
+        React.createElement('div', { className: 'flex justify-end' },
+          React.createElement('button', {
+            className: 'btn',
+            onClick: () => setShowRehab(false),
+          }, t('profile.close'))
         )
       )
     ),
@@ -518,6 +703,34 @@ export default function ProfilePage() {
             onClick: () => setShowExerciseResetConfirm(true),
           }, t('profile.resetAll'))
         )
+      )
+    ),
+
+    // ── Integration Modal ──
+    integrationModal && React.createElement(Modal, {
+      isOpen: true,
+      onClose: () => setIntegrationModal(null),
+      title: integrationModal + ' — Интеграция',
+    },
+      React.createElement('p', null, 'Интеграция с ' + integrationModal + ' в разработке.'),
+      React.createElement('p', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text2)', marginTop: 'var(--spacing-sm)' } },
+        'Оставьте email, чтобы узнать о готовности:'
+      ),
+      React.createElement('input', {
+        type: 'email', placeholder: 'your@email.com',
+        style: { width: '100%', padding: '0.5rem', marginTop: 'var(--spacing-sm)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' },
+        onChange: (e) => setIntegrationEmail(e.target.value),
+      }),
+      React.createElement('div', { style: { display: 'flex', gap: 'var(--spacing-sm)', justifyContent: 'flex-end', marginTop: 'var(--spacing-md)' } },
+        React.createElement('button', { className: 'btn', onClick: () => setIntegrationModal(null) }, 'Закрыть'),
+        React.createElement('button', { className: 'btn btn-accent', onClick: async () => {
+          if (integrationEmail) {
+            const { saveWaitlistEntry } = await import('../../core/storage.js');
+            await saveWaitlistEntry(integrationEmail, integrationModal);
+            setIntegrationModal(null);
+            setIntegrationEmail('');
+          }
+        }}, 'Сохранить')
       )
     ),
 

@@ -1,129 +1,342 @@
 // js/plans/running.ts
-// Running-focused modular training plan — 12 weeks, 3 months
-// Focus: aerobic base, progressive distance, zone-based intensity
+// Running-focused periodized training plan module
+// 4-phase model: base → build → peak → deload (4-week cycles)
+// Upper/Lower split to avoid interference with strength training
 
-import type { Exercise } from '../core/types.js';
+import type { SportPlanModule, SessionPlan, Exercise, ApreProtocolKey } from '../core/types.js';
 
-interface DayPlan {
-  day: string;
-  label: string;
-  exercises: Exercise[];
-}
-
-interface MonthPlan {
-  title: string;
-  full: string;
-  subtitle: string;
-  weeks: string;
-  color: string;
-  days: DayPlan[];
-}
-
-// Helper to create exercises
-const ex = (n: string, s: string, r: string, w?: string, c?: string): Exercise => ({
-  n, s, r, ...(w && { w }), ...(c && { c }),
+const ex = (n: string, s: string, r: string, w?: string, protocol?: ApreProtocolKey, currentRM?: number): Exercise => ({
+  n, s, r, ...(w && { w }), ...(protocol && { isApre: true, protocol }), ...(currentRM ? { currentRM } : {}),
 });
 
-const month1: MonthPlan = {
-  title: "M1",
-  full: "Месяц 1",
-  subtitle: "Аэробный фундамент",
-  weeks: "Нед. 1–4",
-  color: "#4a7c59",
-  days: [
-    { day: "ПН", label: "Бег Z2 + Общая сила", exercises: [
-      ex("Разминка ходьба", "—", "8 мин", "Прогрев бронхов"),
-      ex("Бег Zone 2", "—", "12–15 мин", "Пульс 125–140 bpm"),
-      ex("Заминка ходьба", "—", "5–7 мин", "Профилактика бронхоспазма"),
-      ex("Подтягивания параллельным хватом", "3", "5–6", "НЕ до отказа"),
-      ex("Австралийские подтягивания", "3", "8–10", "Тело прямое"),
-      ex("W-подъём лёжа на животе", "3", "10 медленно", "Нижние трапеции"),
-    ]},
-    { day: "СР", label: "Бег Z2 + Верх тела", exercises: [
-      ex("Разминка ходьба", "—", "7–8 мин", "Протокол астма"),
-      ex("Бег Zone 2", "—", "12–15 мин", "Второй аэробный день"),
-      ex("Заминка", "—", "5–7 мин", "Обязательно"),
-      ex("Отжимания темп 3-0-1", "3", "6–8", "3 сек вниз"),
-      ex("Push-up plus", "3", "8", "Передняя зубчатая"),
-      ex("Внешняя ротация плеча лёжа", "3", "10 / сторону", "Инфраспинатус"),
-    ]},
-    { day: "ПТ", label: "Бег Z2 (длинный)", exercises: [
-      ex("Разминка ходьба", "—", "8–10 мин", "Самая длинная пробежка"),
-      ex("Бег Zone 2", "—", "18–22 мин", "Главный аэробный объём"),
-      ex("Заминка", "—", "7–8 мин", "Профилактика"),
-    ]},
-    { day: "СБ", label: "Восстановление", exercises: [
-      ex("Прогулка", "—", "40–50 мин", "Zone 1"),
-      ex("Мобильность", "—", "15 мин", "Поддержание"),
-    ]},
-  ],
-};
+// Helper: Create session plan object
+const session = (
+  sessionType: SessionPlan['sessionType'],
+  name: string,
+  description: string,
+  defaultParams: Record<string, number>,
+  exercises: Exercise[],
+  apreRule?: SessionPlan['apreRule']
+): Omit<SessionPlan, 'date' | 'sessionId'> => ({
+  sport: 'running',
+  sessionType,
+  name,
+  description,
+  defaultParameters: defaultParams,
+  exercises,
+  mode: 'full',
+  isDeload: false,
+  isRestDay: false,
+  ...(apreRule && { apreRule }),
+});
 
-const month2: MonthPlan = {
-  title: "M2",
-  full: "Месяц 2",
-  subtitle: "Развитие выносливости",
-  weeks: "Нед. 5–8",
-  color: "#7a8a3a",
-  days: [
-    { day: "ПН", label: "Интервалы Z2/Z3 + Сила", exercises: [
-      ex("Разминка", "—", "10 мин", "Протокол астма"),
-      ex("Интервалы 45 сек Z3 / 2 мин шаг", "5–6", "Z3: 136–154 bpm", "Стимул выше аэробного"),
-      ex("Заминка", "—", "8–10 мин", "Критично"),
-      ex("Подтягивания", "4", "6–8", "Прогрессия"),
-      ex("Австралийские с паузой", "3", "10–12", "Изометрия"),
-      ex("W+Y подъёмы", "3", "10 каждая", "Трапеции"),
-    ]},
-    { day: "СР", label: "Длинный Z2 + Верх", exercises: [
-      ex("Разминка", "—", "8 мин", "Протокол"),
-      ex("Бег Zone 2", "—", "22–28 мин", "Основной объём"),
-      ex("Заминка", "—", "7 мин", "Обязательно"),
-      ex("Отжимания темп 3-0-1", "4", "8–10", "+1 подход"),
-      ex("Push-up plus", "3", "10", "Зубчатая"),
-      ex("Алмазные отжимания", "3", "6–8", "Трицепс"),
-    ]},
-    { day: "ПТ", label: "Темп Z3", exercises: [
-      ex("Разминка 10 мин", "—", "—"),
-      ex("Темп Zone 3", "—", "10–12 мин", "Пульс 136–150 bpm"),
-      ex("Заминка 10 мин", "—", "—", "После темпового"),
-    ]},
-    { day: "СБ", label: "Восстановление", exercises: [
-      ex("Прогулка", "—", "50–60 мин", "Zone 1"),
-      ex("Мобильность", "—", "20 мин", "Полная"),
-    ]},
-  ],
-};
+// Base Phase (Weeks 1-4): 80% Zone 2, volume +5%/week
+function basePhase(weekInPhase: number): Omit<SessionPlan, 'date' | 'sessionId'>[] {
+  const distance = 5 + (weekInPhase - 1) * 0.5; // 5, 5.5, 6, 6.5
+  const duration = 30 + (weekInPhase - 1) * 5; // 30, 35, 40, 45
 
-const month3: MonthPlan = {
-  title: "M3",
-  full: "Месяц 3",
-  subtitle: "Интеграция",
-  weeks: "Нед. 9–12",
-  color: "#8a6a3a",
-  days: [
-    { day: "ПН", label: "Интервалы продвинутые", exercises: [
-      ex("Разминка", "—", "10–12 мин", "Протокол"),
-      ex("Интервалы 90 сек Z3 / 90 сек шаг", "5–6", "Z3: 136–154"),
-      ex("Заминка 10 мин", "—", "—", "Критично"),
-      ex("Подтягивания", "4–5", "7–10", "Макс объём"),
-      ex("Австралийские с поворотом", "3", "10", "Продвинутая активация"),
-    ]},
-    { day: "СР", label: "Длинный Z2 (пик)", exercises: [
-      ex("Разминка", "—", "8 мин"),
-      ex("Бег Zone 2", "—", "28–35 мин", "VO2max рост"),
-      ex("Заминка", "—", "8–10 мин"),
-    ]},
-    { day: "ПТ", label: "Фартлек", exercises: [
-      ex("Разминка 10 мин", "—", "—"),
-      ex("Фартлек 28–35 мин", "—", "По ощущениям", "Интуиция к темпу"),
-      ex("Заминка 8–10 мин", "—", "—"),
-    ]},
-    { day: "СБ", label: "Активное восстановление", exercises: [
-      ex("Прогулка/лёгкий бег", "—", "35–40 мин"),
-      ex("Мобильность", "—", "25 мин"),
-    ]},
-  ],
-};
+  return [
+    // Monday: Endurance
+    session(
+      'endurance',
+      `Лёгкая пробежка ${distance} км`,
+      `Zone 2, ${duration} мин`,
+      { distance, duration },
+      [
+        ex("Разминка ходьба", "—", "8-10 мин", "Прогрев бронхов"),
+        ex("Бег Zone 2", "—", `${distance} км`, `Пульс 125-140 bpm, ${duration} мин`),
+        ex("Заминка ходьба", "—", "5-7 мин", "Профилактика бронхоспазма"),
+      ]
+    ),
+    // Tuesday: Strength Upper (integrated)
+    session(
+      'strength',
+      "Силовая: Верх тела",
+      "Подтягивания + Жим",
+      { sets: 3, reps: 8 },
+      [
+        ex("Подтягивания", "3", "6-8", "Параллельный хват", "APRE_6", 0),
+        ex("Отжимания", "3", "8-10", "Темп 3-0-1", "APRE_6", 0),
+        ex("Жим гантелей сидя", "3", "8-10", "Плечевой сустав"),
+      ]
+    ),
+    // Wednesday: Rest
+    null,
+    // Thursday: Tempo/Intervals
+    session(
+      'tempo',
+      `Темповая ${distance + 1} км`,
+      `Zone 3, ${duration + 10} мин`,
+      { distance: distance + 1, duration: duration + 10 },
+      [
+        ex("Разминка", "—", "10 мин", "Протокол астма"),
+        ex("Бег Zone 3", "—", `${distance + 1} км`, `Пульс 136-154 bpm, ${duration + 10} мин`),
+        ex("Заминка", "—", "8-10 мин", "Обязательно"),
+      ]
+    ),
+    // Friday: Strength Lower
+    session(
+      'strength',
+      "Силовая: Низ тела",
+      "Приседания + Ягодичные",
+      { sets: 3, reps: 8 },
+      [
+        ex("Приседания", "3", "6-8", "Полная амплитуда", "APRE_3", 0),
+        ex("Ягодичный мост", "3", "15", "Пауза 2 сек вверху"),
+        ex("Планка", "3", "30-40 сек", "Антигравитационный кор"),
+      ]
+    ),
+    // Saturday: Long Run
+    session(
+      'endurance',
+      `Длинная пробежка ${distance + 2} км`,
+      `Zone 2, ${duration + 15} мин`,
+      { distance: distance + 2, duration: duration + 15 },
+      [
+        ex("Разминка", "—", "10 мин", "Самая длинная пробежка"),
+        ex("Бег Zone 2", "—", `${distance + 2} км`, `Основной аэробный объём, ${duration + 15} мин`),
+        ex("Заминка", "—", "8-10 мин", "Профилактика"),
+      ]
+    ),
+    // Sunday: Recovery
+    session(
+      'recovery',
+      "Восстановительный бег",
+      "Zone 1, 20 мин",
+      { distance: 3, duration: 20 },
+      [
+        ex("Прогулка/лёгкий бег", "—", "20-30 мин", "Zone 1, лимфодренаж"),
+        ex("Мобильность", "—", "15 мин", "Поддержание"),
+      ]
+    ),
+  ].filter((s): s is NonNullable<typeof s> => s !== null);
+}
 
-export const RUNNING_PLAN: MonthPlan[] = [month1, month2, month3];
-export type { MonthPlan, DayPlan };
+// Build Phase (Weeks 5-8): Introduce threshold/tempo, 90-100% peak volume
+function buildPhase(weekInPhase: number): Omit<SessionPlan, 'date' | 'sessionId'>[] {
+  const distance = 7 + (weekInPhase - 1) * 0.5; // 7, 7.5, 8, 8.5
+  const duration = 45 + (weekInPhase - 1) * 5; // 45, 50, 55, 60
+
+  return [
+    session(
+      'intervals',
+      `Интервалы 5×800м`,
+      `Zone 3/4, ${duration} мин`,
+      { repeats: 5, distance: 0.8, duration },
+      [
+        ex("Разминка", "—", "10 мин", "Протокол астма"),
+        ex("Интервалы", "5", "800м", `Zone 3/4: 136-154 bpm, отдых 2 мин шаг`),
+        ex("Заминка", "—", "10 мин", "Критично"),
+      ]
+    ),
+    session(
+      'strength',
+      "Силовая: Тяга + Жим",
+      "Upper body power",
+      { sets: 4, reps: 6 },
+      [
+        ex("Подтягивания", "4", "6-8", "Прогрессия", "APRE_6", 0),
+        ex("Жим лёжа", "4", "6-8", "Контроль грифа", "APRE_3", 0),
+        ex("Отжимания алмазные", "3", "6-8", "Трицепс"),
+      ]
+    ),
+    null, // Rest
+    session(
+      'tempo',
+      `Темповая ${distance} км`,
+      `Zone 3, ${duration} мин`,
+      { distance, duration },
+      [
+        ex("Разминка", "—", "10 мин", "Протокол"),
+        ex("Бег Zone 3", "—", `${distance} км`, `Пульс 136-150 bpm, ${duration} мин`),
+        ex("Заминка", "—", "10 мин", "После темпового"),
+      ]
+    ),
+    session(
+      'strength',
+      "Силовая: Ноги + Ягодицы",
+      "Lower body strength",
+      { sets: 4, reps: 6 },
+      [
+        ex("Приседания со штангой", "4", "6-8", "Базовое движение", "APRE_3", 0),
+        ex("Румынская тяга", "3", "8-10", "Растяжение задней цепи"),
+        ex("Ягодичный мост одноногий", "3", "10 / сторону", "Унилатеральный"),
+      ]
+    ),
+    session(
+      'endurance',
+      `Длинный Z2 ${distance + 2} км`,
+      `Zone 2, ${duration + 15} мин`,
+      { distance: distance + 2, duration: duration + 15 },
+      [
+        ex("Разминка", "—", "10 мин", "Основной объём"),
+        ex("Бег Zone 2", "—", `${distance + 2} км`, `VO2max рост, ${duration + 15} мин`),
+        ex("Заминка", "—", "10 мин", "Дольше"),
+      ]
+    ),
+    session(
+      'recovery',
+      "Активное восстановление",
+      "Zone 1, 30 мин",
+      { distance: 4, duration: 30 },
+      [
+        ex("Прогулка", "—", "30-40 мин", "Zone 1"),
+        ex("Мобильность", "—", "20 мин", "Полная"),
+      ]
+    ),
+  ].filter((s): s is NonNullable<typeof s> => s !== null);
+}
+
+// Peak Phase (Weeks 9-12): Race-pace specific, 100% volume
+function peakPhase(weekInPhase: number): Omit<SessionPlan, 'date' | 'sessionId'>[] {
+  const distance = 9 + (weekInPhase - 1) * 0.5; // 9, 9.5, 10, 10.5
+  const duration = 60 + (weekInPhase - 1) * 5; // 60, 65, 70, 75
+
+  return [
+    session(
+      'intervals',
+      `Интервалы продвинутые 6×1000м`,
+      `Zone 3/4, ${duration} мин`,
+      { repeats: 6, distance: 1.0, duration },
+      [
+        ex("Разминка", "—", "12 мин", "Протокол"),
+        ex("Интервалы", "6", "1000м", `Zone 3/4: 136-154 bpm, отдых 90 сек`),
+        ex("Заминка", "—", "10 мин", "Критично"),
+      ]
+    ),
+    session(
+      'strength',
+      "Силовая: Максимальная сила",
+      "Peak strength, 5×5",
+      { sets: 5, reps: 5 },
+      [
+        ex("Жим лёжа", "5", "5-6", "Тяжёлый", "APRE_3", 0),
+        ex("Подтягивания с весом", "4", "6-8", "Макс объём", "APRE_3", 0),
+        ex("Отжимания на брусьях", "3", "6-8", "Трицепс + грудь"),
+      ]
+    ),
+    null, // Rest
+    session(
+      'tempo',
+      `Фартлек ${distance} км`,
+      `Zone 3, ${duration} мин`,
+      { distance, duration },
+      [
+        ex("Разминка", "—", "10 мин", "Протокол"),
+        ex("Фартлек", "—", `${distance} км`, `По ощущениям, ${duration} мин`),
+        ex("Заминка", "—", "10 мин", "Обязательно"),
+      ]
+    ),
+    session(
+      'strength',
+      "Силовая: Низ тела макс",
+      "Peak lower body",
+      { sets: 5, reps: 5 },
+      [
+        ex("Приседания", "5", "5-6", "Тяжёлые", "APRE_3", 0),
+        ex("Становая тяга", "4", "5-6", "Нейтральный позвоночник", "APRE_3", 0),
+        ex("RKC планка", "4", "12-15 сек", "Макс напряжение"),
+      ]
+    ),
+    session(
+      'endurance',
+      `Пиковая длинная ${distance + 3} км`,
+      `Zone 2, ${duration + 20} мин`,
+      { distance: distance + 3, duration: duration + 20 },
+      [
+        ex("Разминка", "—", "12 мин", "VO2max рост"),
+        ex("Бег Zone 2", "—", `${distance + 3} км`, `Пиковая нагрузка, ${duration + 20} мин`),
+        ex("Заминка", "—", "10-12 мин", "Дольше"),
+      ]
+    ),
+    session(
+      'recovery',
+      "Мобильность + Лёгкий бег",
+      "Zone 1, 35 мин",
+      { distance: 4, duration: 35 },
+      [
+        ex("Прогулка/лёгкий бег", "—", "35-40 мин", "Кровоток"),
+        ex("Мобильность", "—", "25 мин", "Итог"),
+      ]
+    ),
+  ].filter((s): s is NonNullable<typeof s> => s !== null);
+}
+
+// Deload Phase (Every 4th week): Volume × 0.50, intensity maintained
+function deloadPhase(_weekInPhase: number): Omit<SessionPlan, 'date' | 'sessionId'>[] {
+  return [
+    session(
+      'endurance',
+      "Лёгкая пробежка 3 км",
+      "Zone 2, 20 мин (разгрузка)",
+      { distance: 3, duration: 20 },
+      [
+        ex("Разминка", "—", "5-8 мин", "Прогрев"),
+        ex("Бег Zone 2", "—", "3 км", "Пульс 125-135 bpm, 20 мин (50% объёма)"),
+        ex("Заминка", "—", "5 мин", "Короткая"),
+      ]
+    ),
+    session(
+      'strength',
+      "Силовая: Лёгкая (разгрузка)",
+      "2×10, 50% 1RM",
+      { sets: 2, reps: 10 },
+      [
+        ex("Подтягивания", "2", "8-10", "50% нагрузки", "APRE_6", 0),
+        ex("Отжимания", "2", "10-12", "Лёгкие"),
+      ]
+    ),
+    null, // Rest
+    session(
+      'tempo',
+      "Темповая 4 км",
+      "Zone 3, 25 мин (разгрузка)",
+      { distance: 4, duration: 25 },
+      [
+        ex("Разминка", "—", "5 мин", "Протокол"),
+        ex("Бег Zone 3", "—", "4 км", "Пульс 136-145 bpm, 25 мин (50% объёма)"),
+        ex("Заминка", "—", "5 мин", "Короткая"),
+      ]
+    ),
+    session(
+      'strength',
+      "Силовая: Низ (разгрузка)",
+      "2×10, 50% нагрузки",
+      { sets: 2, reps: 10 },
+      [
+        ex("Приседания", "2", "8-10", "50% нагрузки", "APRE_3", 0),
+        ex("Ягодичный мост", "2", "12", "Лёгкая"),
+      ]
+    ),
+    session(
+      'endurance',
+      "Длинная пробежка 5 км",
+      "Zone 2, 30 мин (разгрузка)",
+      { distance: 5, duration: 30 },
+      [
+        ex("Разминка", "—", "8 мин", "Разгрузочная"),
+        ex("Бег Zone 2", "—", "5 км", "Пульс 125-135 bpm, 30 мин (50% объёма)"),
+        ex("Заминка", "—", "5-8 мин", "Короткая"),
+      ]
+    ),
+    session(
+      'recovery',
+      "Полный отдых",
+      "Отдых + мобильность",
+      { distance: 0, duration: 15 },
+      [
+        ex("Мобильность", "—", "15 мин", "Суперкомпенсация"),
+      ]
+    ),
+  ].filter((s): s is NonNullable<typeof s> => s !== null);
+}
+
+export const RunningPlanModule: SportPlanModule = {
+  sport: 'running',
+  phases: {
+    base: basePhase,
+    build: buildPhase,
+    peak: peakPhase,
+    deload: deloadPhase,
+  },
+};

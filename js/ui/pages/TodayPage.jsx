@@ -282,27 +282,27 @@ const DEMO_SESSION = {
 export default function TodayPage() {
   const { t } = useTranslation();
   const {
-    sessionPlan, trainType, readiness, recoveryScore, rpe, sessionNote,
-    testPullUps, testPushUps, testPlank, trainingDone, weekLabel, weekNumber, totalMultiplier,
-    tomorrowPlan, tomorrowType, morningDone, eveningDone, apreReasons,
+    sessionPlan, readiness, recoveryScore, rpe, sessionNote,
+    testPullUps, testPushUps, testPlank, trainingDone, weekLabel, totalWeek, phase,
+    tomorrowPlan, morningDone, eveningDone,
     durationMinutes, lastCheckin, streak, trendData7, rpeTrend7,
     setRpe, setSessionNote, setDurationMinutes, setTestPullUps, setTestPushUps, setTestPlank,
     handleToggleTraining, handleMarkMorning, handleMarkEvening,
     coachAdvice, updateApreResult, checkinTier, checkins,
+    demoMode,
   } = useAppStore();
 
   // Inject demo data for guided tour
   useEffect(() => {
     const handler = (e) => {
       const step = e.detail?.step;
-      if (step === 2 && DEMO_SESSION) {
-        // Step 3: inject demo workout plan
-        useAppStore.setState({
-          sessionPlan: DEMO_SESSION,
-          trainType: 'A',
-          weekLabel: 'Неделя 3',
-          weekNumber: 3,
-        });
+        if (step === 2 && DEMO_SESSION) {
+          // Step 3: inject demo workout plan
+          useAppStore.setState({
+            sessionPlan: DEMO_SESSION,
+            weekLabel: 'Неделя 3',
+            totalWeek: 3,
+          });
       }
       if (step === 1 && DEMO_TREND_DATA.length > 0) {
         // Step 2: inject demo trend + RPE data + sparklines visible
@@ -376,7 +376,9 @@ export default function TodayPage() {
   };
 
   // Derived values
+  const trainType = sessionPlan?.sessionType || null;
   const isRestDay = !trainType || !sessionPlan;
+  const weekNum = totalWeek;
   const rpeKey = Math.round(rpe);
   const rpeDesc = getRpeDescription(rpeKey, t) || '';
   const zone = rpeZone(rpe, t);
@@ -512,18 +514,17 @@ export default function TodayPage() {
       : React.createElement('div', { className: 'card card-appear', style: { animationDelay: '0.1s', padding: 0, overflow: 'hidden' } },
           // Training Header
           React.createElement('div', { className: 'training-header' },
-            React.createElement('span', { className: 'training-type' }, trainType),
+            React.createElement('span', { className: 'training-type' }, sessionPlan?.sport || sessionPlan?.sessionType || null),
             React.createElement('div', { className: 'training-meta' },
               React.createElement('div', { className: 'training-week' },
                 weekLabel,
-                weekNumber % 4 === 0 && React.createElement('span', {
-                  className: 'deload-badge',
-                  style: { marginLeft: '8px', fontSize: '0.75rem', color: 'var(--blue)' }
-                }, t('training.deload'))
+                  totalWeek % 4 === 0 && React.createElement('span', {
+                    className: 'deload-badge',
+                    style: { marginLeft: '8px', fontSize: '0.75rem', color: 'var(--blue)' }
+                  }, t('training.deload'))
               ),
               React.createElement('div', { className: 'training-title' },
-                sessionPlan?.mode === 'test' ? t('training.testDay') : t('training.trainingDay')
-              )
+                sessionPlan?.mode === 'test' ? t('training.testDay') : t('training.trainingDay'))
             )
           ),
           // Exercise List
@@ -623,11 +624,9 @@ export default function TodayPage() {
               onClick: handleToggleTraining,
               style: { minHeight: '48px' }
             }, trainingDone ? t('today.cancelWorkout') : t('today.saveWorkout'))
-          )
+          ),
         ),
 
-  // ═══════════════════════════════════════════════════════════════════
-  // LAYER 4-5: Coach Tips + Quick Actions
   // ═══════════════════════════════════════════════════════════════════
   React.createElement('div', { className: 'card card-appear', style: { animationDelay: '0.2s', padding: 'var(--spacing-md)' } },
     React.createElement(CoachTipsPanel, { tips: coachAdvice || [], t }),
@@ -653,8 +652,8 @@ export default function TodayPage() {
 
     // ═══════════════════════════════════════════════════════════════════
     // LAYER 6: Tomorrow Preview (compact)
-    // ═══════════════════════════════════════════════════════════════════
-    React.createElement(TomorrowMini, { tomorrowType, tomorrowPlan, t }),
+    // ══════════════════════════════════════════════════════════════
+    React.createElement(TomorrowMini, { tomorrowPlan, t }),
 
     // Date header at bottom
     React.createElement('div', { className: 'text-center mt-sm' },

@@ -13,7 +13,7 @@
 | **React** | 18.2.0 | UI-фреймворк |
 | **ReactDOM** | 18.2.0 | Рендеринг |
 | **Vite** | 8.x | Бандлер и дев-сервер |
-| **TypeScript** | 6.x | Строгая типизация (strict mode) |
+| **TypeScript** | 5.x | Строгая типизация (strict mode) |
 | **Zustand** | 5.x | Глобальный стор (единый) |
 | **Dexie.js** | 4.x | IndexedDB-обёртка |
 | **@base-ui/react** | 1.5 | UI-примитивы (Collapsible, Dialog) |
@@ -28,6 +28,64 @@
 ---
 
 ## Структура проекта
+
+```
+js/
+├── app.tsx                    # Точка входа, layout, lazy pages
+├── config/
+│   ├── constants.js           # Константы, зоны, категории спорта
+│   └── tour-steps.js          # Шаги guided tour
+├── core/
+│   ├── types.ts               # Все TypeScript-типы (Checkin, Session, UserProfile, Equipment...)
+│   ├── storage.ts             # Dexie CRUD (sessions, checkins, settings, achievements)
+│   ├── helpers.ts             # Утилиты дат (getAppDate, parseLocalDate, formatISO)
+│   ├── readiness.ts           # calcReadiness, detectRecoveryDebt
+│   ├── recoveryScore.ts       # Tiered Recovery Score (full/medium/light)
+│   ├── planning.ts            # Планирование (getAdaptedSessionForDate, combineSportPlans)
+│   ├── exerciseDatabase.ts    # Библиотека упражнений с метаданными реабилитации 🆕
+│   ├── apre/engine.js         # APRE-движок (Mann tables)
+│   ├── analytics.ts           # Тренды, предупреждения
+│   ├── stats.ts               # Статистика, streak
+│   └── advice.ts              # AI-советы
+├── plans/                     # Модульные планы тренировок (8 видов спорта) 🆕
+│   ├── running.ts             # RunningPlanModule
+│   ├── strength.ts            # StrengthGymPlanModule (sport: 'strength_gym')
+│   ├── cycling.ts             # CyclingPlanModule
+│   ├── swimming.ts            # SwimmingPlanModule
+│   ├── calisthenics.ts        # CalisthenicsPlanModule
+│   ├── yoga.ts                # YogaPlanModule
+│   ├── stretching.ts          # StretchingPlanModule
+│   └── walking.ts             # WalkingPlanModule
+├── stores/
+│   └── useAppStore.ts         # Центральный Zustand-стор
+└── ui/
+    ├── pages/
+    │   ├── TodayPage.jsx      # Дашборд (React.createElement, НЕ JSX)
+    │   ├── ProfilePage.jsx    # Настройки, реабилитация, демо-режим
+    │   ├── CheckinForm.jsx    # Форма чек-ина (tier-adaptive)
+    │   └── AnalyticsPage.jsx  # Тренды, сравнение периодов
+    └── components/
+        ├── OnboardingWizard.jsx    # 5-шаговый онбординг
+        ├── UserProfileEditor.jsx   # Редактор профиля (уровень/цели/инвентарь) 🆕
+        ├── GuidedTour.jsx          # Spotlight tour
+        └── ... (другие компоненты)
+```
+
+### Ключевые паттерны
+
+1. **computeDerived() extension**: При добавлении новых полей в computeDerived() необходимо обновить ВЫЗОВЫ в 10+ местах. Используйте Python bulk replacement scripts.
+
+2. **Zustand store fields**: interface → initial state → computeDerived signature → all call sites → initApp → setter action.
+
+3. **Exercise filtering chain**: rehab (avoidIf) → profile (level/sets, goal/reps, equipment) → readiness (mode) → APRE.
+
+4. **Sport plan modules**: Каждый `js/plans/{sport}.ts` экспортирует `{SportKey}PlanModule` с 4 фазами. Регистрируется в `SPORT_MODULES` в planning.ts.
+
+5. **TodayPage.jsx**: Использует `React.createElement` + emoji, НЕ JSX/Lucide. Это legacy-code, не расширять.
+
+6. **Сохранение данных**: Для сохранения настроек используйте `saveSetting(key, value)` из `js/core/storage.ts`. Для реабилитации/профиля — отдельные setter-actions в store.
+
+7. **write_file line endings**: `write_file` создаёт LF line endings. Для TS/JS файлов нормализуйте в CRLF (иначе TSC может выдавать ошибки на Windows).
 
 ```
 js/
@@ -194,3 +252,16 @@ npm run test:coverage     # покрытие (v8)
 - Использовать `window.confirm` в новом коде — заменять на `Modal` с подтверждением.
 - Добавлять новые npm-зависимости без обоснования (принцип: «одна функция — не повод»).
 - Использовать Redux или React Context для глобального стейта — только Zustand.
+
+---
+
+## Documentation Update Protocol
+
+After every significant code or feature change, update documentation in this order:
+
+1. **memory-bank/progress.md** - Add to "Bug Fixes (This Session)" and update feature inventory
+2. **memory-bank/master-plan.md** - Update phase status and roadmap items
+3. **README.md** - Update test counts, features, and file structure
+4. **PROJECT_CONTEXT.md** - Update technical details and phase status
+
+**Mandatory:** The "Documentation Update Reminder" section in progress.md must be read before merging any feature branch.

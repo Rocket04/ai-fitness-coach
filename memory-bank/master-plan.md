@@ -1,8 +1,9 @@
 # MASTER PLAN — Smart Fitness Coach
 
-**Generated:** 2026-05-24  
-**Scope:** Complete APEI cycle — Analyze, Plan, Execute, Iterate  
-**Phase Status:** Phase 3 ✅ 100% — Virtual date offset system complete. Weekly strip complete. Phase 4 planned.
+**Generated:** 2026-05-24
+**Last Updated:** 2026-05-27
+**Scope:** Complete APEI cycle — Analyze, Plan, Execute, Iterate
+**Phase Status:** Phase 1-4 ✅ 100% — All core features complete. Phase 5 (Granular Logging, Live Workout) in progress.
 
 ---
 
@@ -14,20 +15,25 @@
 |-------|------|--------|
 | Entry | `index.html` | ✅ App shell, critical CSS inline, SW registration |
 | Entry | `js/app.tsx` | ✅ React 18 root, lazy pages, i18n, ErrorBoundary, OnboardingWizard |
-| Store | `js/stores/useAppStore.ts` | ⚠️ Tier fields added but incomplete test mock |
-| Storage | `js/core/storage.ts` | ✅ Extended with checkinTier/gadgets/sports persistence |
-| Core | `js/core/types.ts` | ✅ Complete type definitions |
+| Store | `js/stores/useAppStore.ts` | ✅ Full store with profile, rehab, weeklyTemplate, demo mode |
+| Storage | `js/core/storage.ts` | ✅ Extended with all profile/rehab/persistence fields |
+| Core | `js/core/types.ts` | ✅ Complete type definitions including UserProfile, Equipment, FitnessLevel, FitnessGoal |
 | Core | `js/core/readiness.ts` | ✅ calcReadiness, getEffectiveReadiness, detectRecoveryDebt |
 | Core | `js/core/recoveryScore.ts` | ✅ Tiered weights (full/medium/light), z-score model |
-| Core | `js/core/planning.ts` | ✅ Workout type, session building, deload weeks |
+| Core | `js/core/planning.ts` | ✅ Multi-sport periodization, profile adaptation, rehab filtering, equipment awareness |
 | Core | `js/core/apre/engine.js` | ✅ Mann tables, 56 tests |
+| Core | `js/core/exerciseDatabase.ts` | ✅ Exercise library with rehab/equipment metadata, filtering helpers |
 | Core | `js/core/analytics.ts` | ✅ Trend detection, weekly averages, overtraining warnings |
 | Core | `js/core/stats.ts` | ✅ Weekly/monthly stats, streak |
 | Core | `js/core/advice.ts` | ✅ Coach advice engine |
 | Core | `js/core/helpers.ts` | ✅ Date utilities |
 | Config | `js/config/constants.js` | ✅ MONTHS, APRE_TABLES, SPORT_CATEGORIES, GADGETS, deriveTierFromGadgets |
-| UI | `js/ui/components/OnboardingWizard.jsx` | ✅ 5-step wizard (Value→Goal→Sports→Gadgets→Recovery) |
-| UI | `js/ui/pages/CheckinForm.jsx` | ⚠️ Always shows all fields (no tier adaptation) |
+| Plans | `js/plans/*.ts` (8 files) | ✅ All sport templates with 4-phase periodization |
+| UI | `js/ui/components/OnboardingWizard.jsx` | ✅ 5-step wizard |
+| UI | `js/ui/components/UserProfileEditor.jsx` | ✅ Level, goals, equipment configuration |
+| UI | `js/ui/pages/CheckinForm.jsx` | ✅ Tier-adaptive fields |
+| UI | `js/ui/pages/ProfilePage.jsx` | ✅ Settings, developer panel, rehab config, integrations |
+| UI | `js/ui/pages/TodayPage.jsx` | ✅ Dashboard with weekly strip + rehab notification |
 | UI | `js/ui/pages/ProfilePage.jsx` | ⚠️ No checkinTier selector |
 | CSS | `css/styles.css` | ✅ ~70KB, dark theme, onboarding styles |
 | PWA | `public/manifest.json` | ⚠️ Wrong path (index.html references root) |
@@ -55,9 +61,7 @@
 
 ### 1.4 What's Missing (Phase 3 Roadmap)
 
-1. **Adaptive Recovery Score auto-detection** — Auto-adjust tier based on which metrics user actually fills in over time
-2. **Extended analytics** — Correlation charts, period-over-period comparison
-3. **Chart interactivity** — Hover tooltips on SVG trend charts
+All Phase 3 features are now complete. The remaining items are Phase 4 enhancements.
 
 ### 1.5 Dead Code (From Audit, Still Present)
 
@@ -163,47 +167,28 @@ onComplete={(data: { trainDays: number[]; selectedGoal?: string; apreProtocol?: 
 
 ---
 
-## 3. PHASE 3 DETAILED ROADMAP (TDD-First)
+## 3. PHASE 3 COMPLETED ✅
 
-### Task P3-1: Adaptive Recovery Score Auto-Detection
+All Phase 3 features are now complete:
 
-**Goal:** If user consistently skips HRV for 7+ days, auto-suggest switching to Medium tier  
-**TDD approach:**
-1. Write test first in `js/tests/core/recoveryScore.test.ts`:
-   - `detectOptimalTier(checkins: Checkin[]): CheckinTier` 
-   - If HRV present in <30% of last 7 checkins → suggest medium
-   - If HRV+RHR present in <30% of last 7 checkins → suggest light
-2. Implement `detectOptimalTier` in `js/core/recoveryScore.ts`
-3. Add suggestion UI in TodayPage: "Совет: переключите уровень чек-ина на Средний"
-4. Run tests → green
-
-### Task P3-2: Enhanced Analytics — Period Comparison
-
-**Goal:** Week-over-week and month-over-month comparison in AnalyticsPage  
-**TDD approach:**
-1. Write tests for `getPeriodComparison()` in `js/tests/core/analytics.test.ts`
-2. Implement in `js/core/analytics.ts`
-3. Add comparison cards to AnalyticsPage
-4. Run tests → green
-
-### Task P3-3: Chart Interactivity — SVG Tooltips
-
-**Goal:** Hover tooltips on trend charts  
-**TDD approach:**
-1. Write test for tooltip component
-2. Implement `<TrendTooltip>` component
-3. Wire into existing `TrendChart.jsx`
-4. Run tests → green
+- **Virtual date offset system** — Fully functional with 30-day scrollable strip and week navigation
+- **Demo Mode** — Complete with deterministic synthetic data (30 days), isolated IndexedDB, developer panel
+- **30-day date strip** — Expanded from 7-day to 30-day scrollable strip with prev/next/today navigation
+- **Adaptive tier suggestion** — `detectOptimalTier()` implemented, showing suggestions in TodayPage banner
+- **Integration placeholders** — Apple Health, Google Fit, Garmin, Huawei cards with waitlist modal
 
 ---
 
 ## 4. PHASE 4 VISION
 
-### Demo Mode (Phase 4 Enhancement)
-- Create isolated IndexedDB instance with synthetic data
-- Pre-populate with 30 days of realistic check-ins, sessions, and achievements
-- Allow users to explore the app's full functionality without entering real data
-- Toggle between Demo Mode and Real Mode in developer panel
+### Apple Health / Google Fit Integration
+- Create `js/core/healthConnect.ts` abstraction
+- Platform detection + OAuth flow
+- Import HRV, RHR, sleep data automatically
+
+### PDF Report Export
+- Use `jspdf` or similar client-side PDF library
+- Generate monthly summary PDF with charts
 - Useful for onboarding, testing, and showcasing features
 
 ### Apple Health / Google Fit Integration

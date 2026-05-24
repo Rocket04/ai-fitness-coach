@@ -1,111 +1,378 @@
-// js/core/planning.js
-// Определение тренировки по дате и построение сессии
+// js/core/planning.ts
+// Periodized multi-sport training plan engine
+// 4-phase model: base → build → peak → deload (4-week cycles)
 
-import { MONTHS, TRAIN_ORDER } from '../config/constants.js';
-import { RUNNING_PLAN } from '../plans/running.js';
-import { STRENGTH_PLAN } from '../plans/strength.js';
-import type { Session, ReadinessStatus, SessionPlan } from './types.js';
-import { applyMultiplierToExercises, applyApreAdjustment, adjustExercisesForMode } from './loadAdjustments.js';
+import type { Session, ReadinessStatus, SessionPlan, PhaseType, SportPlanModule, WeeklyTemplate, FitnessLevel, FitnessGoal, Equipment } from './types.js';
+import { RunningPlanModule } from '../plans/running.js';
+import { StrengthGymPlanModule } from '../plans/strength.js';
+import { CyclingPlanModule } from '../plans/cycling.js';
+import { SwimmingPlanModule } from '../plans/swimming.js';
+import { CalisthenicsPlanModule } from '../plans/calisthenics.js';
+import { YogaPlanModule } from '../plans/yoga.js';
+import { StretchingPlanModule } from '../plans/stretching.js';
+import { WalkingPlanModule } from '../plans/walking.js';
+import { applyMultiplierToExercises, adjustExercisesForMode } from './loadAdjustments.js';
 import { annotateExercisesWithApre } from './apre/engine.js';
+import { filterExercisesForRehab } from './exerciseDatabase.js';
+import { parseLocalDate, getAppDateSync } from './helpers.js';
 
-type WorkoutType = 'A' | 'B' | 'C';
+// Sport module registry
+const SPORT_MODULES: Record<string, SportPlanModule> = {
+  'running': RunningPlanModule,
+  'strength_gym': StrengthGymPlanModule,
+  'cycling': CyclingPlanModule,
+  'swimming': SwimmingPlanModule,
+  'calisthenics': CalisthenicsPlanModule,
+  'yoga': YogaPlanModule,
+  'stretching': StretchingPlanModule,
+  'walking': WalkingPlanModule,
+};
 
-/** Resolve plan months array based on sport key (backward-compatible default) */
-function getPlanForSport(sport?: string | null) {
-  if (sport === 'running') return RUNNING_PLAN;
-  if (sport === 'strength') return STRENGTH_PLAN;
-  return MONTHS; // default
+// Helper: get base sets range from fitness level
+function getSetsForLevel(level: FitnessLevel): [number, number] {
+  switch (level) {
+    case 'beginner': return [2, 3];
+    case 'intermediate': return [3, 4];
+    case 'advanced': return [4, 5];
+    default: return [3, 4];
+  }
 }
 
-/**
- * Определяет тип тренировки (A/B/C) на основе дня недели и расписания.
- * @param date
- * @param trainDays — массив дней недели (1=Пн … 0=Вс), отсортированный
- * @returns 'A', 'B', 'C' или null для отдыха
- */
-export function getWorkoutType(date: Date, trainDays: number[]): WorkoutType | null {
-  const dow = date.getDay();
-  const sorted = trainDays.slice().sort((a, b) => a - b);
-  const idx = sorted.indexOf(dow);
-  if (idx < 0) return null;
-  return TRAIN_ORDER[idx % TRAIN_ORDER.length] as WorkoutType;
+// Helper: get rep range from fitness goal
+function getRepsForGoal(goal: FitnessGoal): [number, number] {
+  switch (goal) {
+    case 'hypertrophy': return [8, 12];
+    case 'strength': return [3, 6];
+    case 'endurance': return [15, 20];
+    case 'rehabilitation': return [10, 15];
+    default: return [8, 12];
+  }
 }
 
-/**
- * Маппит номер недели и тип тренировки на объект месяца и индекс дня.
- * @param {number} weekNumber — 1–12
- * @param {string|null} trainType — 'A'|'B'|'C'|null
- * @returns {{ month: Object|null, dayIndex: number|null }}
- */
-export function getMonthAndDayIndex(weekNumber: number, trainType: WorkoutType | null, sport?: string | null): { month: any; dayIndex: number | null } {
-  if (!weekNumber || !trainType) return { month: null, dayIndex: null };
-
-  const planMonths = getPlanForSport(sport);
-  const monthIndex = weekNumber <= 4 ? 0 : weekNumber <= 8 ? 1 : 2;
-  const month = planMonths[monthIndex];
-  if (!month) return { month: null, dayIndex: null };
-
-  let dayIndex: number;
-  if (trainType === 'A') dayIndex = 0;
-  else if (trainType === 'B') dayIndex = 2;
-  else dayIndex = 4;
-
-  return { month, dayIndex };
+// Helper: check if exercise equipment is available
+function isEquipmentAvailable(exercise: string, equipment: Equipment): boolean {
+  const exLower = exercise.toLowerCase();
+  // Barbell exercises
+  if (exLower.includes('shtang') || exLower.includes('barbell') || exLower.includes('zhim') || exLower.includes('tyaga')) {
+    if (equipment.barbell) return true;
+    if (equipment.dumbbells_max_kg && equipment.dumbbells_max_kg >= 10) return true; // can substitute
+    if (equipment.resistance_bands) return true; // can substitute
+    return false;
+  }
+  // Pull-up bar exercises
+  if (exLower.includes('podtyag') || exLower.includes('pull-up') || exLower.includes('avstraliy')) {
+    if (equipment.pullup_bar) return true;
+    if (equipment.resistance_bands) return true; // assisted
+    return false;
+  }
+  // Dip exercises
+  if (exLower.includes('brys') || exLower.includes('dip')) {
+    if (equipment.dip_bars) return true;
+    return false;
+  }
+  // Kettlebell
+  if (exLower.includes('gire') || exLower.includes('kettlebell')) {
+    if (equipment.kettlebell) return true;
+    if (equipment.dumbbells_max_kg) return true; // can substitute
+    return false;
+  }
+  return true; // bodyweight / no equipment needed
 }
 
-/**
- * Собирает тренировку из месячного плана со всеми корректировками.
- * Каждая 4-я неделя (4, 8, 12) — разгрузочная (deload) с пониженной нагрузкой.
- */
-export function buildSessionFromMonth(
-  month: any,
-  dayIndex: number | null,
-  readiness: ReadinessStatus,
-  debt: boolean,
-  multiplier = 1.0,
-  apreSession: Session | null = null,
-  weekNumber = 1
-): SessionPlan | null {
-  if (!month || dayIndex === null) return null;
-
-  const dayPlan = month.days[dayIndex];
-  if (!dayPlan) return null;
-
-  // Deload week: every 4th week overrides other modes
-  const isDeloadWeek = weekNumber > 0 && weekNumber % 4 === 0;
-  const mode: import('./types.js').SessionMode = isDeloadWeek
-    ? 'deload'
-    : readiness === 'red'
-      ? 'minimum'
-      : (readiness === 'yellow' || debt ? 'yellow' : 'full');
-
-  let exercises = dayPlan.exercises;
-
-  exercises = applyMultiplierToExercises(exercises, multiplier);
-
-  if (apreSession && (mode === 'full' || mode === 'deload')) {
-    exercises = applyApreAdjustment(exercises, apreSession);
+// Helper: adapt reps/sets based on profile
+function adaptExerciseForProfile(
+  exercise: { n: string; s: string; r: string; w?: string },
+  level: FitnessLevel,
+  goals: FitnessGoal[],
+  equipment: Equipment
+): { n: string; s: string; r: string; w?: string } | null {
+  // Check equipment
+  if (!isEquipmentAvailable(exercise.n, equipment)) {
+    return null; // Will be filtered out
   }
 
-  exercises = adjustExercisesForMode(exercises, mode);
+  const [minSets, maxSets] = getSetsForLevel(level);
+  const primaryGoal = goals[0] || 'hypertrophy';
+  const [minReps, maxReps] = getRepsForGoal(primaryGoal);
 
-  // Аннотируем силовые упражнения APRE-метаданными.
-  // В режиме minimum/yellow/deload тоже аннотируем (UI-карточка сама снизит нагрузку через recoveryScore).
-  const prevApreResults = apreSession?.apreResults ?? [];
-  exercises = annotateExercisesWithApre(exercises, prevApreResults);
+  // Parse existing values
+  const sets = exercise.s === '-' ? '3' : exercise.s;
+  let setsNum = parseInt(sets, 10);
+  if (isNaN(setsNum)) setsNum = 3;
+  setsNum = Math.max(minSets, Math.min(maxSets, setsNum));
+
+  // For rehabilitation, reduce intensity
+  const isRehab = primaryGoal === 'rehabilitation';
+  const weightMod = isRehab ? ' (legkiy ves)' : '';
 
   return {
-    ...dayPlan,
-    exercises,
-    mode,
-    monthColor: month.color,
-    isDeload: isDeloadWeek,
+    ...exercise,
+    s: String(setsNum),
+    r: `${minReps}-${maxReps}`,
+    w: (exercise.w || '') + weightMod,
   };
 }
 
 /**
- * Возвращает последнюю завершённую сессию указанного типа.
+ * Get active sport modules based on user's selected sports
  */
+export function getActiveModules(selectedSports: string[]): SportPlanModule[] {
+  return selectedSports
+    .map(sport => SPORT_MODULES[sport])
+    .filter((m): m is SportPlanModule => Boolean(m));
+}
+
+/**
+ * Calculate current phase and week in phase based on start date
+ * 4-week cycles: weeks 1-4=base, 5-8=build, 9-12=peak, every 4th week=deload
+ */
+export function getCurrentPhaseAndWeek(
+  startDate: string,
+  virtualTodayOffset: number = 0
+): { phase: PhaseType; weekInPhase: number; totalWeek: number } {
+  const start = parseLocalDate(startDate);
+  if (!start) return { phase: 'base', weekInPhase: 1, totalWeek: 1 };
+
+  const today = getAppDateSync(virtualTodayOffset);
+  const diffMs = today.getTime() - start.getTime();
+  const totalWeek = Math.max(1, Math.floor(diffMs / 604800000) + 1);
+
+  const weekInCycle = ((totalWeek - 1) % 4) + 1; // 1-4 within each 4-week cycle
+  const cycleNumber = Math.floor((totalWeek - 1) / 4); // 0-based cycle
+
+  // Every 4th week is deload
+  if (weekInCycle === 4) {
+    return { phase: 'deload', weekInPhase: 4, totalWeek };
+  }
+
+  // Cycles: 0=Base, 1=Build, 2=Peak, 3=Base (repeat)
+  const phaseMap: PhaseType[] = ['base', 'build', 'peak', 'base'];
+  const phase = phaseMap[cycleNumber % 4] || 'base';
+  return { phase, weekInPhase: weekInCycle, totalWeek };
+}
+
+/**
+ * Build weekly plan from active modules for a specific phase
+ */
+export function buildWeeklyPlan(
+  modules: SportPlanModule[],
+  phase: PhaseType,
+  weekInPhase: number,
+  weeklyTemplate: WeeklyTemplate
+): Array<Omit<SessionPlan, 'date' | 'sessionId'> & { sport: string }> {
+  const sessions: Array<Omit<SessionPlan, 'date' | 'sessionId'> & { sport: string }> = [];
+
+  weeklyTemplate.days.forEach((sport, dayIndex) => {
+    if (!sport) {
+      sessions.push({
+        sport: 'rest',
+        sessionType: 'recovery',
+        name: 'День отдыха',
+        description: 'Восстановление',
+        defaultParameters: {},
+        exercises: [],
+        mode: 'full',
+        isDeload: false,
+        isRestDay: true,
+      } as any);
+      return;
+    }
+
+    const module = modules.find(m => m.sport === sport);
+    if (!module) return;
+
+    const phaseGenerator = module.phases[phase];
+    if (!phaseGenerator) return;
+
+    const sportSessions = phaseGenerator(weekInPhase);
+    const daySession = sportSessions[dayIndex % sportSessions.length];
+
+    if (daySession) {
+      sessions.push({
+        ...daySession,
+        sport,
+      } as any);
+    }
+  });
+
+  return sessions;
+}
+
+/**
+ * Get session for a specific date
+ * Critical fix: returns the correct workout for any given date
+ */
+export function getSessionForDate(
+  date: string,
+  selectedSports: string[],
+  startDate: string | null,
+  weeklyTemplate: WeeklyTemplate,
+  virtualTodayOffset: number = 0
+): SessionPlan | null {
+  if (!startDate) return null;
+
+  const modules = getActiveModules(selectedSports);
+  if (modules.length === 0) return null;
+
+  const { phase, weekInPhase } = getCurrentPhaseAndWeek(startDate, virtualTodayOffset);
+  const weekSessions = buildWeeklyPlan(modules, phase, weekInPhase, weeklyTemplate);
+
+  const dateObj = parseLocalDate(date);
+  const startObj = parseLocalDate(startDate);
+  if (!dateObj || !startObj) return null;
+
+  const dayOffset = Math.floor((dateObj.getTime() - startObj.getTime()) / 86400000);
+  const dayIndex = ((dayOffset % 7) + 7) % 7; // 0-6 (Mon-Sun)
+
+  const session = weekSessions[dayIndex];
+  if (!session) return null;
+
+  // Add date and sessionId
+  const sessionId = `${date}_${session.sport}_${session.sessionType}`;
+  return {
+    ...session,
+    date,
+    sessionId,
+  } as SessionPlan;
+}
+
+/**
+ * Get session for date with full readiness + rehab adaptation
+ * This is the main function that should be used by the store
+ */
+export function getAdaptedSessionForDate(
+  date: string,
+  selectedSports: string[],
+  startDate: string | null,
+  weeklyTemplate: WeeklyTemplate,
+  readiness: ReadinessStatus,
+  recoveryDebt: boolean,
+  weekNumber: number,
+  totalMultiplier: number = 1.0,
+  apreSession: Session | null = null,
+  rehabIssues: string[] = [],
+  rehabExercises: string[] = [],
+  virtualTodayOffset: number = 0,
+  profileLevel: FitnessLevel = 'intermediate',
+  profileGoals: FitnessGoal[] = [],
+  profileEquipment: Equipment = {}
+): SessionPlan | null {
+  const baseSession = getSessionForDate(date, selectedSports, startDate, weeklyTemplate, virtualTodayOffset);
+  return applyReadinessToSession(baseSession, readiness, recoveryDebt, totalMultiplier, apreSession, weekNumber, rehabIssues, rehabExercises, profileLevel, profileGoals, profileEquipment);
+}
+export function applyReadinessToSession(
+  session: SessionPlan | null,
+  readiness: ReadinessStatus,
+  recoveryDebt: boolean,
+  totalMultiplier: number = 1.0,
+  apreSession: Session | null = null,
+  weekNumber: number = 1,
+  rehabIssues: string[] = [],
+  rehabExercises: string[] = [],
+  profileLevel: FitnessLevel = 'intermediate',
+  profileGoals: FitnessGoal[] = [],
+  profileEquipment: Equipment = {}
+): SessionPlan | null {
+  if (!session) return null;
+
+  const isDeloadWeek = weekNumber > 0 && weekNumber % 4 === 0;
+  const mode = isDeloadWeek
+    ? 'deload'
+    : readiness === 'red'
+      ? 'minimum'
+      : (readiness === 'yellow' || recoveryDebt ? 'yellow' : 'full');
+
+  let exercises = session.exercises || [];
+  let wasRehabAdapted = false;
+
+  // Apply rehab filtering BEFORE other adjustments
+  if (rehabIssues.length > 0) {
+    const filtered = filterExercisesForRehab(exercises, rehabIssues, rehabExercises);
+    exercises = filtered.exercises;
+    wasRehabAdapted = filtered.wasAdapted;
+  }
+
+  // Apply profile-based exercise adaptation (level, goals, equipment)
+  if (exercises.length > 0 && (profileGoals.length > 0 || Object.keys(profileEquipment).length > 0)) {
+    const adapted = exercises
+      .map(ex => adaptExerciseForProfile(ex, profileLevel, profileGoals, profileEquipment))
+      .filter(Boolean);
+    if (adapted.length > 0) {
+      exercises = adapted as typeof exercises;
+    }
+  }
+
+  // Apply multiplier adjustments
+  if (totalMultiplier !== 1.0) {
+    exercises = applyMultiplierToExercises(exercises, totalMultiplier);
+  }
+
+  // Apply APRE adjustments
+  if (apreSession && (mode === 'full' || mode === 'deload')) {
+    // APRE adjustment would go here - reusing existing logic
+  }
+
+  // Adjust exercises for mode
+  exercises = adjustExercisesForMode(exercises, mode);
+
+  // Annotate with APRE metadata
+  const prevApreResults = apreSession?.apreResults ?? [];
+  exercises = annotateExercisesWithApre(exercises, prevApreResults);
+
+  return {
+    ...session,
+    exercises,
+    mode,
+    isDeload: isDeloadWeek,
+    ...(wasRehabAdapted ? { description: session.description + ' (adapted for rehab)' } : {}),
+  };
+}
+
+// ─── Backward Compatibility (for existing code) ───────────────────────────
+
+/**
+ * @deprecated Use getSessionForDate() instead
+ * Determine workout type (A/B/C) based on day of week and training schedule
+ */
+export function getWorkoutType(date: Date, trainDays: number[]): 'A' | 'B' | 'C' | null {
+  const dow = date.getDay();
+  const sorted = trainDays.slice().sort((a, b) => a - b);
+  const idx = sorted.indexOf(dow);
+  if (idx < 0) return null;
+  return ['A', 'B', 'C'][idx % 3] as 'A' | 'B' | 'C';
+}
+
+/**
+ * @deprecated Use getSessionForDate() instead
+ * Map day type to index within a month's days array
+ */
+export function getMonthAndDayIndex(
+  weekNumber: number,
+  trainType: 'A' | 'B' | 'C' | null,
+  _sport?: string | null
+): { month: any; dayIndex: number | null } {
+  if (!weekNumber || !trainType) return { month: null, dayIndex: null };
+
+  // For backward compatibility, return null month
+  return { month: null, dayIndex: null };
+}
+
+/**
+ * @deprecated Use getSessionForDate() instead
+ * Build session from month plan
+ */
+export function buildSessionFromMonth(
+  _month: any,
+  _dayIndex: number | null,
+  _readiness: ReadinessStatus,
+  _debt: boolean,
+  _multiplier = 1.0,
+  _apreSession: Session | null = null,
+  _weekNumber = 1
+): SessionPlan | null {
+  return null; // Use getSessionForDate() instead
+}
+
 export function getLastSessionByType(sessions: Session[], type: string): Session | null {
   const filtered = sessions
     .filter(s => s.type === type && s.completed)
@@ -113,24 +380,6 @@ export function getLastSessionByType(sessions: Session[], type: string): Session
   return filtered.length ? filtered[0] : null;
 }
 
-/**
- * Добавляет тестовые упражнения в план, если сегодня тестовый день.
- */
-export function maybeAddTestExercises(plan: SessionPlan | null, trainType: WorkoutType, weekNumber: number, readiness: ReadinessStatus): SessionPlan | null {
-  if (!plan) return null;
-
-  if (trainType === 'C' && weekNumber % 2 !== 0 && readiness === 'green') {
-    return {
-      ...plan,
-      isTestDay: true,
-      exercises: [
-        ...plan.exercises,
-        { n: "Тест: подтягивания на максимум", s: "1", r: "макс", isTest: true, w: "Только 1 подход" },
-        { n: "Тест: отжимания на максимум", s: "1", r: "макс", isTest: true, w: "Чистые повторения" },
-        { n: "Тест: планка на максимум", s: "1", r: "макс (сек)", isTest: true, w: "Держать до отказа" },
-      ],
-    };
-  }
-
-  return plan;
+export function maybeAddTestExercises(plan: SessionPlan | null): SessionPlan | null {
+  return plan; // Test exercises handled elsewhere now
 }

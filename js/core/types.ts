@@ -18,7 +18,7 @@ export interface Checkin {
   shoulderPain: number;
   breathing: BreathingStatus;
   weight: number;
-  notes: string;
+  notes?: string;
   muscleSoreness: number;
   energy: number;
   mood: number;
@@ -150,19 +150,77 @@ export interface Session {
   apreResults?: ApreExerciseResult[];
 }
 
+export type PhaseType = 'base' | 'build' | 'peak' | 'deload';
+
 export interface SessionPlan {
-  type: WorkoutType;
+  sessionId: string;
+  date: string;
+  sport: 'running' | 'strength' | 'cycling' | 'mobility' | 'swimming' | 'calisthenics' | 'strength_gym' | 'yoga' | 'stretching' | 'walking' | 'rest';
+  sessionType: 'endurance' | 'tempo' | 'intervals' | 'hypertrophy' | 'strength' | 'power' | 'recovery' | 'mobility';
+  name: string;
+  description: string;
+  defaultParameters: Record<string, number>;
   exercises: Exercise[];
   mode: SessionMode;
-  monthColor: string;
-  isTestDay?: boolean;
-  /** Каждая 4-я неделя — разгрузочная (deload) с пониженной нагрузкой */
-  isDeload?: boolean;
+  isDeload: boolean;
+  isRestDay: boolean;
+  apreRule?: {
+    type: 'scalar' | 'reps' | 'load';
+    scaleBy: string;
+    modifiers: { green: number; yellow: number; red: number };
+  };
+  alternativeForCrossTraining?: string;
+}
+
+export interface SportPlanModule {
+  sport: string;
+  phases: {
+    base: (weekInPhase: number) => Omit<SessionPlan, 'date' | 'sessionId'>[];
+    build: (weekInPhase: number) => Omit<SessionPlan, 'date' | 'sessionId'>[];
+    peak: (weekInPhase: number) => Omit<SessionPlan, 'date' | 'sessionId'>[];
+    deload: (weekInPhase: number) => Omit<SessionPlan, 'date' | 'sessionId'>[];
+  };
+}
+
+export interface WeeklyTemplate {
+  days: (string | null)[];
+  sportOrder: string[];
 }
 
 export interface Settings {
   startDate: string;
   trainDays: number[];
+  rehabIssues?: string[];
+  rehabExercises?: string[];
+  level?: string;
+  goals?: string[];
+  equipment?: string; // JSON serialized Equipment
+}
+
+export type RehabIssue = 'hips' | 'shoulder' | 'back' | 'knees' | 'neck' | 'elbow' | 'wrist';
+
+export type FitnessLevel = 'beginner' | 'intermediate' | 'advanced';
+export type FitnessGoal = 'hypertrophy' | 'strength' | 'endurance' | 'rehabilitation';
+
+export interface Equipment {
+  dumbbells_max_kg?: number;
+  pullup_bar?: boolean;
+  dip_bars?: boolean;
+  resistance_bands?: boolean;
+  barbell?: boolean;
+  kettlebell?: boolean;
+}
+
+export interface UserProfile {
+  selectedSports: string[];
+  trainDays: number[];
+  checkinTier: 'full' | 'medium' | 'light';
+  selectedGadgets: string[];
+  rehabIssues: RehabIssue[];
+  rehabExercises: string[];
+  level: FitnessLevel;
+  goals: FitnessGoal[];
+  equipment: Equipment;
 }
 
 export interface AppState {
