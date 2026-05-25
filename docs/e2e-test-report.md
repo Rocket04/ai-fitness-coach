@@ -2,7 +2,26 @@
 
 **Date:** 2026-05-28  
 **Tester:** OWL (automated)  
-**Environment:** Windows 10, Vite 8 dev server, Chrome via CDP
+**Environment:** Windows 10, Vite 8, Chrome via CDP
+
+## Latest Features (2026-05-28)
+
+### TrendChart Enhancements
+- Multi-metric support with clickable legend (role=switch, aria-checked)
+- Enhanced tooltips: exact values + deltas, formatted dates, position-aware
+- Smooth animations: drawLine, fadeDot, tooltipIn
+- Responsive: ResizeObserver, container-based width, touch support
+
+### MethodologyPage Interactive Simulators
+- **APRE Simulator**: sliders for RPE, duration → shows Session Load, weight correction, next week RM
+- **Recovery Simulator**: sliders for HRV, sleep, restHR, energy, mood, soreness → live score
+- Both use actual user data as defaults and show live examples
+
+### Accessibility Fixes
+- Fixed label-content-name-mismatch (QuickActionToggle aria-label matches visible text)
+- Modal focus trap with Tab/Shift+Tab, auto-focus close button
+- OnboardingWizard close button: Russian aria-label + sr-only text
+- Added .sr-only utility, :focus-visible styles
 
 ---
 
