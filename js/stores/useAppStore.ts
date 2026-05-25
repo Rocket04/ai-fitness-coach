@@ -808,7 +808,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
   },
 
   handleExportData: async () => {
-    const { todayISO } = get();
+    const { todayISO, showToast: toast, sessions, checkins } = get();
     try {
       const data = await exportAllData();
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -818,25 +818,75 @@ export const useAppStore = create<AppStore>((set, get) => ({
       a.download = `fitness-export-${todayISO}.json`;
       a.click();
       URL.revokeObjectURL(url);
+      toast(`Экспортировано: ${sessions.length} тренировок, ${checkins.length} чек-инов`);
     } catch (err) {
       console.error('Export failed:', err);
+      toast('Ошибка при экспорте данных', 'error');
     }
   },
 
-  handleImportData: async file => {
-    const { showToast: toast, startDate, trainDays, manualOverride, todayISO, checkinTier } = get();
+  handleImportData: async (file: File) => {
+    const { showToast: toast, startDate, trainDays, manualOverride, todayISO, checkinTier, sessions: currentSessions, checkins: currentCheckins } = get();
     try {
+      // File size check (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        throw new Error('Файл слишком большой (макс. 5 МБ)');
+      }
+      // File type check
+      if (!file.name.endsWith('.json') && file.type !== 'application/json') {
+        throw new Error('Ожидается файл JSON');
+      }
+
       const text = await file.text();
-      const data = JSON.parse(text);
+      if (!text.trim()) {
+        throw new Error('Файл пуст');
+      }
+
+      let data: any;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        throw new Error('Невалидный JSON: проверьте синтаксис файла');
+      }
+
+      // Validate data structure
+      if (!data || typeof data !== 'object' || Array.isArray(data)) {
+        throw new Error('Некорректный формат: ожидался объект с данными');
+      }
+
+      // Check version compatibility
+      if (data.version && typeof data.version === 'number' && data.version > 3) {
+        throw new Error(`Неподдерживаемая версия экспорта: ${data.version}. Обновите приложение.`);
+      }
+
+      // Warn if replacing existing data
+      const hasExistingData = (currentSessions && currentSessions.length > 0) || (currentCheckins && currentCheckins.length > 0);
+      if (hasExistingData) {
+        // Create backup before import
+        try {
+          const backup = await exportAllData();
+          const backupKey = `fitness-backup-before-import-${Date.now()}`;
+          localStorage.setItem(backupKey, JSON.stringify(backup));
+          // Keep only last 5 backups
+          const backupKeys = Object.keys(localStorage).filter(k => k.startsWith('fitness-backup-')).sort();
+          while (backupKeys.length > 5) {
+            localStorage.removeItem(backupKeys.shift()!);
+          }
+        } catch (backupErr) {
+          console.warn('Failed to create backup before import:', backupErr);
+        }
+      }
+
       await importAllData(data);
       const [allSessions, allCheckins] = await Promise.all([getAllSessions(), getAllCheckins()]);
       const derived = computeDerived(allSessions, allCheckins, startDate, trainDays, manualOverride, todayISO, checkinTier, 0, get().selectedSports, get().weeklyTemplate, get().rehabIssues, get().rehabExercises, get().profileLevel, get().profileGoals, get().profileEquipment);
       set({ sessions: allSessions, checkins: allCheckins, ...derived });
-      toast('Данные импортированы');
+      toast(`Данные импортированы: ${allSessions.length} тренировок, ${allCheckins.length} чек-инов`);
     } catch (err) {
       console.error('Import failed:', err);
       const msg = err instanceof Error ? err.message : 'Не удалось импортировать файл. Проверьте формат JSON.';
       toast(msg, 'error');
+      throw err; // Re-throw so caller can handle
     }
   },
 
@@ -870,6 +920,26 @@ confirmResetData: async () => {
 
 // ── Demo Mode ──
   activateDemoMode: async () => {
+    const { showToast, sessions: currentSessions, checkins: currentCheckins } = get();
+
+    // Backup existing data before activating demo
+    const hasExistingData = (currentSessions && currentSessions.length > 0) || (currentCheckins && currentCheckins.length > 0);
+    if (hasExistingData) {
+      try {
+        const backup = await exportAllData();
+        const backupKey = `fitness-backup-before-demo-${Date.now()}`;
+        localStorage.setItem(backupKey, JSON.stringify(backup));
+        // Keep only last 5 backups
+        const backupKeys = Object.keys(localStorage).filter(k => k.startsWith('fitness-backup-')).sort();
+        while (backupKeys.length > 5) {
+          localStorage.removeItem(backupKeys.shift()!);
+        }
+        showToast('Резервная копия создана перед активацией демо');
+      } catch (backupErr) {
+        console.warn('Failed to create backup before demo:', backupErr);
+      }
+    }
+
     const { generateDemoData } = await import('../core/demoData.js');
     const demoData = generateDemoData();
     await activateDemoData(demoData);
