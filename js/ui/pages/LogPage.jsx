@@ -55,7 +55,19 @@ export default function LogPage() {
     trendData30,
     weeklySummary,
     monthStats,
+    dataLoaded,
   } = state;
+
+  if (!dataLoaded) {
+    return React.createElement(
+      'div',
+      { className: 'card fade-in-up' },
+      React.createElement('p', { className: 'text-muted font-body text-sm' }, 'Загрузка данных...')
+    );
+  }
+
+  const safeWeekly = weeklySummary || { completed: 0, avgRPE: null, green: 0, yellow: 0, red: 0, dominantStatus: '' };
+  const safeMonth = monthStats || { completed: 0, green: 0, yellow: 0, red: 0 };
 
   const lastCheckin = checkins.length > 0
     ? [...checkins].sort((a, b) => (b.date || '').localeCompare(a.date || ''))[0]
@@ -127,20 +139,20 @@ export default function LogPage() {
       React.createElement(
         'div',
         { className: 'stat-grid' },
-        React.createElement(StatBox, { value: weeklySummary.completed, label: t('log.workouts') }),
-        React.createElement(StatBox, { value: weeklySummary.avgRPE ?? '—', label: t('log.avgRPE') }),
+        React.createElement(StatBox, { value: safeWeekly.completed, label: t('log.workouts') }),
+        React.createElement(StatBox, { value: safeWeekly.avgRPE ?? '—', label: t('log.avgRPE') }),
         React.createElement(StatBox, {
-          value: weeklySummary.green ?? 0,
+          value: safeWeekly.green ?? 0,
           label: t('log.green'),
           color: 'var(--green)',
         }),
         React.createElement(StatBox, {
-          value: weeklySummary.yellow ?? 0,
+          value: safeWeekly.yellow ?? 0,
           label: t('log.yellow'),
           color: 'var(--yellow)',
         }),
         React.createElement(StatBox, {
-          value: weeklySummary.red ?? 0,
+          value: safeWeekly.red ?? 0,
           label: t('log.red'),
           color: 'var(--red)',
         })
@@ -158,25 +170,25 @@ export default function LogPage() {
         React.createElement(
           'div',
           { className: 'month-stat-item' },
-          React.createElement('span', { className: 'month-stat-value' }, monthStats.completed ?? 0),
+          React.createElement('span', { className: 'month-stat-value' }, safeMonth.completed ?? 0),
           React.createElement('span', { className: 'month-stat-label' }, t('log.workouts'))
         ),
         React.createElement(
           'div',
           { className: 'month-stat-item' },
-          React.createElement('span', { className: 'month-stat-value text-green' }, monthStats.green ?? 0),
+          React.createElement('span', { className: 'month-stat-value text-green' }, safeMonth.green ?? 0),
           React.createElement('span', { className: 'month-stat-label' }, t('log.green'))
         ),
         React.createElement(
           'div',
           { className: 'month-stat-item' },
-          React.createElement('span', { className: 'month-stat-value text-yellow' }, monthStats.yellow ?? 0),
+          React.createElement('span', { className: 'month-stat-value text-yellow' }, safeMonth.yellow ?? 0),
           React.createElement('span', { className: 'month-stat-label' }, t('log.yellow'))
         ),
         React.createElement(
           'div',
           { className: 'month-stat-item' },
-          React.createElement('span', { className: 'month-stat-value text-red' }, monthStats.red ?? 0),
+          React.createElement('span', { className: 'month-stat-value text-red' }, safeMonth.red ?? 0),
           React.createElement('span', { className: 'month-stat-label' }, t('log.red'))
         )
       )

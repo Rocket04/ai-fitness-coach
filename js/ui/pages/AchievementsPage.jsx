@@ -3,11 +3,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Trophy, Lock, CheckCircle2 } from 'lucide-react';
+import { Trophy, Lock, CheckCircle2, Inbox } from 'lucide-react';
 import { useAppStore } from '../../stores/useAppStore.js';
 import { getAchievementStatus } from '../../core/achievements.js';
 import StreakBadge from '../components/StreakBadge.jsx';
 import AchievementToast from '../components/AchievementToast.jsx';
+import EmptyState from '../components/EmptyState.jsx';
+import { SkeletonCard } from '../components/Skeleton.jsx';
 import './AchievementsPage.css';
 
 function AchievementsPage() {
@@ -15,6 +17,7 @@ function AchievementsPage() {
   const { sessions, checkins, trainDays, startDate, streak } = useAppStore();
   const [achievements, setAchievements] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [newAchievement, setNewAchievement] = useState(null);
   const [activeTab, setActiveTab] = useState('all');
 
@@ -24,6 +27,7 @@ function AchievementsPage() {
 
   const loadAchievements = async () => {
     setLoading(true);
+    setError(null);
     try {
       const data = await getAchievementStatus(sessions, checkins, trainDays, startDate);
       setAchievements(data);
@@ -35,6 +39,7 @@ function AchievementsPage() {
       }
     } catch (err) {
       console.error('Failed to load achievements:', err);
+      setError(err?.message || 'Не удалось загрузить достижения');
     } finally {
       setLoading(false);
     }
@@ -52,8 +57,53 @@ function AchievementsPage() {
   const totalCount = achievements.length;
 
   if (loading) {
-    return React.createElement('div', { className: 'achievements-page' },
-      React.createElement('div', { className: 'loading' }, 'Loading achievements...')
+    return React.createElement(
+      'div',
+      { className: 'achievements-page' },
+      React.createElement(SkeletonCard, { rows: 2 }),
+      React.createElement('div', { style: { height: 'var(--spacing-md)' } }),
+      React.createElement(SkeletonCard, { rows: 3 }),
+      React.createElement('div', { style: { height: 'var(--spacing-md)' } }),
+      React.createElement(SkeletonCard, { rows: 3 })
+    );
+  }
+
+  // Error state
+  if (error) {
+    return React.createElement(
+      'div',
+      { className: 'achievements-page' },
+      React.createElement('div', {
+        className: 'card',
+        style: {
+          textAlign: 'center',
+          padding: 'var(--spacing-xl)',
+          color: 'var(--red)',
+        },
+      },
+        React.createElement('p', null, error),
+        React.createElement(
+          'button',
+          {
+            className: 'btn btn-accent mt-md',
+            onClick: loadAchievements,
+          },
+          'Повторить'
+        )
+      )
+    );
+  }
+
+  // Empty state: no achievements at all (shouldn't happen with default config)
+  if (!achievements || achievements.length === 0) {
+    return React.createElement(
+      'div',
+      { className: 'achievements-page' },
+      React.createElement(EmptyState, {
+        icon: React.createElement(Inbox, { size: 20 }),
+        title: 'Пока нет достижений',
+        subtitle: 'Достижения появятся по мере тренировок и чек-инов.',
+      })
     );
   }
 
@@ -75,7 +125,7 @@ function AchievementsPage() {
       React.createElement('div', { className: 'achievements-bar' },
         React.createElement('div', { 
           className: 'achievements-bar__fill',
-          style: { width: `${(unlockedCount / totalCount) * 100}%` }
+          style: { width: `${totalCount > 0 ? (unlockedCount / totalCount) * 100 : 0}%` }
         })
       )
     ),

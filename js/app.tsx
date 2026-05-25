@@ -1,7 +1,7 @@
 import React, { useEffect, lazy, Suspense, useState } from 'react';
 import ReactDOM from 'react-dom/client';
 import { I18nextProvider, useTranslation } from 'react-i18next';
-import { Home, BookOpen, TrendingUp, User, X, Check } from 'lucide-react';
+import { Home, BookOpen, TrendingUp, User, X, Check, RefreshCw } from 'lucide-react';
 import i18n from './i18n/index.js';
 import { useAppStore } from './stores/useAppStore.js';
 import { DAYS, DAYS_TO_DOW } from './config/constants.js';
@@ -107,7 +107,24 @@ function AppContent() {
                 className={`page-wrapper page-${i}${activeTab === i ? ' page-active' : ''}`}
                 hidden={activeTab !== i}
               >
-                <p.component />
+                <ErrorBoundary
+                  key={activeTab}
+                  fallback={function (props: { retry?: () => void }) {
+                    return (
+                      <div className="card" style={{ textAlign: 'center', padding: 'var(--spacing-xl)', margin: 'var(--spacing-md)' }}>
+                        <p style={{ color: 'var(--text2)', marginBottom: 'var(--spacing-md)' }}>Ошибка отображения раздела</p>
+                        <button className="btn btn-accent" onClick={() => props.retry?.()}>
+                          <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)' }}>
+                            <RefreshCw size={16} />
+                            Повторить
+                          </span>
+                        </button>
+                      </div>
+                    );
+                  }}
+                >
+                  <p.component />
+                </ErrorBoundary>
               </div>
             ))}
           </div>

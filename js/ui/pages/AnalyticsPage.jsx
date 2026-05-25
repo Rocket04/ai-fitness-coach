@@ -15,9 +15,16 @@ export default function AnalyticsPage() {
   const { t } = useTranslation();
   const state = useAppStore();
   
-  // Add safeguard for context availability
-  if (!state) {
-    return React.createElement('div', { className: 'card' }, 'Загрузка контекста...');
+  // Guard: store not ready
+  if (!state || !state.dataLoaded) {
+    return React.createElement(
+      'div',
+      { className: 'page-enter' },
+      React.createElement('h2', null, t('analytics.title')),
+      React.createElement('div', { className: 'card', style: { textAlign: 'center', padding: 'var(--spacing-xl)' } },
+        React.createElement('p', { className: 'text-muted' }, 'Загрузка аналитики...')
+      )
+    );
   }
   
   const {
@@ -115,7 +122,10 @@ export default function AnalyticsPage() {
     React.createElement(WarningsList, { overtrainingWarning, trendWarnings }),
 
     // ── Weekly summary ──
-    React.createElement(WeeklySummary, { weeklySummary, monthStats }),
+    React.createElement(WeeklySummary, {
+      weeklySummary: weeklySummary || { completed: 0, avgRPE: null, green: 0, yellow: 0, red: 0, dominantStatus: '' },
+      monthStats: monthStats || { completed: 0, green: 0, yellow: 0, red: 0 },
+    }),
 
     // ── Toggle 7 / 30 days ──
     React.createElement(
@@ -290,18 +300,6 @@ export default function AnalyticsPage() {
         )
       ),
 
-    // ── Empty state ──
-    currentTrend.length === 0 &&
-      React.createElement(
-        'div',
-        { className: 'empty-state' },
-        React.createElement('div', { className: 'empty-state-icon' }, React.createElement(BarChart, { size: 20 })),
-        React.createElement('div', { className: 'empty-state-text' }, 'Пока нет данных для анализа.'),
-        React.createElement(
-          'div',
-          { className: 'empty-state-hint' },
-          'Заполняй чек-ины ежедневно, и через несколько дней здесь будут графики твоих трендов.'
-        )
-      )
+
   );
 }

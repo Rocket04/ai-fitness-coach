@@ -289,7 +289,7 @@ export default function TodayPage() {
     setRpe, setSessionNote, setDurationMinutes, setTestPullUps, setTestPushUps, setTestPlank,
     handleToggleTraining, handleMarkMorning, handleMarkEvening,
     coachAdvice, updateApreResult, checkinTier, checkins,
-    demoMode,
+    demoMode, dataLoaded, setActiveTab,
   } = useAppStore();
 
   // Inject demo data for guided tour
@@ -383,6 +383,36 @@ export default function TodayPage() {
   const rpeDesc = getRpeDescription(rpeKey, t) || '';
   const zone = rpeZone(rpe, t);
   const status = getStatusLabel(readiness, recoveryScore, t);
+
+  // Guard: data not loaded yet
+  if (!dataLoaded) {
+    return React.createElement(
+      'div',
+      { className: 'today-page' },
+      React.createElement('div', { className: 'card', style: { textAlign: 'center', padding: 'var(--spacing-xl)' } },
+        React.createElement('p', { className: 'text-muted' }, 'Загрузка данных...')
+      )
+    );
+  }
+
+  // Guard: no sessionPlan despite having a training day (e.g. sports not configured)
+  if (!sessionPlan && trainType) {
+    return React.createElement(
+      'div',
+      { className: 'today-page' },
+      React.createElement('div', { className: 'card', style: { textAlign: 'center', padding: 'var(--spacing-xl)' } },
+        React.createElement(PersonStanding, { size: 32, style: { marginBottom: 'var(--spacing-md)', color: 'var(--text3)' } }),
+        React.createElement('h3', { style: { marginBottom: 'var(--spacing-sm)' } }, 'План тренировки не найден'),
+        React.createElement('p', { className: 'text-muted', style: { marginBottom: 'var(--spacing-md)' } },
+          'Выберите вид спорта и дни тренировок в профиле.'
+        ),
+        React.createElement('button', {
+          className: 'btn btn-accent',
+          onClick: () => setActiveTab(3),
+        }, 'Перейти в профиль')
+      )
+    );
+  }
 
   // Sparkline data
   const hrvData = (trendData7 || []).map(d => d.hrv).filter(Boolean);

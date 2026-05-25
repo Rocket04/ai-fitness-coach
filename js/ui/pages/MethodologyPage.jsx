@@ -1,20 +1,36 @@
-// js/ui/pages/MethodologyPage.js
+// js/ui/pages/MethodologyPage.jsx
 // Научная база приложения — формулы и объяснения
 
 import React, { useMemo, useEffect } from 'react';
-import { BarChart3, Target, Scale, AlertTriangle, TrendingUp, Activity, Circle } from 'lucide-react';
+import { BarChart3, Target, Scale, AlertTriangle, TrendingUp, Activity, Circle, BookOpen } from 'lucide-react';
 import { useAppStore } from '../../stores/useAppStore.js';
 import { RECOVERY_WEIGHTS, SUBJECTIVE_THRESHOLDS } from '../../config/constants.js';
 import HelpIcon from '../components/HelpIcon.jsx';
+import EmptyState from '../components/EmptyState.jsx';
 
 export default function MethodologyPage() {
   const state = useAppStore();
   const dispatch = useAppStore();
   const { setActiveTab } = dispatch;
 
+  // Guard: store not ready
+  if (!state || !state.dataLoaded) {
+    return React.createElement(
+      'div',
+      { className: 'page-enter' },
+      React.createElement(EmptyState, {
+        icon: React.createElement(BookOpen, { size: 20 }),
+        title: 'Загрузка методологии...',
+      })
+    );
+  }
+
   const {
     recoveryScore, readiness, lastCheckin, sessions,
   } = state;
+
+  // Guard: no checkin data yet — show methodology with placeholder values
+  const hasAnyData = lastCheckin && (lastCheckin.hrv > 0 || lastCheckin.sleepHours > 0 || lastCheckin.restHR > 0);
 
   const hrv = lastCheckin?.hrv ? Number(lastCheckin.hrv) : 0;
   const restHR = lastCheckin?.restHR ? Number(lastCheckin.restHR) : 0;
@@ -123,6 +139,24 @@ export default function MethodologyPage() {
       ),
       React.createElement('h2', { style: { margin: 0, fontSize: '1.15rem' } }, '\uD83E\uDDE0 Методология')
     ),
+
+    // No-data hint
+    !hasAnyData &&
+      React.createElement(
+        'div',
+        {
+          className: 'card',
+          style: {
+            padding: 'var(--spacing-md)',
+            marginBottom: 'var(--spacing-md)',
+            backgroundColor: 'var(--surface2)',
+            borderLeft: '3px solid var(--accent)',
+          },
+        },
+        React.createElement('p', { style: { margin: 0, fontSize: 'var(--font-size-caption)', color: 'var(--text2)' } },
+          '\uD83D\uDCCA Заполните первый чек-ин — и здесь появятся ваши персональные значения с разбором каждого показателя.'
+        )
+      ),
 
     React.createElement(
       'p',
