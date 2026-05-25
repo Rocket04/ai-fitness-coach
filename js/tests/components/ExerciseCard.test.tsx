@@ -1,5 +1,5 @@
 // js/tests/components/ExerciseCard.test.tsx
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
 
@@ -62,9 +62,9 @@ const mockEx = {
   r: '6-8',
   w: 'НЕ до отказа',
   isApre: true,
-  protocol: 'APRE_6',
+  protocol: 'APRE_6' as const,
   currentRM: 60,
-  unit: 'kg',
+  unit: 'kg' as const,
   isCalisthenics: false,
 };
 
@@ -186,7 +186,7 @@ describe('ExerciseCard', () => {
 
   it('renders configure button when not configured', () => {
     const onConfigure = vi.fn();
-    render(React.createElement(ExerciseCard, {
+    const { container } = render(React.createElement(ExerciseCard, {
       ex: mockEx,
       recoveryScore: 80,
       onApreResult: vi.fn(),
