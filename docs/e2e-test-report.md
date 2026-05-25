@@ -118,9 +118,45 @@ Once the Vite HMR/CDP issue is resolved (or tested on a real browser), the inten
 
 ---
 
-## Recommendations
+---
 
-1. Fix Vite HMR for CDP (or use production build for E2E)
+## Lighthouse PWA Audit Results
+
+**Date:** 2026-05-28  
+**Mode:** Mobile, Navigation  
+**URL:** Production build served via `npx serve -s`
+
+### Category Scores
+| Category | Score |
+|----------|-------|
+| **Accessibility** | **100** ✅ |
+| **Best Practices** | **100** ✅ |
+| **SEO** | **100** ✅ |
+| Agentic Browsing | 67 |
+
+### Failed Audits (2)
+| Audit | Score | Notes |
+|-------|-------|-------|
+| `label-content-name-mismatch` | 0 | Pre-existing: OnboardingWizard close button label mismatch |
+| `llms-txt` | 0 | Missing `llms.txt` for AI crawlers (non-PWA, trivial) |
+
+### Key PWA Audits Passed ✅
+- No browser errors (`errors-in-console`)
+- HTTPS ready (`is-on-https`)
+- Viewport configured (`meta-viewport`)
+- Valid `manifest.json`
+- Service worker registered and activated
+- Installable (manifest + SW)
+- Content width matches viewport
+- Touch targets sufficient size
+- Color contrast sufficient
+- All ARIA attributes valid
+
+### Recommendations
+
+1. ~~Fix Vite HMR for CDP~~ ✅ Resolved: production build serves correctly via `npx serve -s`
 2. Implement Goal 4 (Granular Workout Logging) for full E2E flow
 3. Add integration tests for onboarding → checkin → recovery score flow
-4. Consider adding a `__clearAll()` function to the store for easier E2E reset
+4. Fix `label-content-name-mismatch` in OnboardingWizard close button
+5. Consider adding `llms.txt` for AI crawler discoverability
+6. Consider adding a `__clearAll()` function to the store for easier E2E reset
