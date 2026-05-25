@@ -11,6 +11,9 @@ import { SkeletonCard } from './ui/components/Skeleton.jsx';
 import OnboardingWizard from './ui/components/OnboardingWizard.jsx';
 import GuidedTour from './ui/components/GuidedTour.jsx';
 import AchievementToast from './ui/components/AchievementToast.jsx';
+import OnlineStatus from './ui/components/OnlineStatus.jsx';
+import UpdateBanner from './ui/components/UpdateBanner.tsx';
+import { useServiceWorkerUpdate } from './hooks/useServiceWorkerUpdate.js';
 import { isOnboardingCompleted } from './core/onboardingStorage.js';
 
 const TodayPage = lazy(() => import('./ui/pages/TodayPage.jsx'));
@@ -60,6 +63,9 @@ function AppContent() {
     setActiveTab, setShowSettings, setEditStartDate, toggleDay, handleSaveSettings,
     initApp, completeOnboarding,
   } = useAppStore();
+
+  // Service worker update detection
+  const { updateAvailable, activateUpdate, dismissUpdate } = useServiceWorkerUpdate();
 
   // Onboarding state managed in localStorage (survives i18n remounts)
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -131,6 +137,9 @@ function AppContent() {
         </Suspense>
       </main>
 
+      {/* SW Update Banner — appears when new version is available */}
+      {updateAvailable && React.createElement(UpdateBanner, { onActivate: activateUpdate, onDismiss: dismissUpdate })}
+
       {/* Demo Mode Badge */}
       {demoMode && React.createElement('div', {
         className: 'demo-badge',
@@ -140,6 +149,17 @@ function AppContent() {
           padding: '4px 0', fontSize: '11px', fontWeight: 600, letterSpacing: '0.5px',
         },
       }, '🎮 ДЕМО-РЕЖИМ')}
+
+      {/* Online/Offline Status Indicator — top right */}
+      <div style={{
+        position: 'fixed',
+        top: demoMode ? 24 : 'var(--spacing-sm)',
+        right: 'var(--spacing-sm)',
+        zIndex: 1500,
+        transition: 'all var(--transition-normal)',
+      }}>
+        <OnlineStatus />
+      </div>
 
       {/* Bottom navigation */}
       <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
