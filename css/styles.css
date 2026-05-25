@@ -3489,3 +3489,71 @@ input[type='range']::-moz-range-track {
     max-width: calc(100vw - 80px);
   }
 }
+
+/* ── TrendChart animations ─────────────────────────────────── */
+@keyframes drawLine {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes fadeDot {
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes tooltipIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -90%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -100%);
+  }
+}
+
+.trend-chart-svg--animated .trend-tooltip {
+  animation: tooltipIn 0.15s ease-out;
+}
+
+/* ── TrendChart responsive container ───────────────────────── */
+.trend-chart-container {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.trend-chart-container::-webkit-scrollbar {
+  display: none;
+}
+
+/* ── TrendChart tooltip ─────────────────────────────────────── */
+.trend-tooltip {
+  transition: left 0.1s ease-out, top 0.1s ease-out;
+}
+
+/* ── TrendChart legend ──────────────────────────────────────── */
+.trend-legend__item {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.trend-legend__item:active {
+  transform: scale(0.95);
+}
+
+/* ── Chart stats responsive ────────────────────────────────── */
+@media (max-width: 400px) {
+  .chart-stats {
+    gap: var(--spacing-sm) !important;
+    font-size: 11px !important;
+  }
+}
+
+/* ── Empty state responsive ────────────────────────────────── */
+@media (max-width: 500px) {
+  .page-enter {
+    padding: var(--spacing-sm);
+  }
+}

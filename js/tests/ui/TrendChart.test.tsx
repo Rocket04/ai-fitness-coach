@@ -14,7 +14,7 @@ let TrendChart: any;
 beforeEach(async () => {
   vi.clearAllMocks();
   vi.resetModules();
-  const mod = await import('../../ui/pages/TrendChart.jsx');
+  const mod = await import('../../ui/pages/TrendChart.tsx');
   TrendChart = mod.default;
 });
 
