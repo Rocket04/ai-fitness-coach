@@ -158,6 +158,7 @@ export default function SessionLogger() {
           {
             className: 'btn btn-sm flex-1 min-w-90',
             onClick: () => fileInputRef.current && fileInputRef.current.click(),
+            'aria-label': t('session.import') || 'Импорт данных',
           },
           t('session.import')
         ),
@@ -174,6 +175,8 @@ export default function SessionLogger() {
           type: 'file',
           accept: '.json',
           className: 'hidden',
+          'aria-label': 'Импорт данных из файла JSON',
+          id: 'session-logger-import',
           onChange: e => {
             if (e.target.files[0]) {
               handleImportData(e.target.files[0]);

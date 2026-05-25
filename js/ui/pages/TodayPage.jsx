@@ -168,15 +168,18 @@ function CoachTipsPanel({ tips, t }) {
 
 /* ---------- Quick Action Toggle ---------- */
 function QuickActionToggle({ icon, label, statusLabel, active, onClick, t }) {
+  const statusText = active ? (t ? t('today.done') : 'Выполнено') : statusLabel;
+
   return React.createElement('button', {
     className: `quick-action-toggle${active ? ' active' : ''}`,
     onClick,
-    'aria-label': `${label} — ${active ? (t ? t('today.done') : 'выполнено') : (t ? t('today.notDone') : 'не выполнено')}`
+    'aria-label': `${label} ${statusText}`,
   },
-    React.createElement('span', { className: 'quick-action-toggle__icon' }, active ? React.createElement(Check, { size: 20 }) : icon),
-    React.createElement('div', { className: 'quick-action-toggle__text' },
+    React.createElement('span', { className: 'quick-action-toggle__icon', 'aria-hidden': 'true' }, active ? React.createElement(Check, { size: 20 }) : icon),
+    React.createElement('span', { className: 'quick-action-toggle__text' },
       React.createElement('span', { className: 'quick-action-toggle__label' }, label),
-      React.createElement('span', { className: 'quick-action-toggle__status' }, active ? (t ? t('today.done') : 'Выполнено') : statusLabel)
+      ' ',
+      React.createElement('span', { className: 'quick-action-toggle__status' }, statusText)
     )
   );
 }

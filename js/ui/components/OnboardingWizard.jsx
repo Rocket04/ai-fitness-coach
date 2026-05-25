@@ -353,8 +353,11 @@ export default function OnboardingWizard({ isOpen, onComplete, onClose }) {
       onClose && React.createElement('button', {
         className: 'onboarding-close',
         onClick: onClose,
-        'aria-label': 'Close',
-      }, React.createElement(X, { size: 20 })),
+        'aria-label': 'Закрыть',
+      },
+        React.createElement('span', { className: 'sr-only' }, 'Закрыть'),
+        React.createElement(X, { size: 20, 'aria-hidden': 'true' }),
+      ),
       React.createElement(StepIndicator, { current: step, total: totalSteps }),
 
       step === STEPS.VALUE && React.createElement(ValueStep, {

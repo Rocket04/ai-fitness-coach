@@ -14,7 +14,6 @@ export default function OnlineStatus() {
       className: `online-status ${isOnline ? 'online-status--online' : 'online-status--offline'}`,
       role: 'status',
       'aria-live': 'polite',
-      'aria-label': isOnline ? 'Подключено к интернету' : 'Нет подключения к интернету',
       style: {
         display: 'inline-flex',
         alignItems: 'center',
