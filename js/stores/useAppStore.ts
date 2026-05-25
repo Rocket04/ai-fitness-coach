@@ -960,10 +960,77 @@ confirmResetData: async () => {
     set({ ...derived, demoMode: true, dataLoaded: true, trainDays: [1, 3, 5], selectedSports, startDate: allSessions.length > 0 ? allSessions[0].date : formatISO(new Date()), virtualTodayOffset: demoOffset });
   },
 
-deactivateDemoMode: async () => {
+  deactivateDemoMode: async () => {
     await deactivateDemoData();
     setVirtualTodayOffset(0);
     set({ demoMode: false, dataLoaded: true, sessions: [], checkins: [], virtualTodayOffset: 0 });
+  },
+
+  // ── Demo Mode with Profile ──
+  activateDemoModeWithProfile: async (profile: import('../core/demoData.js').DemoProfile) => {
+    const { showToast, sessions: currentSessions, checkins: currentCheckins } = get();
+
+    // Backup existing data
+    const hasExistingData = (currentSessions && currentSessions.length > 0) || (currentCheckins && currentCheckins.length > 0);
+    if (hasExistingData) {
+      try {
+        const backup = await exportAllData();
+        const backupKey = `fitness-backup-before-demo-${profile}-${Date.now()}`;
+        localStorage.setItem(backupKey, JSON.stringify(backup));
+        const backupKeys = Object.keys(localStorage).filter(k => k.startsWith('fitness-backup-')).sort();
+        while (backupKeys.length > 5) {
+          localStorage.removeItem(backupKeys.shift()!);
+        }
+      } catch (backupErr) {
+        console.warn('Failed to create backup before demo:', backupErr);
+      }
+    }
+
+    const { generateDemoDataForProfile, DEMO_PROFILES } = await import('../core/demoData.js');
+    const profileConfig = DEMO_PROFILES[profile];
+    const demoData = generateDemoDataForProfile(profile);
+    await activateDemoData(demoData);
+
+    const [allSessions, allCheckins] = await Promise.all([
+      getActiveDatabase().sessions.toArray() as any,
+      getActiveDatabase().checkins.toArray() as any,
+    ]);
+
+    const demoOffset = -15;
+    const selectedSports = profileConfig.settings.selectedSports || ['running'];
+    const profileLevel = (profileConfig.settings.level || 'intermediate') as import('../core/types.js').FitnessLevel;
+    const profileEquipment = profileConfig.settings.equipment ? JSON.parse(profileConfig.settings.equipment) : {};
+    const checkinTier = profileConfig.settings.checkinTier || 'medium';
+
+    const derived = computeDerived(
+      allSessions, allCheckins,
+      allSessions.length > 0 ? allSessions[0].date : null,
+      profileConfig.settings.trainDays || [1, 3, 5],
+      'unknown',
+      allCheckins.length > 0 ? allCheckins[allCheckins.length - 1].date : formatISO(new Date()),
+      checkinTier,
+      demoOffset,
+      selectedSports,
+      profileConfig.weeklyTemplate,
+      [], [], profileLevel, profileConfig.settings.goals as import('../core/types.js').FitnessGoal[] || [], profileEquipment
+    );
+
+    setVirtualTodayOffset(demoOffset);
+    set({
+      ...derived,
+      demoMode: true,
+      dataLoaded: true,
+      trainDays: profileConfig.settings.trainDays || [1, 3, 5],
+      selectedSports,
+      startDate: allSessions.length > 0 ? allSessions[0].date : formatISO(new Date()),
+      virtualTodayOffset: demoOffset,
+      profileLevel,
+      profileGoals: profileConfig.settings.goals as import('../core/types.js').FitnessGoal[] || [],
+      profileEquipment,
+      checkinTier,
+    });
+
+    showToast(`Демо: ${profileConfig.name} — ${allSessions.length} тренировок, ${allCheckins.length} чек-инов`);
   },
 
   // ── Onboarding ──

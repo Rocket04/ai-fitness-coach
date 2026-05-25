@@ -307,6 +307,28 @@ export default function ProfilePage() {
             }, 500);
           },
         }, 'Симуляция')
+      ),
+
+      // ── Demo Profiles ──
+      !demoMode && React.createElement('div', { style: { marginTop: 'var(--spacing-sm)' } },
+        React.createElement('p', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text3)', marginBottom: 'var(--spacing-xs)' } },
+          'Профиль демо-данных:'
+        ),
+        React.createElement('div', { style: { display: 'flex', flexWrap: 'wrap', gap: 'var(--spacing-xs)' } },
+          ['marathoner', 'yogi', 'crossfitter', 'rehab'].map(profile => {
+            const icons = { marathoner: '🏃', yogi: '🧘', crossfitter: '🏋️', rehab: '🩹' };
+            const names = { marathoner: 'Марафонец', yogi: 'Йог', crossfitter: 'КФ', rehab: 'Рехаб' };
+            return React.createElement('button', {
+              key: profile,
+              className: 'btn btn-sm',
+              style: { fontSize: 'var(--font-size-caption)' },
+              onClick: async () => {
+                const s = useAppStore.getState();
+                await s.activateDemoModeWithProfile(profile);
+              },
+            }, `${icons[profile]} ${names[profile]}`);
+          })
+        )
       )
     ),
 
