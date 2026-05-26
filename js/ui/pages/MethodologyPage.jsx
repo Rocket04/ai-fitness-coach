@@ -10,6 +10,47 @@ import { applyApre, calcNextWeekRM } from '../../core/apre/engine.js';
 import HelpIcon from '../components/HelpIcon.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 
+// ── Module-level helpers for simulators ──
+function SectionCard({ icon, title, id, children }) {
+  return React.createElement(
+    'div',
+    { id, className: 'card', style: { marginBottom: '0.75rem', scrollMarginTop: '1rem' } },
+    React.createElement(
+      'h3',
+      { style: { margin: '0 0 var(--spacing-sm) 0', display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', fontSize: 'var(--font-size-body)' } },
+      React.createElement('span', null, icon),
+      title
+    ),
+    children
+  );
+}
+
+function SimSlider({ label, value, min, max, step, onChange, color, format }) {
+  return React.createElement('div', { style: { marginBottom: 'var(--spacing-sm)' } },
+    React.createElement('div', {
+      style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2px' },
+    },
+      React.createElement('label', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text2)' } }, label),
+      React.createElement('span', { style: { fontSize: 'var(--font-size-caption)', fontWeight: 600, color, fontFamily: 'var(--font-mono)' } }, format(value))
+    ),
+    React.createElement('input', {
+      type: 'range',
+      min, max, step, value,
+      onChange: e => onChange(Number(e.target.value)),
+      style: { width: '100%', accentColor: color },
+      'aria-label': label,
+    })
+  );
+}
+
+function SimResult({ label, value, unit, color, sub }) {
+  return React.createElement('div', { style: { textAlign: 'center' } },
+    React.createElement('div', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text3)', marginBottom: '2px' } }, label),
+    React.createElement('div', { style: { fontSize: '1.1rem', fontWeight: 700, color, fontFamily: 'var(--font-mono)' } }, value, unit && ` ${unit}`),
+    sub && React.createElement('div', { style: { fontSize: '10px', color: 'var(--text3)', marginTop: '2px' } }, sub)
+  );
+}
+
 export default function MethodologyPage() {
   const state = useAppStore();
   const dispatch = useAppStore();
@@ -63,20 +104,6 @@ export default function MethodologyPage() {
       }
     }
   }, []);
-
-  function SectionCard({ icon, title, id, children }) {
-    return React.createElement(
-      'div',
-      { id, className: 'card', style: { marginBottom: '0.75rem', scrollMarginTop: '1rem' } },
-      React.createElement(
-        'h3',
-        { style: { margin: '0 0 var(--spacing-sm) 0', display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', fontSize: 'var(--font-size-body)' } },
-        React.createElement('span', null, icon),
-        title
-      ),
-      children
-    );
-  }
 
   function FormulaBlock({ text }) {
     return React.createElement(
@@ -491,32 +518,3 @@ function RecoverySimulator({ lastCheckin, checkins, state }) {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════
-// Reusable simulator components
-// ═══════════════════════════════════════════════════════════════
-
-function SimSlider({ label, value, min, max, step, onChange, color, format }) {
-  return React.createElement('div', { style: { marginBottom: 'var(--spacing-sm)' } },
-    React.createElement('div', {
-      style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2px' },
-    },
-      React.createElement('label', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text2)' } }, label),
-      React.createElement('span', { style: { fontSize: 'var(--font-size-caption)', fontWeight: 600, color, fontFamily: 'var(--font-mono)' } }, format(value))
-    ),
-    React.createElement('input', {
-      type: 'range',
-      min, max, step, value,
-      onChange: e => onChange(Number(e.target.value)),
-      style: { width: '100%', accentColor: color },
-      'aria-label': label,
-    })
-  );
-}
-
-function SimResult({ label, value, unit, color, sub }) {
-  return React.createElement('div', { style: { textAlign: 'center' } },
-    React.createElement('div', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text3)', marginBottom: '2px' } }, label),
-    React.createElement('div', { style: { fontSize: '1.1rem', fontWeight: 700, color, fontFamily: 'var(--font-mono)' } }, value, unit && ` ${unit}`),
-    sub && React.createElement('div', { style: { fontSize: '10px', color: 'var(--text3)', marginTop: '2px' } }, sub)
-  );
-}
