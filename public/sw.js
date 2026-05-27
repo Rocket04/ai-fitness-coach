@@ -47,6 +47,14 @@ self.addEventListener('fetch', (event) => {
   // Skip non-essential requests (source maps, dev-only)
   if (url.pathname.endsWith('.map')) return;
 
+  // Skip Vite HMR and cache-busted module requests (belt and suspenders)
+  if (/[?&]t=\d+/.test(url.search) || url.pathname.includes('/@vite/')) return;
+
+  // In dev mode (localhost / 127.0.0.1 / ::1 / private network), do not intercept any fetches —
+  // Vite HMR must serve fresh modules without stale SW cache.
+  const isDevHost = /^(localhost|127\.0\.0\.1|\[::1\]|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+)$/.test(self.location.hostname);
+  if (isDevHost) return;
+
   // Same-origin: cache-first with background update
   if (url.origin === self.location.origin) {
     event.respondWith(cacheFirst(request));

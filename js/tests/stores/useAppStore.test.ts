@@ -1,9 +1,8 @@
 // js/tests/stores/useAppStore.test.ts
-// Tests for useAppStore - critical path: handleSaveCheckin -> derived recalculation
+// TDD behavior tests: user actions through public store interface
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Mock Dexie/storage module to avoid IndexedDB dependencies in tests
 vi.mock('../../core/storage.js', () => ({
   init: vi.fn().mockResolvedValue(undefined),
   saveSession: vi.fn().mockResolvedValue(undefined),
@@ -23,187 +22,273 @@ vi.mock('../../core/storage.js', () => ({
   saveManualStatus: vi.fn().mockResolvedValue(undefined),
 }));
 
-// Mock the advice module to avoid complex dependencies
 vi.mock('../../core/advice.js', () => ({
   getCoachAdvice: vi.fn().mockReturnValue([]),
   getApreExplanation: vi.fn().mockReturnValue([]),
 }));
 
-describe('useAppStore - Critical Path Tests', () => {
-  beforeEach(() => {
+vi.mock('../../core/achievements.js', () => ({
+  checkAchievements: vi.fn().mockResolvedValue([]),
+}));
+
+/** Reset store to a clean state before each test */
+async function resetStore() {
+  const { useAppStore } = await import('../../stores/useAppStore.js');
+  useAppStore.setState({
+    sessions: [],
+    checkins: [],
+    dataLoaded: true,
+    todayISO: '2026-05-26',
+    startDate: '2026-05-01',
+    trainDays: [1, 3, 5],
+    checkinTier: 'medium',
+    selectedGadgets: [],
+    selectedSports: [],
+    virtualTodayOffset: 0,
+    demoMode: false,
+    guestMode: false,
+    showGuestModal: false,
+    showSettings: false,
+    showResetConfirm: false,
+    editStartDate: '',
+    editTrainDays: [1, 3, 5],
+    rehabIssues: [],
+    rehabExercises: [],
+    profileLevel: 'intermediate',
+    profileGoals: [],
+    profileEquipment: {},
+    weight: 85,
+    restHR: 65,
+    hrv: 70,
+    sleepHours: 7.5,
+    hipPain: 0,
+    shoulderPain: 0,
+    breathing: 'good',
+    notes: '',
+    muscleSoreness: 2,
+    energy: 4,
+    mood: 5,
+    sleepQuality: 0,
+    stress: 0,
+    rpe: 7,
+    sessionNote: 'Хорошая тренировка',
+    durationMinutes: 60,
+    testPullUps: 12,
+    testPushUps: 25,
+    testPlank: 45,
+    pendingApreResults: [],
+    activeTab: 0,
+    showReadiness: false,
+    manualOverride: 'unknown',
+    toast: { message: '', type: 'success', visible: false },
+    weeklyTemplate: {
+      days: ['running', 'strength', null, 'running', 'strength', null, 'running'],
+      sportOrder: ['running'],
+    },
+    pendingAchievement: null,
+  });
+}
+
+describe('user tracks APRE results during workout', () => {
+  beforeEach(async () => {
     vi.clearAllMocks();
+    await resetStore();
   });
 
-  afterEach(() => {
-    vi.restoreAllMocks();
+  it('new exercise result is queued for saving', async () => {
+    const { useAppStore } = await import('../../stores/useAppStore.js');
+
+    useAppStore.getState().updateApreResult({
+      exerciseName: 'Жим лёжа',
+      protocol: 'APRE_6',
+      nextRM: 82.5,
+      unit: 'kg',
+      isCalisthenics: false,
+      lastSet3Reps: 8,
+      lastSet4Reps: 10,
+    });
+
+    const state = useAppStore.getState();
+    expect(state.pendingApreResults).toHaveLength(1);
+    expect(state.pendingApreResults[0].exerciseName).toBe('Жим лёжа');
+    expect(state.pendingApreResults[0].nextRM).toBe(82.5);
   });
 
-  describe('computeDerived - deload weeks', () => {
-    it('should set mode to deload on week 4', async () => {
-      // Import the store after mocks are set up
-      const { useAppStore } = await import('../../stores/useAppStore.js');
-      
-      // Get initial state
-      const state = useAppStore.getState();
-      
-      // Verify store has required methods
-      expect(state.handleSaveCheckin).toBeDefined();
-      expect(state._recompute).toBeDefined();
-      expect(state.showToast).toBeDefined();
+  it('updating same exercise replaces the previous result', async () => {
+    const { useAppStore } = await import('../../stores/useAppStore.js');
+
+    useAppStore.getState().updateApreResult({
+      exerciseName: 'Жим лёжа',
+      protocol: 'APRE_6',
+      nextRM: 80,
+      unit: 'kg',
+      isCalisthenics: false,
+      lastSet3Reps: 6,
+      lastSet4Reps: 8,
     });
 
-    it('should have correct initial state', async () => {
-      const { useAppStore } = await import('../../stores/useAppStore.js');
-      const state = useAppStore.getState();
-
-      // Verify initial derived state structure
-      expect(state.recoveryScore).toBe(0);
-      expect(state.readiness).toBe('green');
-      expect(state.totalWeek).toBe(1);
-      expect(state.trainDays).toEqual([1, 3, 5]);
-      expect(state.sessions).toEqual([]);
-      expect(state.checkins).toEqual([]);
+    useAppStore.getState().updateApreResult({
+      exerciseName: 'Жим лёжа',
+      protocol: 'APRE_6',
+      nextRM: 82.5,
+      unit: 'kg',
+      isCalisthenics: false,
+      lastSet3Reps: 8,
+      lastSet4Reps: 10,
     });
 
-    it('should have all required actions', async () => {
-      const { useAppStore } = await import('../../stores/useAppStore.js');
-      const state = useAppStore.getState();
-
-      // Verify all required actions exist
-      expect(typeof state.initApp).toBe('function');
-      expect(typeof state.handleSaveCheckin).toBe('function');
-      expect(typeof state.handleToggleTraining).toBe('function');
-      expect(typeof state.handleSaveSettings).toBe('function');
-      expect(typeof state.updateApreResult).toBe('function');
-      expect(typeof state._recompute).toBe('function');
-      expect(typeof state.showToast).toBe('function');
-    });
+    const state = useAppStore.getState();
+    expect(state.pendingApreResults).toHaveLength(1);
+    expect(state.pendingApreResults[0].nextRM).toBe(82.5);
   });
 
-  describe('updateApreResult', () => {
-    it('should add new APRE result to pendingApreResults', async () => {
-      const { useAppStore } = await import('../../stores/useAppStore.js');
-      const state = useAppStore.getState();
+  it('different exercises accumulate as separate results', async () => {
+    const { useAppStore } = await import('../../stores/useAppStore.js');
 
-      // Initial state should have empty pendingApreResults
-      expect(state.pendingApreResults).toEqual([]);
-
-      // Update with a result
-      state.updateApreResult({
-        exerciseName: 'Жим лёжа',
-        protocol: 'APRE_6',
-        nextRM: 82.5,
-        unit: 'kg',
-        isCalisthenics: false,
-        lastSet3Reps: 8,
-        lastSet4Reps: 10,
-      });
-
-      // Get updated state
-      const newState = useAppStore.getState();
-      expect(newState.pendingApreResults).toHaveLength(1);
-      expect(newState.pendingApreResults[0].exerciseName).toBe('Жим лёжа');
-      expect(newState.pendingApreResults[0].nextRM).toBe(82.5);
+    useAppStore.getState().updateApreResult({
+      exerciseName: 'Жим лёжа',
+      protocol: 'APRE_6',
+      nextRM: 82.5,
+      unit: 'kg',
+      isCalisthenics: false,
+      lastSet3Reps: 8,
+      lastSet4Reps: 10,
     });
 
-    it('should replace existing result for same exercise', async () => {
-      const { useAppStore } = await import('../../stores/useAppStore.js');
-      const state = useAppStore.getState();
-
-      // Add first result
-      state.updateApreResult({
-        exerciseName: 'Жим лёжа',
-        protocol: 'APRE_6',
-        nextRM: 80,
-        unit: 'kg',
-        isCalisthenics: false,
-        lastSet3Reps: 6,
-        lastSet4Reps: 8,
-      });
-
-      // Update same exercise
-      state.updateApreResult({
-        exerciseName: 'Жим лёжа',
-        protocol: 'APRE_6',
-        nextRM: 82.5,
-        unit: 'kg',
-        isCalisthenics: false,
-        lastSet3Reps: 8,
-        lastSet4Reps: 10,
-      });
-
-      const newState = useAppStore.getState();
-      expect(newState.pendingApreResults).toHaveLength(1);
-      expect(newState.pendingApreResults[0].nextRM).toBe(82.5);
-    });
-  });
-
-  describe('form setters', () => {
-    it('should update checkin form fields', async () => {
-      const { useAppStore } = await import('../../stores/useAppStore.js');
-      const state = useAppStore.getState();
-
-      // Test setters
-      state.setWeight(85);
-      state.setRestHR(65);
-      state.setHrv(70);
-      state.setSleepHours(7.5);
-      state.setEnergy(4);
-      state.setMood(5);
-      state.setMuscleSoreness(2);
-
-      const newState = useAppStore.getState();
-      expect(newState.weight).toBe(85);
-      expect(newState.restHR).toBe(65);
-      expect(newState.hrv).toBe(70);
-      expect(newState.sleepHours).toBe(7.5);
-      expect(newState.energy).toBe(4);
-      expect(newState.mood).toBe(5);
-      expect(newState.muscleSoreness).toBe(2);
+    useAppStore.getState().updateApreResult({
+      exerciseName: 'Присед',
+      protocol: 'APRE_6',
+      nextRM: 100,
+      unit: 'kg',
+      isCalisthenics: false,
+      lastSet3Reps: 6,
+      lastSet4Reps: 8,
     });
 
-    it('should update session form fields', async () => {
-      const { useAppStore } = await import('../../stores/useAppStore.js');
-      const state = useAppStore.getState();
-
-      state.setRpe(7);
-      state.setDurationMinutes(60);
-      state.setSessionNote('Хорошая тренировка');
-      state.setTestPullUps(12);
-      state.setTestPushUps(25);
-      state.setTestPlank(45);
-
-      const newState = useAppStore.getState();
-      expect(newState.rpe).toBe(7);
-      expect(newState.durationMinutes).toBe(60);
-      expect(newState.sessionNote).toBe('Хорошая тренировка');
-      expect(newState.testPullUps).toBe(12);
-      expect(newState.testPushUps).toBe(25);
-      expect(newState.testPlank).toBe(45);
-    });
-  });
-
-  describe('UI state', () => {
-    it('should update UI state correctly', async () => {
-      const { useAppStore } = await import('../../stores/useAppStore.js');
-      const state = useAppStore.getState();
-
-      state.setActiveTab(2);
-      state.setShowSettings(true);
-      state.setShowResetConfirm(true);
-
-      const newState = useAppStore.getState();
-      expect(newState.activeTab).toBe(2);
-      expect(newState.showSettings).toBe(true);
-      expect(newState.showResetConfirm).toBe(true);
-    });
+    const state = useAppStore.getState();
+    expect(state.pendingApreResults).toHaveLength(2);
+    expect(state.pendingApreResults.map(r => r.exerciseName)).toContain('Жим лёжа');
+    expect(state.pendingApreResults.map(r => r.exerciseName)).toContain('Присед');
   });
 });
 
-describe('SessionPlan Mode - Deload Integration', () => {
-  it('deload mode should be defined in SessionMode type', async () => {
-    // This test verifies the type system accepts 'deload' as valid SessionMode
-    const testMode: import('../../core/types.js').SessionMode = 'deload';
-    expect(testMode).toBe('deload');
+describe('user marks daily routines', () => {
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    await resetStore();
+  });
+
+  it('morning routine appears in today sessions after marking', async () => {
+    const { useAppStore } = await import('../../stores/useAppStore.js');
+
+    await useAppStore.getState().handleMarkMorning();
+
+    const state = useAppStore.getState();
+    const morning = state.sessions.find(s => s.type === 'morning');
+    expect(morning).toBeDefined();
+    expect(morning?.date).toBe('2026-05-26');
+    expect(morning?.completed).toBe(true);
+  });
+
+  it('toggling morning routine removes it from today sessions', async () => {
+    const { useAppStore } = await import('../../stores/useAppStore.js');
+
+    await useAppStore.getState().handleMarkMorning();
+    await useAppStore.getState().handleMarkMorning();
+
+    const state = useAppStore.getState();
+    expect(state.sessions.filter(s => s.type === 'morning')).toHaveLength(0);
+  });
+
+  it('evening routine appears in today sessions after marking', async () => {
+    const { useAppStore } = await import('../../stores/useAppStore.js');
+
+    await useAppStore.getState().handleMarkEvening();
+
+    const state = useAppStore.getState();
+    const evening = state.sessions.find(s => s.type === 'evening');
+    expect(evening).toBeDefined();
+    expect(evening?.date).toBe('2026-05-26');
+    expect(evening?.completed).toBe(true);
+  });
+
+  it('toggling evening routine removes it from today sessions', async () => {
+    const { useAppStore } = await import('../../stores/useAppStore.js');
+
+    await useAppStore.getState().handleMarkEvening();
+    await useAppStore.getState().handleMarkEvening();
+
+    const state = useAppStore.getState();
+    expect(state.sessions.filter(s => s.type === 'evening')).toHaveLength(0);
+  });
+});
+
+describe('user saves daily checkin', () => {
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    await resetStore();
+  });
+
+  it('checkin is stored with all filled metrics', async () => {
+    const { useAppStore } = await import('../../stores/useAppStore.js');
+    const { saveCheckin } = await import('../../core/storage.js');
+
+    await useAppStore.getState().handleSaveCheckin();
+
+    expect(vi.mocked(saveCheckin)).toHaveBeenCalledOnce();
+    const saved = vi.mocked(saveCheckin).mock.calls[0][0];
+    expect(saved.weight).toBe(85);
+    expect(saved.restHR).toBe(65);
+    expect(saved.hrv).toBe(70);
+    expect(saved.sleepHours).toBe(7.5);
+    expect(saved.energy).toBe(4);
+    expect(saved.mood).toBe(5);
+    expect(saved.muscleSoreness).toBe(2);
+    expect(saved.date).toBe('2026-05-26');
+  });
+
+  it('checkin appears in today data after saving', async () => {
+    const { useAppStore } = await import('../../stores/useAppStore.js');
+
+    await useAppStore.getState().handleSaveCheckin();
+
+    const state = useAppStore.getState();
+    const today = state.checkins.find(c => c.date === '2026-05-26');
+    expect(today).toBeDefined();
+    expect(today?.weight).toBe(85);
+  });
+});
+
+describe('user manages training sessions', () => {
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    await resetStore();
+  });
+
+  it('form values are reflected when recording a session', async () => {
+    const { useAppStore } = await import('../../stores/useAppStore.js');
+
+    // User fills the session form
+    useAppStore.getState().setRpe(8);
+    useAppStore.getState().setDurationMinutes(75);
+    useAppStore.getState().setSessionNote('Интенсивная тренировка');
+
+    const state = useAppStore.getState();
+    expect(state.rpe).toBe(8);
+    expect(state.durationMinutes).toBe(75);
+    expect(state.sessionNote).toBe('Интенсивная тренировка');
+  });
+
+  it('test results are captured for strength tracking', async () => {
+    const { useAppStore } = await import('../../stores/useAppStore.js');
+
+    useAppStore.getState().setTestPullUps(15);
+    useAppStore.getState().setTestPushUps(30);
+    useAppStore.getState().setTestPlank(60);
+
+    const state = useAppStore.getState();
+    expect(state.testPullUps).toBe(15);
+    expect(state.testPushUps).toBe(30);
+    expect(state.testPlank).toBe(60);
   });
 });

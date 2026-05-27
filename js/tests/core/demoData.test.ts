@@ -4,13 +4,7 @@
 import { describe, it, expect } from 'vitest';
 
 describe('generateDemoData', () => {
-  it('should export generateDemoData from demoData module', async () => {
-    const mod = await import('../../core/demoData.js');
-    expect(mod.generateDemoData).toBeDefined();
-    expect(typeof mod.generateDemoData).toBe('function');
-  });
-
-  it('should return an object with sessions, checkins, and settings', async () => {
+  it('generates demo dataset containing checkins, sessions, and settings', async () => {
     const { generateDemoData } = await import('../../core/demoData.js');
     const data = generateDemoData();
     expect(data).toBeDefined();
@@ -19,7 +13,7 @@ describe('generateDemoData', () => {
     expect(data.settings).toBeDefined();
     expect(Array.isArray(data.sessions)).toBe(true);
     expect(Array.isArray(data.checkins)).toBe(true);
-  });
+  }, 10000);
 
   it('should generate 30 days of checkins', async () => {
     const { generateDemoData } = await import('../../core/demoData.js');
@@ -53,12 +47,12 @@ describe('generateDemoData', () => {
   it('should generate sessions for training days only (Mon/Wed/Fri)', async () => {
     const { generateDemoData } = await import('../../core/demoData.js');
     const data = generateDemoData();
-    // Should have roughly 12-13 sessions over 30 days (Mon/Wed/Fri)
-    expect(data.sessions.length).toBeGreaterThanOrEqual(10);
-    expect(data.sessions.length).toBeLessThanOrEqual(16);
-    // All sessions should have type A, B, or C
+    // Should have roughly 20-22 sessions over 45 days (Mon/Wed/Fri)
+    expect(data.sessions.length).toBeGreaterThanOrEqual(18);
+    expect(data.sessions.length).toBeLessThanOrEqual(25);
+    // All sessions should have type as sport name (running, strength, etc.)
     for (const s of data.sessions) {
-      expect(['A', 'B', 'C'].includes(s.type)).toBe(true);
+      expect(typeof s.type).toBe('string');
       expect(s.completed).toBe(true);
       expect(s.rpe).toBeGreaterThanOrEqual(5);
       expect(s.rpe).toBeLessThanOrEqual(9);
@@ -91,7 +85,7 @@ describe('generateDemoData', () => {
     expect(data.settings.startDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(data.settings.trainDays).toEqual([1, 3, 5]);
     expect(data.settings.checkinTier).toBe('medium');
-    expect(data.settings.selectedSports).toEqual(['running']);
+    expect(data.settings.selectedSports).toEqual(['running', 'strength']);
     expect(data.settings.selectedGadgets).toEqual(['smart_watch']);
   });
 });

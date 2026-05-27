@@ -229,7 +229,7 @@ export default function ProfilePage() {
       React.createElement('p', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text2)', marginBottom: 'var(--spacing-sm)' } },
         'Определяет, какие данные собираются для Recovery Score'
       ),
-      React.createElement('div', { className: 'flex gap-sm flex-wrap' },
+      React.createElement('div', { className: 'flex gap-sm flex-wrap', 'data-testid': 'profile-tier-selector' },
         React.createElement('button', {
           className: `btn ${checkinTier === 'light' ? 'btn-accent' : ''}`,
           onClick: () => setCheckinTier('light'),
@@ -333,7 +333,7 @@ export default function ProfilePage() {
     ),
 
     // ── Achievements ──
-    React.createElement(ProfileSection, { title: '🏆 Достижения', defaultOpen: false },
+    React.createElement(ProfileSection, { title: '🏆 Достижения', defaultOpen: false, testId: 'achievement-list' },
       React.createElement('div', { style: { marginBottom: 'var(--spacing-sm)' } },
         React.createElement('span', { style: { fontSize: 'var(--font-size-sm)', color: 'var(--text2)' } },
           achievementsLoading ? 'Загрузка...' : `${unlockedAchievements.length} разблокировано`
@@ -503,10 +503,10 @@ export default function ProfilePage() {
 
         // Rehab issues multi-select
         React.createElement('div', null,
-          React.createElement('h4', { className: 'mt-0' }, t('profile.rehab.issuesTitle')),
+          React.createElement('h4', { className: 'rehab-section-title' }, t('profile.rehab.issuesTitle')),
           React.createElement('div', { className: 'grid-2 gap-sm' },
             ['hips', 'shoulder', 'back', 'knees', 'neck', 'elbow', 'wrist'].map(issue =>
-              React.createElement('label', { key: issue, className: 'flex items-center gap-xs' },
+              React.createElement('label', { key: issue, className: 'rehab-checkbox' },
                 React.createElement('input', {
                   type: 'checkbox',
                   checked: (rehabIssues || []).includes(issue),
@@ -527,7 +527,7 @@ export default function ProfilePage() {
 
         // Rehab exercises text field
         React.createElement('div', null,
-          React.createElement('h4', null, t('profile.rehab.exercisesTitle')),
+          React.createElement('h4', { className: 'rehab-section-title' }, t('profile.rehab.exercisesTitle')),
           React.createElement('p', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text3)' } }, t('profile.rehab.exercisesHint')),
           React.createElement('input', {
             type: 'text',
@@ -542,14 +542,13 @@ export default function ProfilePage() {
               saveSetting('rehabExercises', ids);
             },
             placeholder: 'squat, deadlift, ...',
-            className: 'w-full',
-            style: { padding: '0.5rem', marginTop: '0.25rem' }
+            className: 'rehab-input'
           })
         ),
 
         // Current adaptation status
         rehabIssues && rehabIssues.length > 0 && React.createElement('div', {
-          style: { padding: 'var(--spacing-sm)', backgroundColor: 'var(--surface2)', borderRadius: 'var(--radius-sm)' }
+          className: 'rehab-status'
         },
           React.createElement('p', { style: { margin: 0, fontSize: 'var(--font-size-caption)' } },
             '✅ ' + t('profile.rehab.active') + ': ' + rehabIssues.map(i => t('profile.rehab.' + i)).join(', ')
@@ -789,3 +788,5 @@ export default function ProfilePage() {
     )
   );
 }
+
+

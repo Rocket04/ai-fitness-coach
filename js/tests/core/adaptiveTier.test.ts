@@ -35,15 +35,6 @@ function makeHistory(days: number, fillHRV: boolean = true, fillRHR: boolean = t
 }
 
 describe('detectOptimalTier (Phase 3)', () => {
-  // TDD Step 1: Write the function signature first
-  // The function should analyze recent check-ins and suggest optimal tier
-
-  it('should export detectOptimalTier from recoveryScore module', async () => {
-    const mod = await import('../../core/recoveryScore.js');
-    expect(mod.detectOptimalTier).toBeDefined();
-    expect(typeof mod.detectOptimalTier).toBe('function');
-  });
-
   it('returns "full" when HRV is consistently provided in recent checkins', async () => {
     const { detectOptimalTier } = await import('../../core/recoveryScore.js');
     const checkins = makeHistory(7, true, true); // 7 days with HRV+RHR

@@ -1,9 +1,10 @@
 // js/tests/ui/OnboardingWizard.test.tsx
-// TDD: OnboardingWizard 5-step flow + tier auto-detection
+// TDD: OnboardingWizard user-facing behavior — what the user can do and see
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
 
 // Mock constants
 vi.mock('../../config/constants.js', () => ({
@@ -41,8 +42,6 @@ vi.mock('lucide-react', () => ({
   X: () => React.createElement('svg', { 'data-testid': 'close-icon' }),
 }));
 
-import React from 'react';
-
 let OnboardingWizard: any;
 
 beforeEach(async () => {
@@ -51,70 +50,76 @@ beforeEach(async () => {
   OnboardingWizard = mod.default;
 });
 
-describe('OnboardingWizard — 5-step flow', () => {
-  it('renders step 1 (Value) initially', () => {
-    const onComplete = vi.fn();
-    render(React.createElement(OnboardingWizard, { isOpen: true, onComplete }));
-    expect(document.querySelector('.onboarding-headline')?.textContent).toBe('Твой умный тренер готов к работе');
-    expect(document.querySelector('.onboarding-steps')).toBeTruthy();
+describe('OnboardingWizard — user onboarding flow', () => {
+  it('shows value proposition headline when opened', () => {
+    render(React.createElement(OnboardingWizard, { isOpen: true, onComplete: vi.fn() }));
+    expect(screen.getByText('Твой умный тренер готов к работе')).toBeInTheDocument();
   });
 
-  it('shows 5 step indicators', () => {
-    const onComplete = vi.fn();
-    render(React.createElement(OnboardingWizard, { isOpen: true, onComplete }));
+  it('shows 5 step progress indicators', () => {
+    render(React.createElement(OnboardingWizard, { isOpen: true, onComplete: vi.fn() }));
     const steps = document.querySelectorAll('.onboarding-step');
     expect(steps.length).toBe(5);
   });
 
-  it('renders nothing when isOpen is false', () => {
-    const onComplete = vi.fn();
-    const { container } = render(React.createElement(OnboardingWizard, { isOpen: false, onComplete }));
+  it('does not render anything when isOpen is false', () => {
+    const { container } = render(React.createElement(OnboardingWizard, { isOpen: false, onComplete: vi.fn() }));
     expect(container.innerHTML).toBe('');
   });
 
-  it('has a close button', () => {
-    const onComplete = vi.fn();
+  it('shows a close button when onClose is provided', () => {
     const onClose = vi.fn();
-    render(React.createElement(OnboardingWizard, { isOpen: true, onComplete, onClose }));
-    expect(document.querySelector('.onboarding-close')).toBeTruthy();
+    render(React.createElement(OnboardingWizard, { isOpen: true, onComplete: vi.fn(), onClose }));
+    const closeBtn = screen.getByLabelText(/закрыть/i);
+    expect(closeBtn).toBeInTheDocument();
   });
 
-  it('advances from step 1 to step 2 on click', async () => {
-    const user = userEvent.setup();
-    const onComplete = vi.fn();
-    render(React.createElement(OnboardingWizard, { isOpen: true, onComplete }));
-    
-    const nextBtn = document.querySelector('.onboarding-value-cta button');
-    expect(nextBtn).toBeTruthy();
-    await user.click(nextBtn!);
-    
-    // Step 2 should show goal selection
-    expect(document.querySelector('.onboarding-goal-cards')).toBeTruthy();
+  it('advances to goal selection when user clicks primary CTA', async () => {
+    render(React.createElement(OnboardingWizard, { isOpen: true, onComplete: vi.fn() }));
+
+    const ctaBtn = screen.getByRole('button', { name: /начать первую тренировку/i });
+    await userEvent.click(ctaBtn);
+
+    expect(screen.getByText('Выбери свою цель')).toBeInTheDocument();
   });
-});
 
-describe('OnboardingWizard — tier auto-detection', () => {
-  it('renders gadget selection on step 4', async () => {
-    const user = userEvent.setup();
-    const onComplete = vi.fn();
-    render(React.createElement(OnboardingWizard, { isOpen: true, onComplete }));
+  it('shows gadget selection with auto-detected tier on step 4', async () => {
+    render(React.createElement(OnboardingWizard, { isOpen: true, onComplete: vi.fn() }));
 
-    // Navigate through steps 1-3
-    await user.click(document.querySelector('.onboarding-value-cta button')!);
-    
-    // Step 2: select a goal and day, then next
-    const goalCards = document.querySelectorAll('.onboarding-goal-card');
-    if (goalCards.length > 0) await user.click(goalCards[0]);
-    const dayChips = document.querySelectorAll('.onboarding-day-chip');
-    if (dayChips.length > 0) await user.click(dayChips[0]);
-    await user.click(document.querySelector('.onboarding-actions .btn-accent')!);
+    // Step 1 → Step 2
+    await userEvent.click(screen.getByRole('button', { name: /начать первую тренировку/i }));
 
-    // Step 3: select a sport, then next
-    const sportChips = document.querySelectorAll('.onboarding-sport-chip');
-    if (sportChips.length > 0) await user.click(sportChips[0]);
-    await user.click(document.querySelector('.onboarding-actions .btn-accent')!);
+    // Step 2: select a goal
+    await userEvent.click(screen.getByText('Стать сильнее'));
+    // Select a day
+    await userEvent.click(screen.getByText('Пн'));
+    // Next
+    await userEvent.click(screen.getAllByRole('button', { name: /далее/i })[0]);
 
-    // Step 4: gadget selection should be visible
-    expect(document.querySelector('.onboarding-gadgets-list')).toBeTruthy();
+    // Step 3: select a sport
+    await userEvent.click(screen.getByText('Бег'));
+    await userEvent.click(screen.getAllByRole('button', { name: /далее/i })[0]);
+
+    // Step 4: gadget selection visible
+    expect(screen.getByText('Какие устройства используешь?')).toBeInTheDocument();
+    expect(screen.getByText('Ручной ввод')).toBeInTheDocument();
+    expect(screen.getByText('Смарт-часы')).toBeInTheDocument();
+  });
+
+  it('recommends light tier when user selects manual input gadget', async () => {
+    render(React.createElement(OnboardingWizard, { isOpen: true, onComplete: vi.fn() }));
+
+    // Navigate to step 4
+    await userEvent.click(screen.getByRole('button', { name: /начать первую тренировку/i }));
+    await userEvent.click(screen.getByText('Стать сильнее'));
+    await userEvent.click(screen.getByText('Пн'));
+    await userEvent.click(screen.getAllByRole('button', { name: /далее/i })[0]);
+    await userEvent.click(screen.getByText('Бег'));
+    await userEvent.click(screen.getAllByRole('button', { name: /далее/i })[0]);
+
+    // Select manual gadget
+    await userEvent.click(screen.getByText('Ручной ввод'));
+
+    expect(screen.getByText(/лёгкий/i)).toBeInTheDocument();
   });
 });

@@ -6,6 +6,7 @@
 [![PWA Ready](https://img.shields.io/badge/PWA-ready-brightgreen)]()
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)]()
 [![Tests](https://img.shields.io/badge/tests-240%2B%20passed%20(26%20files)-brightgreen)]()
+[![E2E Tests](https://img.shields.io/badge/E2E-51%20specs%20(Playwright)-brightgreen)]()
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue)]()
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)]()
 
@@ -100,7 +101,8 @@ npm run dev
 ```bash
 npm run type-check   # TypeScript проверка
 npm run lint         # ESLint
-npm test             # 225+ тестов (24 файлов)
+npm test             # 250+ unit-тестов (Vitest)
+npm run test:e2e     # 51 E2E-спеков (Playwright, Chromium + Firefox + Mobile)
 npm run build        # Production сборка
 ```
 
@@ -119,7 +121,8 @@ npm run build        # Production сборка
 | **Lucide React** | Иконки |
 | **react-i18next** | Интернационализация (ru/en) |
 | **Workbox 7** | Service Worker / PWA |
-| **Vitest 4** | Тест-раннер + @testing-library/react |
+| **Vitest 4** | Unit-тесты + @testing-library/react |
+| **Playwright** | E2E-тесты (Chromium, Firefox, Mobile) |
 
 **Никаких:** jQuery, Bootstrap, Tailwind, CSS-фреймворков, Redux, React Context для глобального стейта.
 
@@ -138,6 +141,12 @@ npm run build        # Production сборка
 ├── public/
 │   ├── manifest.json           # PWA манифест
 │   └── sw.js                   # Service Worker (Workbox)
+│
+├── e2e/
+│   ├── tests/                  # E2E-спеки (Playwright)
+│   ├── pages/                  # Page Object Models
+│   ├── fixtures/               # Тестовые данные и auth-хелперы
+│   └── utils/                  # Кастомные ассерты и селекторы
 │
 ├── js/
 │   ├── app.tsx                 # Точка входа, навигация, layout

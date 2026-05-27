@@ -46,7 +46,7 @@ export default function AnalyticsPage() {
   if (!currentTrend || currentTrend.length < 2) {
     return React.createElement(
       'div',
-      { className: 'page-enter' },
+      { className: 'page-enter', 'data-testid': 'analytics-empty' },
       React.createElement('h2', null, t('analytics.title')),
       React.createElement(EmptyState, {
         icon: React.createElement(TrendingUp, { size: 20 }),
@@ -119,7 +119,9 @@ export default function AnalyticsPage() {
     ),
 
     // ── Warning banner ──
-    React.createElement(WarningsList, { overtrainingWarning, trendWarnings }),
+    React.createElement('div', { 'data-testid': 'warnings-list' },
+      React.createElement(WarningsList, { overtrainingWarning, trendWarnings })
+    ),
 
     // ── Weekly summary ──
     React.createElement(WeeklySummary, {
@@ -165,7 +167,7 @@ export default function AnalyticsPage() {
     // ── Recovery Score ──
     React.createElement(
       'div',
-      { className: 'card chart-card' },
+      { className: 'card chart-card', 'data-testid': 'trend-chart' },
       React.createElement(
         'div',
         { className: 'chart-header' },

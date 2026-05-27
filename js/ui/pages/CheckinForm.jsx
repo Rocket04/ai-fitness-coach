@@ -5,6 +5,7 @@ import React, { useState } from 'react';
 import { Moon, Clock, Sparkles, Heart, Activity, Scale, Wind, Brain, Zap, Smile, Dumbbell, AlertTriangle, Armchair, FileText, Check } from 'lucide-react';
 import { useAppStore } from '../../stores/useAppStore.js';
 import { useTranslation } from 'react-i18next';
+import { validate } from '../../core/validation.js';
 import ScaleSelector from '../components/ScaleSelector.jsx';
 import Collapsible from '../components/Collapsible.jsx';
 import MiniSparkline from '../components/MiniSparkline.jsx';
@@ -35,27 +36,9 @@ function SparklineRow({ data, label, color }) {
   );
 }
 
-function validate(fields) {
-  const { sleepHours, restHR, hrv, weight, muscleSoreness, energy, mood, sleepQuality, stress } = fields;
-  const hasData = sleepHours > 0 || restHR > 0 || hrv > 0 || weight > 0 ||
-    muscleSoreness > 0 || energy > 0 || mood > 0 || sleepQuality > 0 || stress > 0;
-  if (!hasData) return 'Заполните хотя бы одно поле чтобы сохранить чек-ин';
-  if (sleepHours > 0 && (sleepHours < 1 || sleepHours > 16)) return 'Сон: введите значение от 1 до 16 часов';
-  if (restHR > 0 && (restHR < 30 || restHR > 120)) return 'ЧСС покоя: введите значение 30–120';
-  if (hrv > 0 && (hrv < 10 || hrv > 200)) return 'HRV: введите значение 10–200 мс';
-  if (hrv > 0 && hrv < 20) return 'HRV ниже 20 — проверьте измерение (обычно 40-100 мс)';
-  if (weight > 0 && (weight < 30 || weight > 300)) return 'Вес: реалистичный диапазон 30–300 кг';
-  if (muscleSoreness > 0 && (muscleSoreness < 1 || muscleSoreness > 5)) return 'Мышечная боль: оценка от 1 до 5';
-  if (energy > 0 && (energy < 1 || energy > 5)) return 'Энергия: оценка от 1 до 5';
-  if (mood > 0 && (mood < 1 || mood > 5)) return 'Настроение: оценка от 1 до 5';
-  if (sleepQuality > 0 && (sleepQuality < 1 || sleepQuality > 5)) return 'Качество сна: оценка от 1 до 5';
-  if (stress > 0 && (stress < 1 || stress > 5)) return 'Стресс: оценка от 1 до 5';
-  return null;
-}
-
 /* ---------- вспомогательные компоненты ---------- */
 
-function NumberRow({ icon, label, sublabel, value, onChange, min, max, step, filled, pain, trend }) {
+function NumberRow({ icon, label, sublabel, value, onChange, min, max, step, filled, pain, trend, testId }) {
   const cls = ['checkin-row', filled ? 'checkin-row--filled' : '', pain ? 'checkin-row--pain' : ''].filter(Boolean).join(' ');
   return React.createElement(
     'div',
@@ -78,16 +61,17 @@ function NumberRow({ icon, label, sublabel, value, onChange, min, max, step, fil
         placeholder: '—',
         onChange: e => onChange(Number(e.target.value)),
         min, max, step,
+        ...(testId ? { 'data-testid': testId } : {}),
       })
     )
   );
 }
 
-function ScaleRow({ icon, label, sublabel, value, onChange, labels, filled, pain, inverse }) {
+function ScaleRow({ icon, label, sublabel, value, onChange, labels, filled, pain, inverse, testId }) {
   const cls = ['checkin-row', 'checkin-row--scale', filled ? 'checkin-row--filled' : '', pain ? 'checkin-row--pain' : ''].filter(Boolean).join(' ');
   return React.createElement(
     'div',
-    { className: cls },
+    { className: cls, ...(testId ? { 'data-testid': testId } : {}) },
     React.createElement(
       'div',
       { className: 'checkin-row__top' },
@@ -111,7 +95,7 @@ function ScaleRow({ icon, label, sublabel, value, onChange, labels, filled, pain
   );
 }
 
-function SelectRow({ icon, label, sublabel, value, onChange, options, filled }) {
+function SelectRow({ icon, label, sublabel, value, onChange, options, filled, testId }) {
   const cls = ['checkin-row', filled ? 'checkin-row--filled' : ''].filter(Boolean).join(' ');
   return React.createElement(
     'div',
@@ -128,7 +112,7 @@ function SelectRow({ icon, label, sublabel, value, onChange, options, filled }) 
       { className: 'checkin-row__control' },
       React.createElement(
         'select',
-        { className: 'checkin-select', value, onChange: e => onChange(e.target.value) },
+        { className: 'checkin-select', value, onChange: e => onChange(e.target.value), ...(testId ? { 'data-testid': testId } : {}) },
         options.map(o => React.createElement('option', { key: o.value, value: o.value }, o.label))
       )
     )
@@ -176,7 +160,7 @@ export default function CheckinForm() {
 
     React.createElement(
       'div',
-      { className: 'checkin-form' },
+      { className: 'checkin-form', 'data-testid': 'checkin-form' },
 
       /* ── Сон ─────────────────────────────────────────────── */
       React.createElement(
@@ -188,6 +172,7 @@ export default function CheckinForm() {
           value: sleepHours, onChange: setSleepHours,
           min: 0, max: 16, step: 0.5,
           filled: sleepHours > 0,
+          testId: 'checkin-sleep',
         }),
         React.createElement(ScaleRow, {
           icon: React.createElement(Sparkles, { size: 20 }), label: 'Качество', sublabel: 'как спалось',
@@ -208,6 +193,7 @@ export default function CheckinForm() {
           min: 30, max: 120,
           filled: restHR > 0,
           trend: React.createElement(TrendIndicator, { current: restHR, history: getLast7Values(checkins, 'restHR'), unit: 'уд/мин', inverse: true }),
+          testId: 'checkin-rhr',
         }),
         checkinTier === 'full' && React.createElement(NumberRow, {
           icon: React.createElement(Activity, { size: 20 }), label: 'HRV', sublabel: 'мс',
@@ -215,6 +201,7 @@ export default function CheckinForm() {
           min: 0, max: 200,
           filled: hrv > 0,
           trend: React.createElement(TrendIndicator, { current: hrv, history: getLast7Values(checkins, 'hrv'), unit: 'мс' }),
+          testId: 'checkin-hrv',
         }),
         React.createElement(NumberRow, {
           icon: React.createElement(Scale, { size: 20 }), label: 'Вес', sublabel: 'кг',
@@ -222,6 +209,7 @@ export default function CheckinForm() {
           min: 0, max: 300, step: 0.5,
           filled: weight > 0,
           trend: React.createElement(TrendIndicator, { current: weight, history: getLast7Values(checkins, 'weight'), unit: 'кг' }),
+          testId: 'checkin-weight',
         }),
         React.createElement(SelectRow, {
           icon: React.createElement(Wind, { size: 20 }), label: 'Дыхание', sublabel: 'самочувствие',
@@ -254,6 +242,7 @@ export default function CheckinForm() {
           icon: React.createElement(Dumbbell, { size: 20 }), label: 'Болезненность', sublabel: 'мышц',
           value: muscleSoreness, onChange: setMuscleSoreness,
           labels: SORENESS_LABELS, filled: muscleSoreness > 0, inverse: true,
+          testId: 'checkin-soreness',
         }),
         React.createElement(ScaleRow, {
           icon: React.createElement(Activity, { size: 20 }), label: 'Стресс',
@@ -304,6 +293,7 @@ export default function CheckinForm() {
           'button',
           {
             className: 'btn btn-accent',
+            'data-testid': 'checkin-submit',
             style: { width: '100%' },
             onClick: async () => {
               const err = validate({ sleepHours, restHR, hrv, weight, muscleSoreness, energy, mood, sleepQuality, stress });

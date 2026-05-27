@@ -1,11 +1,8 @@
 // js/plans/calisthenics.ts
 // Calisthenics-focused periodized training plan module
+// Re-engineered for posture improvement, scapular control, and shoulder/hip stabilization
 
-import type { SportPlanModule, SessionPlan, Exercise, ApreProtocolKey } from '../core/types.js';
-
-const ex = (n: string, s: string, r: string, w?: string, protocol?: ApreProtocolKey, rm?: number): Exercise => ({
-  n, s, r, ...(w && { w }), ...(protocol && { isApre: true, protocol, currentRM: rm ?? 0 }),
-});
+import type { SportPlanModule, SessionPlan, Exercise } from '../core/types.js';
 
 const cal = (n: string, s: string, r: string, w?: string, level?: number): Exercise => ({
   n, s, r, ...(w && { w }), isCalisthenics: true, ...(level ? { calisthenicLevel: level } : {}),
@@ -21,30 +18,31 @@ const session = (
 
 function basePhase(_w: number): Omit<SessionPlan, 'date' | 'sessionId'>[] {
   return [
-    session('strength', 'Calisthenica Tyaga + Kor', 'Podtyagivaniya, Kor', { sets: 3, reps: 8 }, [
-      cal('Podtyagivaniya parallelnym khvat', '3', '5-6', 'NE do otzyva', 1),
-      cal('Avstraliyskie podtyagivaniya', '3', '8-10', 'Telo pryamoe', 1),
-      cal('W-podem lezha', '3', '10', 'Nizhnie trapezyy', 1),
-      cal('Podem nog v vis', '3', '6-8', 'Kor', 1),
+    session('strength', 'Kalistenika: Tyaga i Osanka', 'Pre-aktivatsiya lopatok i ukreplenie verha spiny dlya osanki', { sets: 3, reps: 8 }, [
+      cal('Podtyagivaniya parallelnym khvatom', '3', '3-5', 'Pered podtyagivaniem tyanut lopatki vniz, bez dead-hang', 1),
+      cal('Lopatochnye podtyagivaniya (Scapular pull-ups)', '3', '8-10', 'Aktivnyy kontrol plechevyh sustavov', 1),
+      cal('Avstraliyskie podtyagivaniya', '3', '8-10', 'Grudyu k perekladine, kontrolirovat opuskie', 1),
+      cal('W-podem lezha na zhivote', '3', '10-12', 'Bez vesa / ganteli 1.5kg, dlya nizhney trapezii', 1),
+      cal('Mertvyy zhuk (Dead bug)', '3', '10-12', 'Kontrolirovat poyasnitsu na polu', 1),
     ]),
     null,
-    session('strength', 'Calisthenica Zhim + Navyki', 'Otzhimaniya, Navyki balansa', { sets: 3, reps: 8 }, [
-      cal('Otzhimaniya temp 3-0-1', '3', '6-8', '3 sek vniz', 1),
-      cal('Otzhimaniya na brys', '3', '4-6', 'Chastichnaya amplituda', 1),
-      cal('Push-up plus', '3', '8', 'perednyaya zubchataya', 1),
-      cal('L-sit na polu', '3', '10-15 sek', 'Baza dlya stoek', 1),
+    session('strength', 'Kalistenika: Zhim i Zubchataya', 'Stabilizatsiya plechevogo poyasa i rabota nad peredney zubchatoy', { sets: 3, reps: 8 }, [
+      cal('Otzhimaniya temp 3-0-1', '3', '6-8', '3 sek opuskie, pod-em na 1 sek', 1),
+      cal('Push-up plus (otzhimaniya s protrakciey)', '3', '10', 'Vverhu silno push ot pola, okruglyaya lopatki', 1),
+      cal('Vneshnyaya rotatsiya plecha s gantelyami 1.5kg', '3', '10-12', 'Dlya stabilizatsii rotatornoy cuff', 1),
+      cal('Planka na predplechyah', '3', '30-40 sek', 'Zazhat yagoditsy, ne progibat poyasnitsu', 1),
     ]),
     null,
-    session('strength', 'Calisthenica Niz + Mobilnost', 'Prisedaniya, Vypady, Mobilnost', { sets: 3, reps: 10 }, [
-      cal('Prisedaniya na odne noge (assist)', '3', '5-6 / storona', 'Kontrol', 1),
-      cal('Vypady nazad', '3', '8 / storona', 'Koleno ne vykhodit', 1),
-      cal('Yagodichnyy most odnogiy', '3', '10 / storona', 'Zadnyaya tsep', 1),
-      cal('Mobilnost TBS', '-', '10 min'),
+    session('strength', 'Kalistenika: Niz i Glubokiy Kor', 'Stabilizatsiya taza i bedra, ukreplenie gluteus medius', { sets: 3, reps: 10 }, [
+      cal('Yagodichnyy most na odnoy noge', '3', '10 / storona', 'Dlya korrektsii disbalansa psoasa i yagodits', 1),
+      cal('Raskladushka (Clamshells)', '3', '12-15 / storona', 'Stabilizatsiya taza, ukreplenie gluteus medius', 1),
+      cal('Vypady nazad', '3', '8-10 / storona', 'Kontrol kolena, bolee myagkaya nagruzka na TBS', 1),
+      cal('Soba-ohotnik (Bird dog)', '3', '10 / storona', 'Kontrol ravnovesiya', 1),
     ]),
-    session('power', 'Calisthenica Navyki', 'Flag progressiya, Handstand u steny', { sets: 5, reps: 5, level: 2 }, [
-      cal('Flag Tokhchok s partnerom', '5', '3-5 sek', 'Uroven 2', 2),
-      cal('Handstand u steny', '5', '15-20 sek', 'Pryamoe telo', 2),
-      cal('Mostik', '3', '10 sek', 'Podvizhnost plech', 1),
+    session('power', 'Kalistenika: Legkaya Mobilnost', 'Vosstanovlenie, mobilnost plech i taza', { sets: 3, reps: 5 }, [
+      cal('Wall slides (slides u steny)', '3', '8-10', 'Thoracic mobilnost i trapeziya', 1),
+      cal('Koska-korova (Cat-cow)', '3', '10', 'Mobilizatsiya pozvonochnika', 1),
+      cal('Mobilnost TBS 90/90', '2', '5-6 / storona', 'Razblokirovka clicking hip', 1),
     ]),
     null,
   ].filter((s): s is NonNullable<typeof s> => s !== null);
@@ -52,29 +50,30 @@ function basePhase(_w: number): Omit<SessionPlan, 'date' | 'sessionId'>[] {
 
 function buildPhase(_w: number): Omit<SessionPlan, 'date' | 'sessionId'>[] {
   return [
-    session('strength', 'Calisthenica Tyaga prodvinutaya', 'Podtyagivaniya shirokim khvatom', { sets: 4, reps: 6, level: 2 }, [
-      ex('Podtyagivaniya', '4', '6-8', 'Shirokiy khvat', 'APRE_6'),
-      cal('Avstraliyskie odno rukoy', '3', '6 / storona', 'Progressiya', 2),
-      cal('Tyaga na TRX', '3', '12', 'Sblizhenie lopatok', 2),
-      cal('Podem nog Ugolok', '3', '15 sek', 'Kor', 2),
+    session('strength', 'Kalistenika: Tyaga (Uvelichenie)', 'Uvelichenie ob-ema tyagi i postury', { sets: 4, reps: 6 }, [
+      cal('Podtyagivaniya parallelnym khvatom', '4', '4-6', 'Tense shoulders, bez dead-hang', 2),
+      cal('Lopatochnye podtyagivaniya (zaderzhka 2s)', '3', '8', 'Uderzhat vverhu', 2),
+      cal('Avstraliyskie podtyagivaniya (nizkiy ugol)', '3', '10', 'Sblizhenie lopatok', 2),
+      cal('W-podem lezha na zhivote (ganteli 1.5kg)', '3', '10', 'Nizhnyaya trapeziya', 2),
+      cal('Mertvyy zhuk (s povorotom)', '3', '12', 'Kontrol kora', 2),
     ]),
     null,
-    session('strength', 'Calisthenica Zhim prodvinutyy', 'Brisy polnye', { sets: 4, reps: 6, level: 2 }, [
-      cal('Otzhimaniya na brys polnye', '4', '6-8', 'Polnaya amplituda', 2),
-      cal('Otzhimaniya s nogami na vysote', '3', '8-10', 'Novyy ugol', 2),
-      cal('Pike push-up', '3', '6-8', 'Progressiya k stoyke', 2),
-      cal('Planche lean', '3', '10-15 sek', 'Baza planche', 2),
+    session('strength', 'Kalistenika: Zhim (Kontrol)', 'Uvelichenie sily zhima i plechevogo kontrolya', { sets: 4, reps: 6 }, [
+      cal('Otzhimaniya ot pola', '4', '10-12', 'Plavno, bez sryvov', 2),
+      cal('Push-up plus (ot pola)', '3', '12', 'Maksimalnoe vytyagivanie vverh', 2),
+      cal('Face pulls s rezinoy / gantelyami', '3', '12', 'Zadnyaya delta, lopatki', 2),
+      cal('Wall slides', '3', '10-12', 'Podvizhnost plech i grudi', 2),
     ]),
     null,
-    session('power', 'Calisthenica Niz + Navyki', 'Pistol squats, Front lever', { sets: 4, reps: 5, level: 3 }, [
-      cal('Pistol (assist)', '4', '4-5 / storona', 'Kontrol', 3),
-      cal('Front lever Tuck', '5', '5-8 sek', 'Gorizontal', 3),
-      cal('Dragon flag Neg', '3', '3', 'Kor', 3),
+    session('power', 'Kalistenika: Niz (Stabilizatsiya)', 'Razvitie sily i balansa beder', { sets: 4, reps: 5 }, [
+      cal('Rumynskaya tyaga s gantelyami 4kg', '3', '12', 'Kontrol bedra, spina pryamaya', 2),
+      cal('Yagodichnyy most (zaderzhka 2s)', '3', '12', 'Zazhat yagoditsy vverhu', 2),
+      cal('Clamshells (s rezinoy)', '3', '15', 'Gluteus medius', 2),
+      cal('Bird dog s uderzhaniem 3s', '3', '10', 'Stabilnost pozvonochnika', 2),
     ]),
-    session('power', 'Calisthenica Navyki prodvinutye', 'Muscle-up progressiya', { sets: 5, reps: 3, level: 3 }, [
-      cal('Muscle-up Negatives', '5', '3', 'Negativnaya faza', 3),
-      cal('Handstand Kick ups', '5', '20 sek', 'Balans', 3),
-      cal('Flag Advanced tuck', '5', '3-5 sek', 'Uroven 3', 3),
+    session('power', 'Kalistenika: Navyki i Kor', 'Mertvyy zhuk i planki dlya kora', { sets: 3, reps: 5 }, [
+      cal('Podem kolen k grudi v vise', '3', '8-10', 'Medlenno, bez raskachki', 2),
+      cal('Planka s kasaniem plecha', '3', '8-10 / storona', 'Ne rascachivat taz', 2),
     ]),
     null,
   ].filter((s): s is NonNullable<typeof s> => s !== null);
@@ -82,26 +81,29 @@ function buildPhase(_w: number): Omit<SessionPlan, 'date' | 'sessionId'>[] {
 
 function peakPhase(_w: number): Omit<SessionPlan, 'date' | 'sessionId'>[] {
   return [
-    session('strength', 'Calisthenica Maks tyaga', 'Podtyagivaniya s otyagoshcheniem', { sets: 5, reps: 3, level: 4 }, [
-      ex('Podtyagivaniya + otyagoshchenie', '5', '3-5', 'Poyas s vesom', 'APRE_3'),
-      cal('Typewriter pull-ups', '3', '3 / storona', 'Plavno', 4),
-      cal('Hanging L-sit', '3', '15 sek', 'Kor', 3),
+    session('strength', 'Kalistenika: Tyaga (Maks)', 'Maksimalnaya rabota na podtyagivaniyakh', { sets: 5, reps: 3 }, [
+      cal('Podtyagivaniya parallelnym khvatom', '4', '6', 'Kontrolirovat negativnuyu fazu', 3),
+      cal('Lopatochnye podtyagivaniya v vise', '3', '10', 'Maksimalnaya amplituda lopatok', 3),
+      cal('Avstraliyskie podtyagivaniya (ugol 30 gr)', '3', '10-12', 'Maksimalnoe svedenie lopatok', 3),
+      cal('W-podem lezha na zhivote (ganteli 1.5kg)', '3', '12', 'Osanka i plechi', 3),
     ]),
     null,
-    session('strength', 'Calisthenica Maks zhim', 'Brisy s otyagoshcheniem', { sets: 5, reps: 3, level: 4 }, [
-      ex('Brisy + otyagoshchenie', '5', '4-6', 'Poyas s vesom', 'APRE_3'),
-      cal('HSPU u steny neg', '5', '3', 'Negativ', 4),
-      cal('Archer push-ups', '3', '5 / storona', 'Asimmetriya', 4),
-      cal('Planche Advanced tuck', '5', '8 sek', 'Prodvinutyy', 4),
+    session('strength', 'Kalistenika: Zhim (Maks)', 'Ukreplenie rotatornoy cuff i sily zhima', { sets: 5, reps: 3 }, [
+      cal('Otzhimaniya ot pola (temp 3-1-1)', '4', '12', '1 sek uderzhat vniz', 3),
+      cal('Push-up plus (medlenno)', '3', '12', 'Kontrol zubchatoy', 3),
+      cal('Wall slides (kontseptualno)', '3', '12', ' thoracic podvizhnost', 3),
+      cal('Pike push-ups ot stola / stula', '3', '6-8', 'Umerennaya vertikalnaya stabilizatsiya', 3),
     ]),
     null,
-    session('power', 'Calisthenica Pik navykov', 'Front lever, Back lever', { sets: 5, reps: 3, level: 4 }, [
-      cal('Front lever Single leg', '5', '5 sek', 'Progressiya', 4),
-      cal('Back lever Tuck', '5', '8 sek', 'Zadniy balans', 4),
+    session('power', 'Kalistenika: Niz (Maks)', 'Maksimalnyy balans nog i beder', { sets: 5, reps: 3 }, [
+      cal('Rumynskaya tyaga na odnoy noge s gantelyami', '3', '8 / storona', 'Ukreplenie stop i stabilizatorov bedra', 3),
+      cal('Clamshells (s poyasom intensiv)', '3', '15-20 / storona', 'Gluteus medius v ogne', 3),
+      cal('Prisedaniya (gantel 4kg u grudi)', '3', '12', 'Temp medlennyy, kontrol klikaniya bedra', 3),
+      cal('Bird dog (zaderzhka 5s)', '3', '8 / storona', 'Kor v napryazhenii', 3),
     ]),
-    session('power', 'Calisthenica Shou navykov', 'Muscle-up, Handstand walk', { sets: 5, reps: 2, level: 5 }, [
-      cal('Muscle-up', '5', '1-2', 'Polnyy vyhod', 5),
-      cal('Handstand walk', '-', '5 m', 'Khodba na rukah', 5),
+    session('power', 'Kalistenika: Kor i Prehab', 'Kompleks dlya zashchity plech i poyasnitsy', { sets: 3, reps: 2 }, [
+      cal('Planka s vytyagivaniem ruki vpered', '3', '8 / storona', 'Kor', 3),
+      cal('Vneshnyaya rotatsiya plecha s gantelyami 4kg', '3', '10', 'Rotator cuff uvelichenie', 3),
     ]),
     null,
   ].filter((s): s is NonNullable<typeof s> => s !== null);
@@ -109,16 +111,18 @@ function peakPhase(_w: number): Omit<SessionPlan, 'date' | 'sessionId'>[] {
 
 function deloadPhase(): Omit<SessionPlan, 'date' | 'sessionId'>[] {
   return [
-    session('recovery', 'Calisthenica Legkie navyki', 'Legkaya praktika', { sets: 2, reps: 5, level: 1 }, [
-      cal('Podtyagivaniya', '2', '5', 'Legko, 50% usiliya', 1),
-      cal('Otzhimaniya', '2', '8', 'Legko', 1),
-      cal('Mobilnost', '-', '15 min'),
+    session('recovery', 'Kalistenika: Decompression', 'Zashchita plech, datskaya poza, box breathing', { sets: 2, reps: 5 }, [
+      cal('Lopatochnye podtyagivaniya (legko)', '2', '8', 'Myagkaya aktivatsiya', 1),
+      cal('Koska-korova (Cat-cow)', '3', '10', 'Myagkaya mobilizatsiya', 1),
+      cal('Detskaya poza (Child pose) s dyhaniem', '3', '1 min', 'Vosstanovlenie plech i beder', 1),
+      cal('Mertvyy zhuk (medlenno)', '2', '8', 'Zashchita poyasnitsy', 1),
+      cal('Kvadratnoe dyhanie (Box breathing)', '1', '5 min', 'Asthma recovery & RHR snyzhnie', 1),
     ]),
     null, null, null,
-    session('recovery', 'Calisthenica Legkie navyki', 'Legkaya praktika', { sets: 2, reps: 5, level: 1 }, [
-      cal('Avstraliyskie podtyagivaniya', '2', '8', 'Legko', 1),
-      cal('Pike push-up', '2', '5', 'Legko', 1),
-      cal('Raztyazhka', '-', '15 min'),
+    session('recovery', 'Kalistenika: Decompression', 'Zashchita plech, datskaya poza, box breathing', { sets: 2, reps: 5 }, [
+      cal('Wall slides (myagko)', '2', '8', 'Thoracic podvizhnost', 1),
+      cal('Mobilnost TBS 90/90', '2', '5 / storona', 'Razblokirovka bedra', 1),
+      cal('Shavasana (Rasslablenie)', '1', '10 min', 'Snyzhnie stressa', 1),
     ]),
     null, null,
   ].filter((s): s is NonNullable<typeof s> => s !== null);

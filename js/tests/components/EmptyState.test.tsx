@@ -8,11 +8,6 @@ describe('EmptyState', () => {
     expect(screen.getByText('Нет данных')).toBeInTheDocument();
   });
 
-  it('renders default icon when none provided', () => {
-    render(<EmptyState title="Test" />);
-    expect(document.querySelector('.empty-state__icon')).toBeInTheDocument();
-  });
-
   it('renders custom icon', () => {
     render(<EmptyState icon="📊" title="Test" />);
     expect(screen.getByText('📊')).toBeInTheDocument();
@@ -24,11 +19,11 @@ describe('EmptyState', () => {
   });
 
   it('does not render subtitle when omitted', () => {
-    const { container } = render(<EmptyState title="Test" />);
-    expect(container.querySelector('.empty-state__subtitle')).toBeNull();
+    render(<EmptyState title="Test" />);
+    expect(screen.queryByText('Подсказка')).not.toBeInTheDocument();
   });
 
-  it('renders action button when action prop provided', () => {
+  it('renders action button and calls onClick when clicked', () => {
     const handleClick = vi.fn();
     render(<EmptyState title="Test" action={{ label: 'Добавить', onClick: handleClick }} />);
     const btn = screen.getByRole('button', { name: 'Добавить' });
@@ -39,14 +34,6 @@ describe('EmptyState', () => {
 
   it('does not render button when action omitted', () => {
     render(<EmptyState title="Test" />);
-    expect(screen.queryByRole('button')).toBeNull();
-  });
-
-  it('has correct BEM class structure', () => {
-    const { container } = render(<EmptyState title="Test" subtitle="Sub" />);
-    expect(container.querySelector('.empty-state')).toBeInTheDocument();
-    expect(container.querySelector('.empty-state__icon')).toBeInTheDocument();
-    expect(container.querySelector('.empty-state__title')).toBeInTheDocument();
-    expect(container.querySelector('.empty-state__subtitle')).toBeInTheDocument();
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
 });

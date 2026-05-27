@@ -225,7 +225,19 @@
       "title": "Rehab",
       "description": "7 morning exercises (15 min) + 8 evening (20 min). Reduce injury risk and speed up recovery.",
       "subtitle": "Spine mobility, T-spine, hip, shoulder, breathing techniques.",
-      "open": "Open Program"
+      "open": "Open Program",
+      "issuesTitle": "Problem Areas",
+      "hips": "Hips",
+      "shoulder": "Shoulders",
+      "back": "Back",
+      "knees": "Knees",
+      "neck": "Neck",
+      "elbow": "Elbows",
+      "wrist": "Wrists",
+      "exercisesTitle": "Adaptation Exercises",
+      "exercisesHint": "Enter exercise IDs separated by commas (e.g: squat, deadlift)",
+      "active": "Active Areas",
+      "close": "Close"
     },
     "info": {
       "title": "📖 Guide",

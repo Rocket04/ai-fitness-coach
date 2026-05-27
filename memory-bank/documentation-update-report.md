@@ -25,14 +25,14 @@
 - New sections: 8 sports, user profile, rehab filtering
 - Science base updated
 
-### 4. `PROJECT_CONTEXT.md` — ✅ COMPLETE
+### 4. `docs/context/PROJECT_CONTEXT.md` — ✅ COMPLETE
 - Honest limitations updated (plans connected, profile implemented)
 - Phase descriptions: 4 layers instead of 3
 - Architecture diagram updated with exerciseDatabase.ts, sport plans
 - Roadmap: Phase 1-4 ✅, Phase 5 ⏳ 20%
 - Test count: 225 → 240+
 
-### 5. `CONVENTIONS.md` — ✅ COMPLETE
+### 5. `docs/conventions/CONVENTIONS.md` — ✅ COMPLETE
 - TypeScript version: 6 → 5.x
 - Full directory structure with all new files
 - Key patterns section (7 patterns including computeDerived extension, exercise filtering chain)

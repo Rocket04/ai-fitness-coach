@@ -1,7 +1,7 @@
 // js/core/advice.ts
 // Советы тренера и объяснения авторегуляции (APRE)
 
-import type { Checkin, Session, ReadinessStatus, SessionMode } from './types.js';
+import type { Checkin, Session, ReadinessStatus, SessionMode, TrendPoint } from './types.js';
 
 /**
  * Генерирует советы тренера на основе Recovery Score и текущего состояния.
@@ -110,4 +110,71 @@ export function getApreExplanation(mode: SessionMode, readiness: ReadinessStatus
   }
 
   return reasons;
+}
+
+/**
+ * Генерирует аналитические объяснения ("почему") для пользователя.
+ * Принимает t из useTranslation для i18n.
+ */
+export function getExplanation(
+  recoveryScore: number,
+  _readiness: ReadinessStatus,
+  debt: boolean,
+  lastCheckin: Partial<Checkin>,
+  hrvTrend: TrendPoint[],
+  _sleepTrend: TrendPoint[],
+  planModifications: string[],
+  t: (key: string, opts?: Record<string, unknown>) => string
+): string[] {
+  const items: string[] = [];
+
+  if (!lastCheckin || !lastCheckin.date) {
+    items.push(t('explanation.noCheckin'));
+    return items;
+  }
+
+  // Recovery score explanation
+  if (recoveryScore >= 80) {
+    items.push(t('explanation.recoveryScore', { score: recoveryScore, status: t('recovery.status.green') }));
+  } else if (recoveryScore >= 60) {
+    items.push(t('explanation.recoveryScore', { score: recoveryScore, status: t('recovery.status.yellow') }));
+  } else {
+    items.push(t('explanation.recoveryScore', { score: recoveryScore, status: t('recovery.status.red') }));
+  }
+
+  // HRV trend
+  if (hrvTrend.length >= 2 && lastCheckin.hrv && lastCheckin.hrv > 0) {
+    const baseline = hrvTrend.slice(-7);
+    const avg = baseline.reduce((sum, d) => sum + (d.hrv || 0), 0) / baseline.length;
+    if (avg > 0) {
+      const drop = ((avg - lastCheckin.hrv) / avg) * 100;
+      if (drop > 10) {
+        items.push(t('explanation.hrvDrop', { percent: Math.round(drop) }));
+      }
+    }
+  }
+
+  // Sleep
+  if (typeof lastCheckin.sleepHours === 'number' && lastCheckin.sleepHours > 0 && lastCheckin.sleepHours < 7) {
+    items.push(t('explanation.sleepShort', { hours: lastCheckin.sleepHours }));
+  }
+
+  // RHR
+  if (typeof lastCheckin.restHR === 'number' && lastCheckin.restHR > 70) {
+    items.push(t('explanation.rhrHigh', { bpm: lastCheckin.restHR }));
+  }
+
+  // Recovery debt
+  if (debt) {
+    items.push(t('explanation.recoveryDebt'));
+  }
+
+  // Plan modifications (already human-readable from planning.ts)
+  for (const mod of planModifications) {
+    if (mod && !items.includes(mod)) {
+      items.push(mod);
+    }
+  }
+
+  return items.slice(0, 5);
 }

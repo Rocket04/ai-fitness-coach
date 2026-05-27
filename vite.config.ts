@@ -15,6 +15,7 @@ export default defineConfig({
   },
   plugins: [react({ include: /\.(jsx|tsx)$/ })],
   server: {
+    host: true,
     port: 3000,
     open: true,
     hmr: {

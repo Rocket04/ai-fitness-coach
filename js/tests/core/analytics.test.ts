@@ -4,12 +4,6 @@
 import { describe, it, expect } from 'vitest';
 
 describe('getPeriodComparison (Phase 3)', () => {
-  it('should export getPeriodComparison from analytics module', async () => {
-    const mod = await import('../../core/analytics.js');
-    expect(mod.getPeriodComparison).toBeDefined();
-    expect(typeof mod.getPeriodComparison).toBe('function');
-  });
-
   it('returns null when trend data is empty', async () => {
     const { getPeriodComparison } = await import('../../core/analytics.js');
     const result = getPeriodComparison([], []);

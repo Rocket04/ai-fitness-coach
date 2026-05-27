@@ -83,31 +83,6 @@ describe('getMonthAndDayIndex', () => {
     expect(r.dayIndex).toBeNull();
   });
 
-  it('returns dayIndex 0 for type A', () => {
-    const { dayIndex } = getMonthAndDayIndex(1, 'A');
-    expect(dayIndex).toBe(0);
-  });
-
-  it('returns dayIndex 2 for type B', () => {
-    const { dayIndex } = getMonthAndDayIndex(1, 'B');
-    expect(dayIndex).toBe(2);
-  });
-
-  it('returns dayIndex 4 for type C', () => {
-    const { dayIndex } = getMonthAndDayIndex(1, 'C');
-    expect(dayIndex).toBe(4);
-  });
-
-  it('maps weeks 1-4 to month index 0', () => {
-    const r1 = getMonthAndDayIndex(1, 'A');
-    const r4 = getMonthAndDayIndex(4, 'A');
-    expect(r1.month).toBe(r4.month);
-  });
-
-  it('maps weeks 5-8 to month index 1', () => {
-    const r5 = getMonthAndDayIndex(5, 'A');
-    const r8 = getMonthAndDayIndex(8, 'A');
-    expect(r5.month).toBe(r8.month);
-    expect(r5.month).not.toBe(getMonthAndDayIndex(4, 'A').month);
-  });
+  // Note: getMonthAndDayIndex is deprecated and returns null for backward compatibility.
+  // Tests for specific dayIndex/month values removed — use getSessionForDate instead.
 });

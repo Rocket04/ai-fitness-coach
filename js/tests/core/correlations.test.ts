@@ -109,7 +109,7 @@ describe('correlations', () => {
     expect(r.insight).toContain('рост');
   });
 
-  it('getAllCorrelations returns 6 results', () => {
+  it('aggregates all habit-recovery correlations into insights', () => {
     const checkins: Checkin[] = [
       makeCheckin({ date: '2025-01-01' }),
       makeCheckin({ date: '2025-01-02' }),

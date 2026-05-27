@@ -9,6 +9,7 @@
 ## 1. PROBLEM ANALYSIS (Root Causes)
 
 ### Current Bugs
+
 1. **TodayPage shows no workout** → `sessionPlan` is `null` because:
    - `computeDerived()` doesn't pass `sport` to `getMonthAndDayIndex()`
    - Day index mapping (`A→0, B→2, C→4`) only works for `MONTHS` structure
@@ -17,6 +18,7 @@
 2. **Date-tap doesn't change plan** → `setVirtualTodayOffset` passes stale `s.virtualTodayOffset` instead of new value `v` (partially fixed in progress.md)
 
 ### Architectural Gaps
+
 - Single 12-week plan with hardcoded `trainDays` array
 - No periodization (base/build/peak/deload phases)
 - No multi-sport weekly template system
@@ -27,6 +29,7 @@
 ## 2. NEW DATA MODEL (types.ts)
 
 ### 2.1 Update SessionPlan Type
+
 Replace existing `SessionPlan` (line 153-161 in types.ts):
 
 ```typescript
@@ -54,6 +57,7 @@ export interface SessionPlan {
 ```
 
 ### 2.2 Add SportPlanModule Interface
+
 ```typescript
 export interface SportPlanModule {
   sport: string;
@@ -67,6 +71,7 @@ export interface SportPlanModule {
 ```
 
 ### 2.3 Add WeeklyTemplate Interface
+
 ```typescript
 export interface WeeklyTemplate {
   days: (string | null)[];  // ["running", "strength", null, "running", "strength", null, "running"]
@@ -79,6 +84,7 @@ export interface WeeklyTemplate {
 ## 3. PERIODIZATION ENGINE (planning.ts rewrite)
 
 ### 3.1 Phase Calculation
+
 ```typescript
 export function getCurrentPhaseAndWeek(
   startDate: string,
@@ -105,6 +111,7 @@ export function getCurrentPhaseAndWeek(
 ```
 
 ### 3.2 Sport Module Registry
+
 ```typescript
 import { RunningPlanModule } from '../plans/running.js';
 import { StrengthPlanModule } from '../plans/strength.js';
@@ -122,6 +129,7 @@ export function getActiveModules(selectedSports: string[]): SportPlanModule[] {
 ```
 
 ### 3.3 Weekly Plan Builder
+
 ```typescript
 export function buildWeeklyPlan(
   modules: SportPlanModule[],
@@ -154,6 +162,7 @@ export function buildWeeklyPlan(
 ```
 
 ### 3.4 Date-to-Session Lookup (Critical Fix)
+
 ```typescript
 export function getSessionForDate(
   date: string,
@@ -183,6 +192,7 @@ export function getSessionForDate(
 ## 4. PLAN GENERATORS (running.ts & strength.ts rewrite)
 
 ### 4.1 RunningPlanModule (running.ts)
+
 ```typescript
 export const RunningPlanModule: SportPlanModule = {
   sport: 'running',
@@ -211,7 +221,9 @@ export const RunningPlanModule: SportPlanModule = {
 ```
 
 ### 4.2 StrengthPlanModule (strength.ts)
+
 Split into Upper/Lower to avoid interference:
+
 - Monday: Upper Body (Push/Pull)
 - Tuesday: Lower Body (Squat/Hinge)
 - Thursday: Upper Body (Accessory)
@@ -224,6 +236,7 @@ Each phase returns `SessionPlan[]` with APRE-integrated exercises.
 ## 5. STORE INTEGRATION (useAppStore.ts)
 
 ### 5.1 Add to computeDerived()
+
 ```typescript
 // Replace old trainType/month/dayIndex logic (lines 105-133)
 const { phase, weekInPhase, totalWeek } = getCurrentPhaseAndWeek(
@@ -254,6 +267,7 @@ const tomorrowPlan = getSessionForDate(
 ```
 
 ### 5.2 Update TodayPage.jsx
+
 - Read `sessionPlan` from store (already done)
 - Render new `SessionPlan` fields: `name`, `description`, `sport`, `sessionType`
 - Show "День отдыха" when `sessionPlan.isRestDay === true`
@@ -264,6 +278,7 @@ const tomorrowPlan = getSessionForDate(
 ## 6. TEST STRATEGY (TDD)
 
 ### 6.1 Test Files to Create/Update
+
 | File | Tests | Coverage |
 |------|-------|----------|
 | `js/tests/core/planning.test.ts` | 20+ | Phase calc, getSessionForDate, sport modules |
@@ -273,6 +288,7 @@ const tomorrowPlan = getSessionForDate(
 | `js/tests/stores/useAppStore.periodization.test.ts` | 8+ | computeDerived with new architecture |
 
 ### 6.2 Test First Approach
+
 1. Write test for `getCurrentPhaseAndWeek()` → implement
 2. Write test for `getSessionForDate()` → implement
 3. Write test for `buildWeeklyPlan()` → implement
@@ -283,22 +299,26 @@ const tomorrowPlan = getSessionForDate(
 ## 7. IMPLEMENTATION ORDER
 
 ### Step 1: Types (types.ts)
+
 - [ ] Add `PhaseType`, update `SessionPlan`, add `SportPlanModule`, `WeeklyTemplate`
 - [ ] Run `npx tsc --noEmit` → 0 errors
 
 ### Step 2: Plan Generators (running.ts, strength.ts)
+
 - [ ] Rewrite `running.ts` with `RunningPlanModule` export
 - [ ] Rewrite `strength.ts` with `StrengthPlanModule` export (upper/lower split)
 - [ ] Write tests in `js/tests/plans/`
 - [ ] Run `npm test` → all pass
 
 ### Step 3: Planning Engine (planning.ts)
+
 - [ ] Remove `getWorkoutType()`, `getMonthAndDayIndex()`, `buildSessionFromMonth()`
 - [ ] Implement `getCurrentPhaseAndWeek()`, `getActiveModules()`, `buildWeeklyPlan()`, `getSessionForDate()`
 - [ ] Write tests in `js/tests/core/`
 - [ ] Run `npm test` → all pass
 
 ### Step 4: Store Integration (useAppStore.ts)
+
 - [ ] Update `computeDerived()` to use new planning functions
 - [ ] Add `weeklyTemplate` to store state
 - [ ] Update all `computeDerived()` call sites
@@ -306,6 +326,7 @@ const tomorrowPlan = getSessionForDate(
 - [ ] Run `npm test` → all pass
 
 ### Step 5: Fix TodayPage (TodayPage.jsx)
+
 - [ ] Update rendering to use new `SessionPlan` fields
 - [ ] Show rest day message when `isRestDay`
 - [ ] Verify 30-day strip tap updates plan (already fixed)
@@ -313,15 +334,17 @@ const tomorrowPlan = getSessionForDate(
 - [ ] Run `npm test` → all pass
 
 ### Step 6: Demo Mode (demoData.ts)
+
 - [ ] Update `generateDemoData()` to use `buildWeeklyPlan()`
 - [ ] Generate 30 days of sessions with varied RPE (5-9)
 - [ ] Write tests for demo data structure
 - [ ] Run `npm test` → all pass
 
 ### Step 7: Validation
+
 - [ ] `npx tsc --noEmit` → 0 errors
 - [ ] `npm test` → 225+ tests pass (update count)
-- [ ] CDP verification at http://localhost:3000/:
+- [ ] CDP verification at <http://localhost:3000/>:
   - [ ] Tap dates in 30-day strip → workout changes
   - [ ] Activate demo mode → 30 days of sessions populate
   - [ ] Navigate weeks → each day shows correct workout
@@ -331,11 +354,12 @@ const tomorrowPlan = getSessionForDate(
 ## 8. DOCUMENTATION UPDATES
 
 After implementation, update:
+
 - [ ] `README.md` - New architecture, test counts
 - [ ] `memory-bank/progress.md` - New features, bug fixes, test counts
 - [ ] `memory-bank/master-plan.md` - Phase status, feature inventory
-- [ ] `PROJECT_CONTEXT.md` - Technical details, new data model
-- [ ] `docs/ANALYSIS_REPORT.md` - Architecture details, test counts
+- [ ] `docs/context/PROJECT_CONTEXT.md` - Technical details, new data model
+- [ ] `docs/audit/ANALYSIS_REPORT.md` - Architecture details, test counts
 
 ---
 

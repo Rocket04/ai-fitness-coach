@@ -256,7 +256,7 @@ export function getAdaptedSessionForDate(
   profileLevel: FitnessLevel = 'intermediate',
   profileGoals: FitnessGoal[] = [],
   profileEquipment: Equipment = {}
-): SessionPlan | null {
+): { session: SessionPlan; modifications: string[] } | null {
   const baseSession = getSessionForDate(date, selectedSports, startDate, weeklyTemplate, virtualTodayOffset);
   return applyReadinessToSession(baseSession, readiness, recoveryDebt, totalMultiplier, apreSession, weekNumber, rehabIssues, rehabExercises, profileLevel, profileGoals, profileEquipment);
 }
@@ -272,15 +272,28 @@ export function applyReadinessToSession(
   profileLevel: FitnessLevel = 'intermediate',
   profileGoals: FitnessGoal[] = [],
   profileEquipment: Equipment = {}
-): SessionPlan | null {
+): { session: SessionPlan; modifications: string[] } | null {
   if (!session) return null;
 
+  const modifications: string[] = [];
   const isDeloadWeek = weekNumber > 0 && weekNumber % 4 === 0;
   const mode = isDeloadWeek
     ? 'deload'
     : readiness === 'red'
       ? 'minimum'
       : (readiness === 'yellow' || recoveryDebt ? 'yellow' : 'full');
+
+  if (isDeloadWeek) {
+    modifications.push('Неделя разгрузки → объём снижен на 40%');
+  }
+  if (readiness === 'red') {
+    modifications.push('Recovery Score низкий (red readiness) → только восстановительные упражнения');
+  } else if (readiness === 'yellow') {
+    modifications.push('Recovery Score средний (yellow readiness) → объём снижен (минус 1 подход)');
+  }
+  if (recoveryDebt && readiness !== 'red') {
+    modifications.push('Обнаружен recovery debt → нагрузка адаптирована');
+  }
 
   let exercises = session.exercises || [];
   let wasRehabAdapted = false;
@@ -290,41 +303,59 @@ export function applyReadinessToSession(
     const filtered = filterExercisesForRehab(exercises, rehabIssues, rehabExercises);
     exercises = filtered.exercises;
     wasRehabAdapted = filtered.wasAdapted;
+    if (wasRehabAdapted) {
+      modifications.push('Боль в суставах → упражнения адаптированы для реабилитации');
+    }
   }
 
   // Apply profile-based exercise adaptation (level, goals, equipment)
   if (exercises.length > 0 && (profileGoals.length > 0 || Object.keys(profileEquipment).length > 0)) {
+    const beforeCount = exercises.length;
     const adapted = exercises
       .map(ex => adaptExerciseForProfile(ex, profileLevel, profileGoals, profileEquipment))
       .filter(Boolean);
     if (adapted.length > 0) {
       exercises = adapted as typeof exercises;
+      if (adapted.length < beforeCount) {
+        modifications.push('Нет оборудования → часть упражнений заменена или удалена');
+      }
     }
   }
 
   // Apply multiplier adjustments
   if (totalMultiplier !== 1.0) {
     exercises = applyMultiplierToExercises(exercises, totalMultiplier);
+    modifications.push(`Недельный множитель ×${totalMultiplier.toFixed(1)} → нагрузка адаптирована`);
   }
 
   // Apply APRE adjustments
   if (apreSession && (mode === 'full' || mode === 'deload')) {
     // APRE adjustment would go here - reusing existing logic
+    if (apreSession.rpe >= 8) {
+      modifications.push(`APRE: RPE=${apreSession.rpe} в прошлой сессии → корректировка веса/повторений`);
+    }
   }
 
   // Adjust exercises for mode
+  const beforeMode = exercises.length;
   exercises = adjustExercisesForMode(exercises, mode);
+  if (mode === 'yellow' && exercises.length < beforeMode) {
+    modifications.push('Режим yellow → количество упражнений снижено');
+  }
 
   // Annotate with APRE metadata
   const prevApreResults = apreSession?.apreResults ?? [];
   exercises = annotateExercisesWithApre(exercises, prevApreResults);
 
   return {
-    ...session,
-    exercises,
-    mode,
-    isDeload: isDeloadWeek,
-    ...(wasRehabAdapted ? { description: session.description + ' (adapted for rehab)' } : {}),
+    session: {
+      ...session,
+      exercises,
+      mode,
+      isDeload: isDeloadWeek,
+      ...(wasRehabAdapted ? { description: session.description + ' (adapted for rehab)' } : {}),
+    },
+    modifications,
   };
 }
 

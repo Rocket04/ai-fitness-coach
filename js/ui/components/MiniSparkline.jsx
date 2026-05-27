@@ -2,6 +2,8 @@
 // Tiny SVG sparkline chart — no dependencies, pure React.createElement
 // Props: data (number[]), width (number), height (number), color (string)
 
+import React from 'react';
+
 export default function MiniSparkline({ data, width = 120, height = 28, color = 'var(--accent)' }) {
   if (!data || data.length < 2) return null;
 

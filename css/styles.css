@@ -3557,3 +3557,78 @@ input[type='range']::-moz-range-track {
     padding: var(--spacing-sm);
   }
 }
+
+/* -- Rehab Modal Styling ------------------------------------- */
+.rehab-checkbox {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  background: var(--surface2);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.rehab-checkbox:hover {
+  background: var(--surface3);
+}
+
+.rehab-checkbox input[type='checkbox'] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: var(--accent);
+}
+
+.rehab-checkbox input[type='checkbox']:checked {
+  accent-color: var(--accent);
+}
+
+.rehab-checkbox span {
+  font-size: var(--font-size-body);
+  color: var(--text);
+  user-select: none;
+}
+
+.rehab-section-title {
+  font-size: var(--font-size-h3);
+  font-weight: 600;
+  margin: 0 0 var(--spacing-sm) 0;
+  color: var(--text);
+}
+
+.rehab-input {
+  width: 100%;
+  padding: var(--spacing-sm);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text);
+  font-size: var(--font-size-body);
+  font-family: var(--font);
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.rehab-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+.rehab-input::placeholder {
+  color: var(--text3);
+}
+
+.rehab-status {
+  padding: var(--spacing-sm);
+  background: var(--surface2);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--green);
+}
+
+.rehab-status p {
+  margin: 0;
+  font-size: var(--font-size-caption);
+  color: var(--text2);
+}

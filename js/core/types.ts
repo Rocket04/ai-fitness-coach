@@ -114,6 +114,22 @@ export interface ApreExerciseResult {
   calisthenicLevel?: number;
 }
 
+/** Результат выполнения одного подхода упражнения */
+export interface SetResult {
+  setNumber: number;
+  completed: boolean;
+  repsDone: number;
+}
+
+/** Результат выполнения упражнения (для не-APRE упражнений) */
+export interface ExerciseResult {
+  exerciseName: string;
+  plannedSets: number;
+  completedSets: number;
+  repsPerSet: number[];
+  completed: boolean;
+}
+
 export interface Exercise {
   n: string; // name
   s: string; // sets

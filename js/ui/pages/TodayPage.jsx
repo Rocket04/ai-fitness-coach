@@ -2,12 +2,13 @@
 // Главная страница «Сегодня» — премиум-дашборд в стиле Whoop/Athlytic
 // 6 слоёв прогрессивного раскрытия
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next'; 
 import { Check, Sun, Moon, Flame, PersonStanding, Lightbulb } from 'lucide-react';
 import { useAppStore } from '../../stores/useAppStore.js';
 import { useFitnessData, isExerciseConfigured } from '../../hooks/useFitnessData.js';
 import { detectOptimalTier } from '../../core/recoveryScore.js';
+import { getExplanation } from '../../core/advice.js';
 import Collapsible from '../components/Collapsible.jsx';
 import ExerciseCard from '../components/ExerciseCard.jsx';
 import ExerciseConfigModal from '../components/ExerciseConfigModal.jsx';
@@ -35,7 +36,7 @@ function getStatusLabel(readiness, recoveryScore, t) {
 }
 
 /* ---------- Premium Hero Ring (200px) ---------- */
-function HeroRing({ score, onClick, t }) {
+function HeroRing({ score, onClick, t, testId }) {
   const radius = 90;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (score / 100) * circumference;
@@ -50,6 +51,7 @@ function HeroRing({ score, onClick, t }) {
   // Empty state for first launch (score = 0)
   if (!score) {
     return React.createElement('div', {
+      ...(testId ? { 'data-testid': testId } : {}),
       className: 'hero-ring--large hero-ring--empty',
       role: 'button',
       tabIndex: 0,
@@ -67,6 +69,7 @@ function HeroRing({ score, onClick, t }) {
   }
   
   return React.createElement('div', {
+    ...(testId ? { 'data-testid': testId } : {}),
     className: 'hero-ring--large',
     onClick,
     onKeyDown: handleKeyDown,
@@ -285,13 +288,13 @@ const DEMO_SESSION = {
 export default function TodayPage() {
   const { t } = useTranslation();
   const {
-    sessionPlan, readiness, recoveryScore, rpe, sessionNote,
+    sessionPlan, readiness, recoveryScore, recoveryDebt, rpe, sessionNote,
     testPullUps, testPushUps, testPlank, trainingDone, weekLabel, totalWeek, phase,
     tomorrowPlan, morningDone, eveningDone,
     durationMinutes, lastCheckin, streak, trendData7, rpeTrend7,
     setRpe, setSessionNote, setDurationMinutes, setTestPullUps, setTestPushUps, setTestPlank,
     handleToggleTraining, handleMarkMorning, handleMarkEvening,
-    coachAdvice, updateApreResult, checkinTier, checkins,
+    coachAdvice, updateApreResult, checkinTier, checkins, planModifications,
     demoMode, dataLoaded, setActiveTab,
   } = useAppStore();
 
@@ -321,6 +324,21 @@ export default function TodayPage() {
     window.addEventListener('tour-demo-data', handler);
     return () => window.removeEventListener('tour-demo-data', handler);
   }, []);
+
+  // Explanation
+  const explanation = useMemo(() => {
+    if (!lastCheckin) return [];
+    return getExplanation(
+      recoveryScore || 0,
+      readiness,
+      recoveryDebt,
+      lastCheckin || {},
+      trendData7 || [],
+      trendData7 || [],
+      planModifications || [],
+      t
+    );
+  }, [recoveryScore, readiness, recoveryDebt, lastCheckin, trendData7, planModifications, t]);
 
   // Exercise configuration state
   const { exercises: configs, updateExerciseById } = useFitnessData();
@@ -446,6 +464,7 @@ export default function TodayPage() {
     // ═══════════════════════════════════════════════════════════════════
     showTierSuggestion && React.createElement('div', {
       className: 'card tier-suggestion-banner',
+      'data-testid': 'tier-banner',
       style: { padding: 'var(--spacing-sm) var(--spacing-md)', display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', fontSize: 'var(--font-size-caption)' },
     },
       React.createElement(Lightbulb, { size: 16, style: { flexShrink: 0, color: 'var(--yellow)' } }),
@@ -480,10 +499,21 @@ export default function TodayPage() {
       )
     ),
 
+    // Explanation card
+    explanation.length > 0 && React.createElement('div', { className: 'card explanation-card card-appear', style: { animationDelay: '0.05s' } },
+      React.createElement('h4', { className: 'explanation-title', style: { marginBottom: 'var(--spacing-sm)', fontSize: 'var(--font-size-body)', fontWeight: 600 } }, t('today.why')),
+      React.createElement('ul', { className: 'explanation-list', style: { paddingLeft: '1.25rem', margin: 0 } },
+        explanation.map((item, i) =>
+          React.createElement('li', { key: i, className: 'explanation-item', style: { marginBottom: 'var(--spacing-xs)', fontSize: 'var(--font-size-caption)', lineHeight: 1.5 } }, item)
+        )
+      )
+    ),
+
     // LAYER 1: Hero Ring (always visible)
     // ═══════════════════════════════════════════════════════════════════
     React.createElement('div', {
       className: 'card card--hero text-center card-appear',
+      'data-testid': 'recovery-ring',
       'aria-live': 'polite',
       'aria-atomic': 'true',
       'aria-label': `Recovery Score: ${recoveryScore || 0}%`
@@ -492,6 +522,7 @@ export default function TodayPage() {
         score: recoveryScore || 0,
         onClick: () => setShowSparklines(o => !o),
         t,
+        testId: 'checkin-trigger',
       }),
       React.createElement('div', {
         className: 'status-pill',
@@ -509,7 +540,7 @@ export default function TodayPage() {
     // ═══════════════════════════════════════════════════════════════════
     // LAYER 2: Weekly Sparklines (tap to expand)
     // ═══════════════════════════════════════════════════════════════════
-    showSparklines && React.createElement('div', { className: 'card-appear' },
+    showSparklines && React.createElement('div', { className: 'card-appear', 'data-testid': 'metrics-panel' },
       React.createElement('div', { style: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem' } },
         React.createElement(SparklineCard, {
           label: t('recovery.components.hrv'),
@@ -539,12 +570,12 @@ export default function TodayPage() {
     // LAYER 3: Training Plan / Rest Day
     // ═══════════════════════════════════════════════════════════════════
     isRestDay
-      ? React.createElement('div', { className: 'card rest-day-card card-appear', style: { animationDelay: '0.1s' } },
+      ? React.createElement('div', { className: 'card rest-day-card card-appear', 'data-testid': 'workout-card', style: { animationDelay: '0.1s' } },
           React.createElement('span', { className: 'rest-day-icon' }, React.createElement(PersonStanding, { size: 20 })),
           React.createElement('span', { className: 'rest-day-title' }, t('today.restDay')),
           React.createElement('span', { className: 'rest-day-desc' }, t('today.restDescription'))
         )
-      : React.createElement('div', { className: 'card card-appear', style: { animationDelay: '0.1s', padding: 0, overflow: 'hidden' } },
+      : React.createElement('div', { className: 'card card-appear', 'data-testid': 'workout-card', style: { animationDelay: '0.1s', padding: 0, overflow: 'hidden' } },
           // Training Header
           React.createElement('div', { className: 'training-header' },
             React.createElement('span', { className: 'training-type' }, sessionPlan?.sport || sessionPlan?.sessionType || null),

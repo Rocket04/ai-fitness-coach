@@ -3,6 +3,7 @@
 
 import Dexie from 'dexie';
 import type { Session, Checkin, TestResults, Settings, ManualStatus } from './types.js';
+import { validateImportData, detectImportFormat } from './importSchemas.js';
 
 /**
  * Dexie‑экземпляр для работы с IndexedDB.
@@ -110,7 +111,7 @@ export async function getAllSessions() {
  */
 export async function getLatestTestResults(): Promise<TestResults | null> {
   try {
-    const sessions = await db.sessions
+    const sessions = await _db().sessions
       .filter(s => s.testResults != null)
       .toArray();
     if (!sessions.length) return null;
@@ -174,7 +175,7 @@ export async function getCheckinsForLastDays(days: number): Promise<Checkin[]> {
     start.setDate(today.getDate() - days + 1);
     const startStr = start.toISOString().slice(0, 10);
     const endStr = today.toISOString().slice(0, 10);
-    return await db.checkins
+    return await _db().checkins
       .where('date')
       .between(startStr, endStr, true, true)
       .toArray();
@@ -333,46 +334,56 @@ export async function importAllData(data: any): Promise<void> {
     throw new Error('Некорректный формат файла: ожидался объект');
   }
 
-  // ── Валидация sessions ──
-  if (data.sessions !== undefined && !Array.isArray(data.sessions)) {
-    throw new Error('Некорректный формат файла: sessions должен быть массивом');
+  // ── Zod валидация ──
+  const validationResult = validateImportData(data);
+  if (!validationResult.success) {
+    // Log all errors to console
+    console.error('Import validation errors:', validationResult.errors);
+    
+    // Throw error with first error + count for UI
+    const firstError = validationResult.errors[0];
+    const errorCount = validationResult.errors.length;
+    const message = errorCount > 1
+      ? `${firstError} (и ещё ${errorCount - 1} ошибок)`
+      : firstError;
+    throw new Error(message);
   }
 
-  // ── Валидация checkins ──
-  if (data.checkins !== undefined && !Array.isArray(data.checkins)) {
-    throw new Error('Некорректный формат файла: checkins должен быть массивом');
+  // Use validated data
+  const validatedData = validationResult.data as any;
+  const format = detectImportFormat(data);
+
+  // Handle legacy format (minimal validation, basic structure only)
+  if (format === 'legacy') {
+    console.warn('Importing legacy format - minimal validation applied');
+    // Legacy format handling would go here if needed
+    // For now, we'll treat it as passthrough since the schema is very permissive
   }
 
-  // ── Валидация settings ──
-  if (data.settings !== undefined) {
-    if (!data.settings || typeof data.settings !== 'object' || Array.isArray(data.settings)) {
-      throw new Error('Некорректный формат файла: settings должен быть объектом');
-    }
-    if (typeof data.settings.startDate !== 'string') {
-      throw new Error('Некорректный формат файла: settings.startDate должен быть строкой');
-    }
-    if (!Array.isArray(data.settings.trainDays) || !data.settings.trainDays.every((d: unknown) => typeof d === 'number')) {
-      throw new Error('Некорректный формат файла: settings.trainDays должен быть массивом чисел');
-    }
-  }
+  const sessions = validatedData.sessions ?? [];
+  const checkins = validatedData.checkins ?? [];
 
-  const sessions = data.sessions ?? [];
-  const checkins = data.checkins ?? [];
-
-  // ── Настройки из data.settings ──
+  // ── Настройки из data.settings (Dexie v2 format) ──
   const settingsMap: Record<string, { key: string; value: string }> = {};
-  if (data.settings) {
-    settingsMap.startDate = { key: 'startDate', value: data.settings.startDate };
-    settingsMap.trainDays = { key: 'trainDays', value: JSON.stringify(data.settings.trainDays) };
+  
+  if (format === 'dexie-v2' && Array.isArray(validatedData.settings)) {
+    // Dexie v2: settings is an array of {key, value} objects
+    validatedData.settings.forEach((s: { key: string; value: string }) => {
+      settingsMap[s.key] = { key: s.key, value: s.value };
+    });
+  } else if (validatedData.settings && typeof validatedData.settings === 'object' && !Array.isArray(validatedData.settings)) {
+    // Legacy format: settings is a plain object
+    settingsMap.startDate = { key: 'startDate', value: validatedData.settings.startDate };
+    settingsMap.trainDays = { key: 'trainDays', value: JSON.stringify(validatedData.settings.trainDays) };
   }
 
   // ── Транзакция: очистка + запись ──
   await _db().transaction(
     'rw',
-    db.sessions,
-    db.checkins,
-    db.achievements,
-    db.settings,
+    _db().sessions,
+    _db().checkins,
+    _db().achievements,
+    _db().settings,
     async () => {
       // Очищаем всё
       await Promise.all([
@@ -386,9 +397,9 @@ export async function importAllData(data: any): Promise<void> {
       const writeOps = [];
       if (sessions.length) writeOps.push(_db().sessions.bulkPut(sessions));
       if (checkins.length) writeOps.push(_db().checkins.bulkPut(checkins));
-      if (Array.isArray(data.achievements) && data.achievements.length) {
+      if (Array.isArray(validatedData.achievements) && validatedData.achievements.length) {
         // achievements используют ++id — strips ids для избежания конфликтов
-        const cleanAchievements = data.achievements.map((a: any) => ({
+        const cleanAchievements = validatedData.achievements.map((a: any) => ({
           achievementKey: a.achievementKey ?? a.key,
           earnedAt: a.earnedAt ?? Date.now(),
         }));
@@ -411,10 +422,10 @@ export async function importAllData(data: any): Promise<void> {
 export async function clearAllData(): Promise<void> {
   await _db().transaction(
     'rw',
-    db.sessions,
-    db.checkins,
-    db.achievements,
-    db.settings,
+    _db().sessions,
+    _db().checkins,
+    _db().achievements,
+    _db().settings,
     async () => {
       await Promise.all([
         _db().sessions.clear(),

@@ -55,7 +55,7 @@ function StepIndicator({ current, total }) {
 
 /** STEP 1: Value & Immediate Action */
 function ValueStep({ onNext }) {
-  return React.createElement('div', { className: 'onboarding-content onboarding-content--value' },
+  return React.createElement('div', { className: 'onboarding-content onboarding-content--value', 'data-testid': 'onboarding-step-1' },
     React.createElement('h1', { className: 'onboarding-headline' },
       'Твой умный тренер готов к работе'
     ),
@@ -75,7 +75,7 @@ function ValueStep({ onNext }) {
 function GoalStep({ selectedGoal, onSelectGoal, selectedDays, onToggleDay, onNext, onBack }) {
   const canProceed = selectedGoal && selectedDays.length > 0;
 
-  return React.createElement('div', { className: 'onboarding-content onboarding-content--goal' },
+  return React.createElement('div', { className: 'onboarding-content onboarding-content--goal', 'data-testid': 'onboarding-step-2' },
     React.createElement('h2', { className: 'onboarding-title' }, 'Выбери свою цель'),
 
     // Goal Cards
@@ -84,6 +84,7 @@ function GoalStep({ selectedGoal, onSelectGoal, selectedDays, onToggleDay, onNex
         React.createElement('button', {
           key: goal.key,
           className: `onboarding-goal-card${selectedGoal === goal.key ? ' onboarding-goal-card--selected' : ''}`,
+          'data-testid': 'goal-option',
           onClick: () => onSelectGoal(goal.key),
           style: { '--goal-color': goal.color },
         },
@@ -105,6 +106,7 @@ function GoalStep({ selectedGoal, onSelectGoal, selectedDays, onToggleDay, onNex
           return React.createElement('button', {
             key: i,
             className: `onboarding-day-chip${isSelected ? ' onboarding-day-chip--selected' : ''}`,
+            'data-testid': 'training-days-toggle',
             onClick: () => onToggleDay(dow),
             disabled: !isSelected && selectedDays.length >= 3,
           }, day);
@@ -136,7 +138,7 @@ function GoalStep({ selectedGoal, onSelectGoal, selectedDays, onToggleDay, onNex
 function SportsStep({ selectedSports, onToggleSport, onNext, onBack }) {
   const canProceed = selectedSports.length > 0;
 
-  return React.createElement('div', { className: 'onboarding-content onboarding-content--sports' },
+  return React.createElement('div', { className: 'onboarding-content onboarding-content--sports', 'data-testid': 'onboarding-step-3' },
     React.createElement('h2', { className: 'onboarding-title' }, 'Каким спортом занимаешься?'),
     React.createElement('p', { className: 'onboarding-hint' }, 'Можно выбрать несколько'),
 
@@ -153,6 +155,7 @@ function SportsStep({ selectedSports, onToggleSport, onNext, onBack }) {
               return React.createElement('button', {
                 key: sport.key,
                 className: `onboarding-sport-chip${isSelected ? ' onboarding-sport-chip--selected' : ''}`,
+                'data-testid': 'sport-selector',
                 onClick: () => onToggleSport(sport.key),
               }, sport.label);
             })
@@ -182,7 +185,7 @@ function GadgetsStep({ selectedGadgets, onToggleGadget, derivedTier, onNext, onB
   const tierLabels = { full: 'Полный (HRV + ЧСС + Сон)', medium: 'Средний (ЧСС + Сон)', light: 'Лёгкий (субъективный)' };
   const tierColors = { full: 'var(--green)', medium: 'var(--yellow)', light: 'var(--text3)' };
 
-  return React.createElement('div', { className: 'onboarding-content onboarding-content--gadgets' },
+  return React.createElement('div', { className: 'onboarding-content onboarding-content--gadgets', 'data-testid': 'onboarding-step-4' },
     React.createElement('h2', { className: 'onboarding-title' }, 'Какие устройства используешь?'),
     React.createElement('p', { className: 'onboarding-hint' }, 'Определяет точность Recovery Score'),
 
@@ -192,6 +195,7 @@ function GadgetsStep({ selectedGadgets, onToggleGadget, derivedTier, onNext, onB
         return React.createElement('button', {
           key: gadget.key,
           className: `onboarding-gadget-card${isSelected ? ' onboarding-gadget-card--selected' : ''}`,
+          'data-testid': 'gadget-selector',
           onClick: () => onToggleGadget(gadget.key),
         },
           React.createElement('div', { className: 'onboarding-gadget-info' },
@@ -232,7 +236,7 @@ function RecoveryStep({ onFinish }) {
   const circumference = 2 * Math.PI * radius;
   const color = 'var(--accent)';
 
-  return React.createElement('div', { className: 'onboarding-content onboarding-content--recovery' },
+  return React.createElement('div', { className: 'onboarding-content onboarding-content--recovery', 'data-testid': 'onboarding-step-5' },
     React.createElement('h2', { className: 'onboarding-title' }, 'Recovery Score'),
 
     React.createElement('div', { className: 'onboarding-recovery-ring' },
@@ -280,6 +284,7 @@ function RecoveryStep({ onFinish }) {
 
     React.createElement('button', {
       className: 'btn btn-accent onboarding-btn--primary',
+      'data-testid': 'onboarding-complete',
       onClick: onFinish,
     }, React.createElement(Rocket, { size: 20 }), ' Перейти к тренировке')
   );
@@ -352,6 +357,7 @@ export default function OnboardingWizard({ isOpen, onComplete, onClose }) {
     React.createElement('div', { className: 'onboarding-modal', onClick: e => e.stopPropagation() },
       onClose && React.createElement('button', {
         className: 'onboarding-close',
+        'data-testid': 'onboarding-close',
         onClick: onClose,
         'aria-label': 'Закрыть',
       },
