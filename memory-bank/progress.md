@@ -2,9 +2,8 @@
 
 ## Quality Gates ✅
 - TypeScript: 0 errors (`npx tsc --noEmit`)
-- Tests: 188 passing (32 files, 142 failures all from pre-existing act() incompatibility)
+- Tests: 263 passing (30 files)
 - Build: Clean compilation (Vite 8)
-- Lighthouse: Accessibility 100, Best Practices 100, SEO 100
 
 ## Complete Feature Set
 
@@ -34,61 +33,71 @@
 - Level-based sets, goal-based reps
 - Profile adaptation engine
 
-### Phase 5: Premium Dashboard ✅ (NEW)
-- **TrendChart**: Multi-metric overlay, clickable legend (role=switch/aria-checked), enhanced tooltips (exact values + deltas + formatted dates), smooth animations (drawLine/fadeDot/tooltipIn), responsive (ResizeObserver), touch support
-- **MethodologyPage**: Interactive APRE simulator (RPE+duration→load/weight/RM), Recovery Score simulator (HRV+sleep+restHR+energy+mood→live score with tips)
-- **OnlineStatus**: Wifi/WifiOff pill indicator with reactive online/offline detection
-- **UpdateBanner**: Gradient banner for SW updates with activate/dismiss
-- **Data Export/Import**: Validated import (file size/type/JSON/version checks), auto-backup before import/demo, toast notifications
-- **Error/Loading/Empty States**: Consistent EmptyState usage, SkeletonCard loading, dataLoaded guards, ErrorBoundary with retry per-page
-- **Accessibility**: Focus trap Modal, sr-only utility, :focus-visible styles, aria-labels fixed, label-content-name-mismatch resolved
+### Phase 5: Premium Dashboard ✅
+- TrendChart: Multi-metric overlay, clickable legend, enhanced tooltips, animations, responsive
+- MethodologyPage: Interactive APRE + Recovery Score simulators
+- OnlineStatus, UpdateBanner, Data Export/Import, Error/Loading/Empty States
+- Accessibility: Focus trap Modal, sr-only utility, aria-labels
 
-### PWA Enhancements ✅ (NEW)
-- sw.js v2: SKIP_WAITING message handler, cache-first same-origin, stale-while-revalidate CDN
-- manifest.json: shortcuts (Today/Checkin/Analytics), launch_handler
+### Phase 6: Exercise Tracking Loop ✅ (NEW — 2026-05-29)
+- Per-set completion checkboxes for non-APRE exercises (ExerciseCard)
+- SetResult tracking in store (pendingSetResults → ExerciseResult[] on save)
+- `completionRate.ts` — session + weekly completion rate (6 tests, TDD)
+- `getVolumeMultiplierFromAdherence()` in planning.ts (≥0.8→1.2x, ≥0.6→1.0x, <0.6→0.8x) (7 tests, TDD)
+- Post-session fatigue/pain inputs in TodayPage
+- `getAdaptedSessionForDate()` accepts `volumeMultiplier` parameter
+
+### PWA Enhancements ✅
+- sw.js v2: SKIP_WAITING, cache-first, stale-while-revalidate
+- manifest.json: shortcuts (Today/Checkin/Analytics)
 - SW update detection via useServiceWorkerUpdate hook
 
-## Test Coverage (330 tests, 32 files)
-### Passing (188 tests):
-- Core: achievements(8+), analytics, apre(56), correlations, helpers, planning, readiness, recoveryScore(11), stats, storage, streak
-- Stores: useAppStore, useAppStore.offset(4)
-- UI: EmptyState, ScaleSelector, Skeleton, StatBox, TodayPage.weekly(2)
-- Note: Component tests (TrendChart, CheckinForm, OnboardingWizard, TodayPage, ExerciseCard, etc.) fail with pre-existing act() incompatibility — test logic is correct
+## Test Coverage (263 tests, 30 files)
+### Core (NEW)
+- `completionRate.test.ts` (6) — session/weekly completion rate
+- `adherenceMultiplier.test.ts` (7) — volume multiplier boundaries
+- Existing: achievements(8), analytics(4), apre(56), correlations(7), helpers(5), planning(11), readiness(17), recoveryScore(11), stats(12), streak(12), storage.demo(4), sessionLoad(6), advice(6), validation(9), adaptiveTier(6), deriveTier(8)
 
-### Known Issues
-- act() incompatibility with React production builds affects all component tests
-- Vite HMR WebSocket doesn't connect through CDP browser → manual hard reload (Ctrl+Shift+R) needed
-- TodayPage uses React.createElement (legacy code, not JSX)
+### UI Components
+- EmptyState(6), ScaleSelector, Skeleton(2), StatBox(3), CorrelationCard(6), MiniSparkline(4)
+
+### Stores
+- useAppStore(11), useAppStore.offset(4)
 
 ## File Structure (Key Files)
 ### Core
-- `js/core/storage.ts` — Dexie CRUD + demo mode + backup (exportAllData/importAllData/clearAllData)
-- `js/core/apre/engine.js` — APRE engine (applyApre, calcApreSets, calcNextWeekRM)
+- `js/core/storage.ts` — Dexie CRUD + demo mode + export/import
+- `js/core/apre/engine.js` — APRE engine
 - `js/core/recoveryScore.ts` — Tiered recovery scoring
+- `js/core/completionRate.ts` — NEW: session/weekly completion rate
 - `js/core/analytics.ts` — Trend analysis, correlation detection
+- `js/core/planning.ts` — Periodized plans + adherence multiplier
 - `js/core/advice.ts` — Coach advice generation
 
 ### Stores
-- `js/stores/useAppStore.ts` — Central store + export/import/reset/backup actions
+- `js/stores/useAppStore.ts` — Central store + set result tracking + export/import/reset
 
-### Hooks (NEW)
-- `js/hooks/useOnlineStatus.ts` — Reactive online/offline detection
-- `js/hooks/useServiceWorkerUpdate.ts` — SW update detection + SKIP_WAITING
+### UI Components
+- `js/ui/components/ExerciseCard.jsx` — Per-set checkboxes (non-APRE) + APRE AMRAP inputs
+- `js/ui/components/OnlineStatus.jsx` — Online/offline pill
+- `js/ui/components/TrendChart.tsx` — Multi-metric chart
 
-### UI Components (NEW/ENHANCED)
-- `js/ui/components/OnlineStatus.jsx` — Online/offline pill indicator
-- `js/ui/components/UpdateBanner.tsx` — SW update banner
-- `js/ui/components/TrendChart.tsx` — Multi-metric chart (rewritten with TS)
-- `js/ui/components/Modal.jsx` — Focus trap + aria-modal
-- `js/ui/components/EmptyState.jsx` — Reusable empty state
-
-### Pages (ENHANCED)
+### Pages
+- `js/ui/pages/TodayPage.jsx` — Dashboard with post-session fatigue/pain inputs
 - `js/ui/pages/MethodologyPage.jsx` — Interactive simulators
-- `js/ui/pages/TrendChart.tsx` — Enhanced chart component
-- `js/ui/pages/LogPage.jsx` — Safe weeklySummary/monthStats defaults
 
-## Lighthouse Scores
-- Accessibility: 100 ✅
-- Best Practices: 100 ✅
-- SEO: 100 ✅
-- Only failure: llms.txt (non-UI, trivial)
+## Known Issues
+- TodayPage uses React.createElement (legacy code, not JSX) — planned refactor in Phase 5
+- `computeDerived()` not yet wired to `calculateWeeklyCompletionRate` + `getVolumeMultiplierFromAdherence` — functions exist, integration deferred
+
+## Phase Status Summary
+
+| Phase | Report Phase | Actual Status |
+|-------|-------------|---------------|
+| Phase 0 (cleanup) | Preparation | ✅ Done — dead code, demo-mode bug, launch_handler |
+| Phase 1 (tracking loop) | Core Logic (W1-4) | ✅ Done — per-set tracking, completion rate, adherence multiplier |
+| Phase 2 (CSV import) | Data Integration (W5-6) | ⏳ Not started |
+| Phase 3 (rehab stretching) | Additional Features (W7-8) | ⏳ Not started |
+| Phase 4 (store refactor) | Refactoring (W9-10) | ⏳ Not started |
+| Phase 5 (test coverage) | Testing (W11-12) | ⏳ Not started |
+| Phase 3-6 (docs-i18n) | Documentation (Ongoing) | ⏳ Not started |
