@@ -13,7 +13,7 @@ import { StretchingPlanModule } from '../plans/stretching.js';
 import { WalkingPlanModule } from '../plans/walking.js';
 import { applyMultiplierToExercises, adjustExercisesForMode } from './loadAdjustments.js';
 import { annotateExercisesWithApre } from './apre/engine.js';
-import { filterExercisesForRehab } from './exerciseDatabase.js';
+import { filterExercisesForRehab, filterStretchingForRehab } from './exerciseDatabase.js';
 import { parseLocalDate, getAppDateSync } from './helpers.js';
 
 // Sport module registry
@@ -314,6 +314,10 @@ export function applyReadinessToSession(
     if (wasRehabAdapted) {
       modifications.push('Боль в суставах → упражнения адаптированы для реабилитации');
     }
+  }
+
+  if (session.sport === 'stretching' && rehabIssues.length > 0) {
+    exercises = filterStretchingForRehab(exercises, rehabIssues);
   }
 
   // Apply profile-based exercise adaptation (level, goals, equipment)

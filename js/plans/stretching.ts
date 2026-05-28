@@ -16,23 +16,23 @@ const session = (
 function basePhase(w: number): Omit<SessionPlan, 'date' | 'sessionId'>[] {
   const d = 15 + w;
   return [
-    session('mobility', 'Raztyazhka Vsyo telo', 'Raztyazhka vsyego tela ' + d + ' min', { duration: d }, [
-      ex('Sheya i plechi', '-', '3 min'), ex('Poyasnitsa', '-', '3 min'), ex('Bedra', '-', '4 min'), ex('Nogi', '-', '3 min'),
+    session('mobility', 'Растяжка всего тела', 'Растяжка всего тела ' + d + ' мин', { duration: d }, [
+      ex('Шея и плечи', '-', '3 мин'), ex('Поясница', '-', '3 мин'), ex('Бёдра', '-', '4 мин'), ex('Ноги', '-', '3 мин'),
     ]),
-    session('mobility', 'Raztyazhka Niz tela', 'Raztyazhka nog i bedra ' + d + ' min', { duration: d }, [
-      ex('Zadnyaya tsep', '-', '3 min'), ex('Kvadritsep', '-', '3 min'), ex('Ikronnye', '-', '2 min'),
+    session('mobility', 'Растяжка низа тела', 'Растяжка ног и бёдер ' + d + ' мин', { duration: d }, [
+      ex('Задняя цепь', '-', '3 мин'), ex('Квадрицепс', '-', '3 мин'), ex('Икры', '-', '2 мин'),
     ]),
-    session('mobility', 'Raztyazhka Verh tela', 'Raztyazhka plech i ruk ' + d + ' min', { duration: d }, [
-      ex('Plevoy sustav', '-', '4 min'), ex('Zapyastya', '-', '2 min'),
+    session('mobility', 'Растяжка верха тела', 'Растяжка плеч и рук ' + d + ' мин', { duration: d }, [
+      ex('Плечевой сустав', '-', '4 мин'), ex('Запястья', '-', '2 мин'),
     ]),
-    session('mobility', 'Raztyazhka TBS', 'Podvizhnost taza ' + d + ' min', { duration: d }, [
-      ex('90/90', '2', '3 min / storona'), ex('Skrutki lezha', '2', '3 min / storona'),
+    session('mobility', 'Растяжка ТБС', 'Подвижность таза ' + d + ' мин', { duration: d }, [
+      ex('90/90', '2', '3 мин / сторона'), ex('Скрутки лёжа', '2', '3 мин / сторона'),
     ]),
-    session('mobility', 'Raztyazhka Vsyo telo', 'Raztyazhka vsyego tela ' + d + ' min', { duration: d }, [
-      ex('Raztyazhka', '-', (d - 6) + ' min'), ex('Rasslablenie', '-', '3 min'),
+    session('mobility', 'Растяжка всего тела', 'Растяжка всего тела ' + d + ' мин', { duration: d }, [
+      ex('Растяжка', '-', (d - 6) + ' мин'), ex('Расслабление', '-', '3 мин'),
     ]),
-    session('recovery', 'Raztyazhka Aktivnoe vosstanovlenie', 'Myagkaya raztyazhka ' + (d - 5) + ' min', { duration: d - 5 }, [
-      ex('Myagkie dvizheniya', '-', (d - 5) + ' min'),
+    session('recovery', 'Активное восстановление', 'Мягкая растяжка ' + (d - 5) + ' мин', { duration: d - 5 }, [
+      ex('Мягкие движения', '-', (d - 5) + ' мин'),
     ]),
     null,
   ].filter((s): s is NonNullable<typeof s> => s !== null);
@@ -41,23 +41,23 @@ function basePhase(w: number): Omit<SessionPlan, 'date' | 'sessionId'>[] {
 function buildPhase(w: number): Omit<SessionPlan, 'date' | 'sessionId'>[] {
   const d = 18 + w;
   return [
-    session('mobility', 'Raztyazhka Glubokaya', 'Glubokaya raztyazhka ' + d + ' min', { duration: d }, [
-      ex('Glubokaya raztyazhka nog', '-', '7 min'), ex('Verh tela', '-', '6 min'), ex('Shavasana', '-', '3 min'),
+    session('mobility', 'Растяжка глубокая', 'Глубокая растяжка ' + d + ' мин', { duration: d }, [
+      ex('Глубокая растяжка ног', '-', '7 мин'), ex('Верх тела', '-', '6 мин'), ex('Шавасана', '-', '3 мин'),
     ]),
-    session('mobility', 'Raztyazhka PNF', 'PNF-raztyazhka ' + d + ' min', { duration: d }, [
-      ex('Nogi PNF', '-', '6 min'), ex('Ruki PNF', '-', '6 min'),
+    session('mobility', 'Растяжка ПНФ', 'ПНФ-растяжка ' + d + ' мин', { duration: d }, [
+      ex('Ноги ПНФ', '-', '6 мин'), ex('Руки ПНФ', '-', '6 мин'),
     ]),
-    session('mobility', 'Raztyazhka Potok', 'Podvizhnostnyy potok ' + d + ' min', { duration: d }, [
-      ex('Potok TBS', '-', '8 min'), ex('Potok plech', '-', '8 min'), ex('Zaminka', '-', '3 min'),
+    session('mobility', 'Растяжка поток', 'Подвижностной поток ' + d + ' мин', { duration: d }, [
+      ex('Поток ТБС', '-', '8 мин'), ex('Поток плеч', '-', '8 мин'), ex('Заминка', '-', '3 мин'),
     ]),
-    session('mobility', 'Raztyazhka In-stil', 'Dlitelnaya raztyazhka ' + (d + 5) + ' min', { duration: d + 5 }, [
-      ex('Dolgie asany', '4', '5 min / poza'),
+    session('mobility', 'Растяжка ин-стиль', 'Длительная растяжка ' + (d + 5) + ' мин', { duration: d + 5 }, [
+      ex('Долгие асаны', '4', '5 мин / поза'),
     ]),
-    session('mobility', 'Raztyazhka Aktivnaya podvizhnost', 'Kontroliruemaya podvizhnost ' + d + ' min', { duration: d }, [
-      ex('CARs Plechi', '1', '5 min'), ex('CARs TBS', '1', '5 min'), ex('CARs Pozvonochnik', '1', '5 min'),
+    session('mobility', 'Активная подвижность', 'Контролируемая подвижность ' + d + ' мин', { duration: d }, [
+      ex('CARs Плечи', '1', '5 мин'), ex('CARs ТБС', '1', '5 мин'), ex('CARs Позвоночник', '1', '5 мин'),
     ]),
-    session('recovery', 'Raztyazhka Vosstanovlenie', 'Myagkaya raztyazhka ' + (d - 5) + ' min', { duration: d - 5 }, [
-      ex('Intuitivnaya raztyazhka', '-', (d - 5) + ' min'),
+    session('recovery', 'Растяжка восстановление', 'Мягкая растяжка ' + (d - 5) + ' мин', { duration: d - 5 }, [
+      ex('Интуитивная растяжка', '-', (d - 5) + ' мин'),
     ]),
     null,
   ].filter((s): s is NonNullable<typeof s> => s !== null);
@@ -66,23 +66,23 @@ function buildPhase(w: number): Omit<SessionPlan, 'date' | 'sessionId'>[] {
 function peakPhase(w: number): Omit<SessionPlan, 'date' | 'sessionId'>[] {
   const d = 20 + w;
   return [
-    session('mobility', 'Raztyazhka Maksimalnaya', 'Maksimalnaya raztyazhka ' + d + ' min', { duration: d }, [
-      ex('Razogrev', '-', '5 min'), ex('Maksimalnaya raztyazhka', '-', (d - 10) + ' min'), ex('Dyhanie', '-', '5 min'),
+    session('mobility', 'Максимальная растяжка', 'Максимальная растяжка ' + d + ' мин', { duration: d }, [
+      ex('Разогрев', '-', '5 мин'), ex('Максимальная растяжка', '-', (d - 10) + ' мин'), ex('Дыхание', '-', '5 мин'),
     ]),
-    session('mobility', 'Raztyazhka PNF intensiv', 'PNF-raztyazhka ' + d + ' min', { duration: d }, [
-      ex('Nogi PNF', '-', (d / 2) + ' min'), ex('Ruki PNF', '-', (d / 2) + ' min'),
+    session('mobility', 'Растяжка ПНФ интенсив', 'ПНФ-растяжка ' + d + ' мин', { duration: d }, [
+      ex('Ноги ПНФ', '-', (d / 2) + ' мин'), ex('Руки ПНФ', '-', (d / 2) + ' мин'),
     ]),
-    session('mobility', 'Raztyazhka Potok podvizhnosti', 'Podvizhnostnyy potok ' + d + ' min', { duration: d }, [
-      ex('Potok TBS', '-', '8 min'), ex('Potok plech', '-', '8 min'), ex('Zaminka', '-', '3 min'),
+    session('mobility', 'Поток подвижности', 'Подвижностной поток ' + d + ' мин', { duration: d }, [
+      ex('Поток ТБС', '-', '8 мин'), ex('Поток плеч', '-', '8 мин'), ex('Заминка', '-', '3 мин'),
     ]),
-    session('mobility', 'Raztyazhka In glubokiy', 'Glubokiy in ' + (d + 5) + ' min', { duration: d + 5 }, [
-      ex('Dolgie asany', '4', '5 min / poza'),
+    session('mobility', 'Глубокий ин', 'Глубокий ин ' + (d + 5) + ' мин', { duration: d + 5 }, [
+      ex('Долгие асаны', '4', '5 мин / поза'),
     ]),
-    session('recovery', 'Raztyazhka Aktivnoe vosstanovlenie', 'Legkaya podvizhnost ' + (d - 10) + ' min', { duration: d - 10 }, [
-      ex('Legkie dvizheniya', '-', (d - 10) + ' min'),
+    session('recovery', 'Активное восстановление', 'Лёгкая подвижность ' + (d - 10) + ' мин', { duration: d - 10 }, [
+      ex('Лёгкие движения', '-', (d - 10) + ' мин'),
     ]),
-    session('mobility', 'Raztyazhka Polnaya praktika', 'Polnaya praktika ' + d + ' min', { duration: d }, [
-      ex('Razminka', '-', '5 min'), ex('Osnovnaya chast', '-', (d - 10) + ' min'), ex('Zaminka', '-', '5 min'),
+    session('mobility', 'Полная практика', 'Полная практика ' + d + ' мин', { duration: d }, [
+      ex('Разминка', '-', '5 мин'), ex('Основная часть', '-', (d - 10) + ' мин'), ex('Заминка', '-', '5 мин'),
     ]),
     null,
   ].filter((s): s is NonNullable<typeof s> => s !== null);
@@ -90,16 +90,16 @@ function peakPhase(w: number): Omit<SessionPlan, 'date' | 'sessionId'>[] {
 
 function deloadPhase(): Omit<SessionPlan, 'date' | 'sessionId'>[] {
   return [
-    session('recovery', 'Raztyazhka Legkaya', 'Legkaya raztyazhka 10 min', { duration: 10 }, [
-      ex('Myagkie dvizheniya', '-', '10 min'),
+    session('recovery', 'Лёгкая растяжка', 'Лёгкая растяжка 10 мин', { duration: 10 }, [
+      ex('Мягкие движения', '-', '10 мин'),
     ]),
     null,
-    session('recovery', 'Raztyazhka Legkaya', 'Legkaya raztyazhka 10 min', { duration: 10 }, [
-      ex('Myagkie dvizheniya', '-', '10 min'),
+    session('recovery', 'Лёгкая растяжка', 'Лёгкая растяжка 10 мин', { duration: 10 }, [
+      ex('Мягкие движения', '-', '10 мин'),
     ]),
     null,
-    session('recovery', 'Raztyazhka Legkaya', 'Legkaya raztyazhka 10 min', { duration: 10 }, [
-      ex('Myagkie dvizheniya', '-', '10 min'),
+    session('recovery', 'Лёгкая растяжка', 'Лёгкая растяжка 10 мин', { duration: 10 }, [
+      ex('Мягкие движения', '-', '10 мин'),
     ]),
     null, null,
   ].filter((s): s is NonNullable<typeof s> => s !== null);

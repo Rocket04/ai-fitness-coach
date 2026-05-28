@@ -1,5 +1,6 @@
 // js/stores/useAppStore.ts
 // Central Zustand store: data + derived state + actions (replaces AppContext)
+// Orchestrator: combines 5 slice files, keeps computeDerived/_recompute/initApp
 
 import { create } from 'zustand';
 import type {
@@ -64,6 +65,12 @@ import {
 } from '../core/analytics.js';
 import { getAllCorrelations } from '../core/correlations.js';
 import { parseLocalDate, formatISO, getAppDateSync, setVirtualTodayOffset as setVirtualTodayOffsetHelper } from '../core/helpers.js';
+
+import { createCheckinSlice } from './slices/checkinSlice.js';
+import { createSessionSlice } from './slices/sessionSlice.js';
+import { createUiSlice } from './slices/uiSlice.js';
+import { createDataSlice } from './slices/dataSlice.js';
+import { createDemoSlice } from './slices/demoSlice.js';
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
@@ -412,403 +419,446 @@ const initialDerived = computeDerived([], [], null, [1, 2, 3, 4, 5, 6], 'unknown
   days: ['calisthenics', 'walking', 'stretching', 'calisthenics', 'walking', 'stretching', null] as (string | null)[],
   sportOrder: ['calisthenics', 'walking', 'stretching'] as string[],
 }, ['hips', 'shoulder', 'back'], [], 'beginner', ['rehabilitation'], { pullup_bar: true, dumbbells_max_kg: 4 });
+
 // ─── store ────────────────────────────────────────────────────────────────────
 
-export const useAppStore = create<AppStore>((set, get) => ({
-  // Raw data
-  sessions: [],
-  checkins: [],
-  dataLoaded: false,
-  todayISO: todayISO0,
+export const useAppStore = create<AppStore>((set, get) => {
+  // Create slices — each returns its state + actions
+  const checkin = createCheckinSlice();
+  const session = createSessionSlice(set, get as any);
+  const ui = createUiSlice(set, get as any);
+  const data = createDataSlice();
+  const demo = createDemoSlice();
 
-  // Settings
-  startDate: null,
-  trainDays: [1, 2, 3, 4, 5, 6],
-  checkinTier: 'medium',
-  selectedGadgets: [],
-  selectedSports: ['calisthenics', 'walking', 'stretching'],
-  virtualTodayOffset: 0,
-  demoMode: false,
-  guestMode: false,
-  showGuestModal: false,
-  showSettings: false,
-  showResetConfirm: false,
-  editStartDate: '',
-  editTrainDays: [1, 2, 3, 4, 5, 6],
-  rehabIssues: ['hips', 'shoulder', 'back'],
-  rehabExercises: [],
-  profileLevel: 'beginner',
-  profileGoals: ['rehabilitation'],
-  profileEquipment: { pullup_bar: true, dumbbells_max_kg: 4 },
+  return {
+    // ── Spread slice initial state ──
+    ...checkin,
+    ...session,
+    ...ui,
+    ...data,
+    ...demo,
 
-  // Checkin form
-  weight: 0,
-  restHR: 0,
-  hrv: 0,
-  sleepHours: 0,
-  hipPain: 0,
-  shoulderPain: 0,
-  breathing: 'good',
-  notes: '',
-  muscleSoreness: 0,
-  energy: 0,
-  mood: 0,
-  sleepQuality: 0,
-  stress: 0,
+    // todayISO (orchestrator-managed)
+    todayISO: todayISO0,
 
-  // Session form
-  rpe: 0,
-  sessionNote: '',
-  durationMinutes: 45,
-  testPullUps: 0,
-  testPushUps: 0,
-  testPlank: 0,
-  pendingApreResults: [],
-  pendingSetResults: [],
-  postSessionFatigue: 0,
-  postSessionPain: 0,
+    // ── Achievement notification ──
+    pendingAchievement: null,
 
-  // ── Achievement notification ──
-  pendingAchievement: null,
+    // ── Derived ──
+    ...initialDerived,
 
-  // ── updateApreResult ──
-  updateApreResult: (result: ApreExerciseResult) => {
-    const { pendingApreResults } = get();
-    const updated = [
-      ...pendingApreResults.filter(r => r.exerciseName !== result.exerciseName),
-      result,
-    ];
-    set({ pendingApreResults: updated });
-  },
+    // ── Internal recompute ──
+    _recompute: () => {
+      const s = get();
+      const derived = computeDerived(
+        s.sessions,
+        s.checkins,
+        s.startDate,
+        s.trainDays,
+        s.manualOverride,
+        s.todayISO,
+        s.checkinTier,
+        s.virtualTodayOffset,
+        s.selectedSports,
+        s.weeklyTemplate,
+        s.rehabIssues,
+        s.rehabExercises,
+        s.profileLevel,
+        s.profileGoals,
+        s.profileEquipment
+      );
+      set(derived);
+    },
 
-  // ── Set result tracking ──
-  updateSetResult: (result: SetResult) => {
-    const { pendingSetResults } = get();
-    const idx = pendingSetResults.findIndex(
-      r => r.exerciseName === result.exerciseName && r.setNumber === result.setNumber
-    );
-    if (idx >= 0) {
-      const updated = [...pendingSetResults];
-      updated[idx] = result;
-      set({ pendingSetResults: updated });
-    } else {
-      set({ pendingSetResults: [...pendingSetResults, result] });
-    }
-  },
-  setPostSessionFatigue: (v: number) => set({ postSessionFatigue: v }),
-  setPostSessionPain: (v: number) => set({ postSessionPain: v }),
+    // ── App init ──
+    initApp: async () => {
+      const todayISO = makeTodayISO();
+      try {
+        await init();
+        const [allSessions, allCheckins, rawSettings] = await Promise.all([
+          getAllSessions(),
+          getAllCheckins(),
+          getSettings(),
+        ]);
 
-  // UI
-  activeTab: 0,
-  showReadiness: false,
-  manualOverride: 'unknown',
-  toast: { message: '', type: 'success', visible: false },
+        const settings = rawSettings as any;
+        const sd = (settings.startDate as string | null) || todayISO;
+        const td = (settings.trainDays as number[] | null) || [1, 2, 3, 4, 5, 6];
+        const ct = (settings.checkinTier as CheckinTier | null) || 'medium';
+        const sg = (settings.selectedGadgets as string[] | null) || [];
+        const ss = (settings.selectedSports as string[] | null) || ['calisthenics', 'walking', 'stretching'];
+        const ri = (settings.rehabIssues as string[] | null) || ['hips', 'shoulder', 'back'];
+        const re = (settings.rehabExercises as string[] | null) || [];
 
-  // Derived
-  ...initialDerived,
-
-  // Weekly template (NEW)
-  weeklyTemplate: {
-    days: ['calisthenics', 'walking', 'stretching', 'calisthenics', 'walking', 'stretching', null] as (string | null)[],
-    sportOrder: ['calisthenics', 'walking', 'stretching'] as string[],
-  },
-
-  // ── Internal recompute ──
-  _recompute: () => {
-    const s = get();
-    const derived = computeDerived(
-      s.sessions,
-      s.checkins,
-      s.startDate,
-      s.trainDays,
-      s.manualOverride,
-      s.todayISO,
-      s.checkinTier,
-      s.virtualTodayOffset,
-      s.selectedSports,
-      s.weeklyTemplate,
-      s.rehabIssues,
-      s.rehabExercises,
-      s.profileLevel,
-      s.profileGoals,
-      s.profileEquipment
-    );
-    set(derived);
-  },
-
-  // ── App init ──
-  initApp: async () => {
-    const todayISO = makeTodayISO();
-    try {
-      await init();
-      const [allSessions, allCheckins, rawSettings] = await Promise.all([
-        getAllSessions(),
-        getAllCheckins(),
-        getSettings(),
-      ]);
-
-      const settings = rawSettings as any;
-      const sd = (settings.startDate as string | null) || todayISO;
-      const td = (settings.trainDays as number[] | null) || [1, 2, 3, 4, 5, 6];
-      const ct = (settings.checkinTier as CheckinTier | null) || 'medium';
-      const sg = (settings.selectedGadgets as string[] | null) || [];
-      const ss = (settings.selectedSports as string[] | null) || ['calisthenics', 'walking', 'stretching'];
-      const ri = (settings.rehabIssues as string[] | null) || ['hips', 'shoulder', 'back'];
-      const re = (settings.rehabExercises as string[] | null) || [];
-
-      if (!settings.startDate || !settings.trainDays) {
-        await saveSettings({ startDate: sd, trainDays: td });
-      }
-
-      const tc = await getCheckin(todayISO);
-      const ms = await getManualStatus(todayISO);
-      const lt = await getLatestTestResults();
-
-      const vto = ((settings as any).virtualTodayOffset as number | null) || 0;
-      const weeklyTemplateFromSettings = (settings as any).weeklyTemplate as WeeklyTemplate | null;
-      const weeklyTemplate = weeklyTemplateFromSettings || {
-        days: ['calisthenics', 'walking', 'stretching', 'calisthenics', 'walking', 'stretching', null] as (string | null)[],
-        sportOrder: ss,
-      };
-      const manualStatus = (ms || 'unknown') as ManualStatus;
-
-      const hasExistingData = allSessions.length > 0 || allCheckins.length > 0;
-      const onboardingCompleted = isOnboardingCompleted();
-
-      let sessions = allSessions;
-      let checkins = allCheckins;
-      let isGuestMode = false;
-
-      // Guest Mode: no data + onboarding not done → show demo data
-      if (!hasExistingData && !onboardingCompleted) {
-        isGuestMode = true;
-        // Check if guest data exists in sessionStorage (user refreshed page in guest mode)
-        const guestSessions = getGuestSessions();
-        const guestCheckins = getGuestCheckins();
-
-        if (guestSessions.length > 0 || guestCheckins.length > 0) {
-          // Restore guest session data
-          sessions = guestSessions;
-          checkins = guestCheckins;
-        } else {
-          // Generate fresh demo data
-          const demoData = generateDemoData();
-          sessions = demoData.sessions;
-          checkins = demoData.checkins;
-          // Save to sessionStorage for persistence within the session
-          saveGuestSessions(sessions);
-          saveGuestCheckins(checkins);
-          saveGuestSettings(demoData.settings);
+        if (!settings.startDate || !settings.trainDays) {
+          await saveSettings({ startDate: sd, trainDays: td });
         }
+
+        const tc = await getCheckin(todayISO);
+        const ms = await getManualStatus(todayISO);
+        const lt = await getLatestTestResults();
+
+        const vto = ((settings as any).virtualTodayOffset as number | null) || 0;
+        const weeklyTemplateFromSettings = (settings as any).weeklyTemplate as WeeklyTemplate | null;
+        const weeklyTemplate = weeklyTemplateFromSettings || {
+          days: ['calisthenics', 'walking', 'stretching', 'calisthenics', 'walking', 'stretching', null] as (string | null)[],
+          sportOrder: ss,
+        };
+        const manualStatus = (ms || 'unknown') as ManualStatus;
+
+        const hasExistingData = allSessions.length > 0 || allCheckins.length > 0;
+        const onboardingCompleted = isOnboardingCompleted();
+
+        let sessions = allSessions;
+        let checkins = allCheckins;
+        let isGuestMode = false;
+
+        // Guest Mode: no data + onboarding not done → show demo data
+        if (!hasExistingData && !onboardingCompleted) {
+          isGuestMode = true;
+          // Check if guest data exists in sessionStorage (user refreshed page in guest mode)
+          const guestSessions = getGuestSessions();
+          const guestCheckins = getGuestCheckins();
+
+          if (guestSessions.length > 0 || guestCheckins.length > 0) {
+            // Restore guest session data
+            sessions = guestSessions;
+            checkins = guestCheckins;
+          } else {
+            // Generate fresh demo data
+            const demoData = generateDemoData();
+            sessions = demoData.sessions;
+            checkins = demoData.checkins;
+            // Save to sessionStorage for persistence within the session
+            saveGuestSessions(sessions);
+            saveGuestCheckins(checkins);
+            saveGuestSettings(demoData.settings);
+          }
+        }
+
+        const derived = computeDerived(sessions, checkins, sd, td, manualStatus, todayISO, ct, vto, ss, weeklyTemplate, ri, re, (settings.level as any) || 'intermediate', (settings.goals as any) || [], settings.equipment ? JSON.parse(settings.equipment as string) : {});
+
+        set({
+          todayISO,
+          sessions,
+          checkins,
+          startDate: sd,
+          trainDays: td,
+          checkinTier: ct,
+          selectedGadgets: sg,
+          selectedSports: ss,
+          rehabIssues: ri,
+          rehabExercises: re,
+          profileLevel: (settings.level as any) || 'intermediate',
+          profileGoals: (settings.goals as any) || [],
+          profileEquipment: settings.equipment ? JSON.parse(settings.equipment as string) : {},
+          virtualTodayOffset: vto,
+          manualOverride: manualStatus,
+          weight: tc?.weight ?? 0,
+          restHR: tc?.restHR ?? 0,
+          hrv: tc?.hrv ?? 0,
+          sleepHours: tc?.sleepHours ?? 0,
+          hipPain: tc?.hipPain ?? 0,
+          shoulderPain: tc?.shoulderPain ?? 0,
+          breathing: (tc?.breathing ?? 'good') as BreathingStatus,
+          notes: tc?.notes ?? '',
+          muscleSoreness: tc?.muscleSoreness ?? 0,
+          energy: tc?.energy ?? 0,
+          mood: tc?.mood ?? 0,
+          sleepQuality: tc?.sleepQuality ?? 0,
+          stress: tc?.stress ?? 0,
+          testPullUps: lt?.pullUps ?? 0,
+          testPushUps: lt?.pushUps ?? 0,
+          testPlank: lt?.plankSec ?? 0,
+          ...derived,
+          weeklyTemplate,
+          dataLoaded: true,
+          guestMode: isGuestMode,
+        });
+        setVirtualTodayOffsetHelper(vto);
+      } catch (err) {
+        console.error('Failed to load data:', err);
+        set({ dataLoaded: true, todayISO });
       }
+    },
 
-      const derived = computeDerived(sessions, checkins, sd, td, manualStatus, todayISO, ct, vto, ss, weeklyTemplate, ri, re, (settings.level as any) || 'intermediate', (settings.goals as any) || [], settings.equipment ? JSON.parse(settings.equipment as string) : {});
+    // ── Async settings actions (orchestrator — need _recompute) ──
+    setCheckinTier: async (v) => {
+      const s = get();
+      await saveSetting('checkinTier', v);
+      const derived = computeDerived(s.sessions, s.checkins, s.startDate, s.trainDays, s.manualOverride, s.todayISO, v, s.virtualTodayOffset, s.selectedSports, s.weeklyTemplate, s.rehabIssues, s.rehabExercises, s.profileLevel, s.profileGoals, s.profileEquipment);
+      set({ checkinTier: v, ...derived });
+    },
+    setVirtualTodayOffset: async (v) => {
+      const s = get();
+      await saveSetting('virtualTodayOffset', v);
+      setVirtualTodayOffsetHelper(v);
+      const derived = computeDerived(s.sessions, s.checkins, s.startDate, s.trainDays, s.manualOverride, s.todayISO, s.checkinTier, v, s.selectedSports, s.weeklyTemplate, s.rehabIssues, s.rehabExercises, s.profileLevel, s.profileGoals, s.profileEquipment);
+      set({ virtualTodayOffset: v, ...derived });
+    },
+    setSelectedGadgets: async (v) => {
+      await saveSetting('selectedGadgets', v);
+      set({ selectedGadgets: v });
+    },
+    setSelectedSports: async (v) => {
+      await saveSetting('selectedSports', v);
+      set({ selectedSports: v });
+    },
+    setRehabIssues: async (v) => {
+      await saveSetting('rehabIssues', v);
+      set({ rehabIssues: v });
+    },
+    setRehabExercises: async (v) => {
+      await saveSetting('rehabExercises', v);
+      set({ rehabExercises: v });
+    },
+    setProfileLevel: async (v) => {
+      await saveSetting('level', v);
+      set({ profileLevel: v });
+    },
+    setProfileGoals: async (v) => {
+      await saveSetting('goals', v);
+      set({ profileGoals: v });
+    },
+    setProfileEquipment: async (v) => {
+      await saveSetting('equipment', JSON.stringify(v));
+      set({ profileEquipment: v });
+    },
 
+    // ── Toast ──
+    showToast: (message, type = 'success', duration = 2000) => {
+      set({ toast: { message, type, visible: true } });
+      setTimeout(() => set({ toast: { message: '', type: 'success', visible: false } }), duration);
+    },
+
+    // ── Achievement notification ──
+    clearPendingAchievement: () => set({ pendingAchievement: null }),
+
+    // ── UI helpers ──
+    openSettings: () => {
+      const { startDate, trainDays, todayISO } = get();
+      set({ editStartDate: startDate || todayISO, editTrainDays: trainDays, showSettings: true });
+    },
+
+    toggleDay: day => {
+      const { editTrainDays } = get();
       set({
-        todayISO,
-        sessions,
-        checkins,
-        startDate: sd,
-        trainDays: td,
-        checkinTier: ct,
-        selectedGadgets: sg,
-        selectedSports: ss,
-        rehabIssues: ri,
-        rehabExercises: re,
-        profileLevel: (settings.level as any) || 'intermediate',
-        profileGoals: (settings.goals as any) || [],
-        profileEquipment: settings.equipment ? JSON.parse(settings.equipment as string) : {},
-        virtualTodayOffset: vto,
-        manualOverride: manualStatus,
-        weight: tc?.weight ?? 0,
-        restHR: tc?.restHR ?? 0,
-        hrv: tc?.hrv ?? 0,
-        sleepHours: tc?.sleepHours ?? 0,
-        hipPain: tc?.hipPain ?? 0,
-        shoulderPain: tc?.shoulderPain ?? 0,
-        breathing: (tc?.breathing ?? 'good') as BreathingStatus,
-        notes: tc?.notes ?? '',
-        muscleSoreness: tc?.muscleSoreness ?? 0,
-        energy: tc?.energy ?? 0,
-        mood: tc?.mood ?? 0,
-        sleepQuality: tc?.sleepQuality ?? 0,
-        stress: tc?.stress ?? 0,
-        testPullUps: lt?.pullUps ?? 0,
-        testPushUps: lt?.pushUps ?? 0,
-        testPlank: lt?.plankSec ?? 0,
-        ...derived,
-        weeklyTemplate,
-        dataLoaded: true,
-        guestMode: isGuestMode,
+        editTrainDays: editTrainDays.includes(day)
+          ? editTrainDays.filter(d => d !== day)
+          : [...editTrainDays, day].sort((a, b) => a - b),
       });
-      setVirtualTodayOffsetHelper(vto);
-    } catch (err) {
-      console.error('Failed to load data:', err);
-      set({ dataLoaded: true, todayISO });
-    }
-  },
+    },
 
-  // ── Form setters ──
-  setWeight: v => set({ weight: v }),
-  setRestHR: v => set({ restHR: v }),
-  setHrv: v => set({ hrv: v }),
-  setSleepHours: v => set({ sleepHours: v }),
-  setHipPain: v => set({ hipPain: v }),
-  setShoulderPain: v => set({ shoulderPain: v }),
-  setBreathing: v => set({ breathing: v }),
-  setNotes: v => set({ notes: v }),
-  setMuscleSoreness: v => set({ muscleSoreness: v }),
-  setEnergy: v => set({ energy: v }),
-  setMood: v => set({ mood: v }),
-  setSleepQuality: v => set({ sleepQuality: v }),
-  setStress: v => set({ stress: v }),
-  setRpe: v => set({ rpe: v }),
-  setSessionNote: v => set({ sessionNote: v }),
-  setDurationMinutes: v => set({ durationMinutes: v }),
-  setTestPullUps: v => set({ testPullUps: v }),
-  setTestPushUps: v => set({ testPushUps: v }),
-  setTestPlank: v => set({ testPlank: v }),
-
-  // ── UI setters ──
-  setActiveTab: v => set({ activeTab: v }),
-  setShowReadiness: v => set({ showReadiness: v }),
-  setShowSettings: v => set({ showSettings: v }),
-  setShowResetConfirm: v => set({ showResetConfirm: v }),
-  setEditStartDate: v => set({ editStartDate: v }),
-  setEditTrainDays: v => set({ editTrainDays: v }),
-  setVirtualTodayOffset: async (v: number) => {
-    const s = get();
-    await saveSetting('virtualTodayOffset', v);
-    setVirtualTodayOffsetHelper(v);
-    const derived = computeDerived(s.sessions, s.checkins, s.startDate, s.trainDays, s.manualOverride, s.todayISO, s.checkinTier, v, s.selectedSports, s.weeklyTemplate, s.rehabIssues, s.rehabExercises, s.profileLevel, s.profileGoals, s.profileEquipment);
-    set({ virtualTodayOffset: v, ...derived });
-  },
-
-  setCheckinTier: async (v) => {
-    const s = get();
-    await saveSetting('checkinTier', v);
-    const derived = computeDerived(s.sessions, s.checkins, s.startDate, s.trainDays, s.manualOverride, s.todayISO, v, s.virtualTodayOffset, s.selectedSports, s.weeklyTemplate, s.rehabIssues, s.rehabExercises, s.profileLevel, s.profileGoals, s.profileEquipment);
-    set({ checkinTier: v, ...derived });
-  },
-  setSelectedGadgets: async (v) => {
-    await saveSetting('selectedGadgets', v);
-    set({ selectedGadgets: v });
-  },
-  setSelectedSports: async (v) => {
-    await saveSetting('selectedSports', v);
-    set({ selectedSports: v });
-  },
-  setRehabIssues: async (v) => {
-    await saveSetting('rehabIssues', v);
-    set({ rehabIssues: v });
-  },
-  setRehabExercises: async (v) => {
-    await saveSetting('rehabExercises', v);
-    set({ rehabExercises: v });
-  },
-  setProfileLevel: async (v) => {
-    await saveSetting('level', v);
-    set({ profileLevel: v });
-  },
-  setProfileGoals: async (v) => {
-    await saveSetting('goals', v);
-    set({ profileGoals: v });
-  },
-  setProfileEquipment: async (v) => {
-    await saveSetting('equipment', JSON.stringify(v));
-    set({ profileEquipment: v });
-  },
-
-  showToast: (message, type = 'success', duration = 2000) => {
-    set({ toast: { message, type, visible: true } });
-    setTimeout(() => set({ toast: { message: '', type: 'success', visible: false } }), duration);
-  },
-
-  // ── Achievement notification ──
-  clearPendingAchievement: () => set({ pendingAchievement: null }),
-
-  openSettings: () => {
-    const { startDate, trainDays, todayISO } = get();
-    set({ editStartDate: startDate || todayISO, editTrainDays: trainDays, showSettings: true });
-  },
-
-  toggleDay: day => {
-    const { editTrainDays } = get();
-    set({
-      editTrainDays: editTrainDays.includes(day)
-        ? editTrainDays.filter(d => d !== day)
-        : [...editTrainDays, day].sort((a, b) => a - b),
-    });
-  },
-
-  // ── Async actions ──
-  handleSaveSettings: async () => {
-    const { editStartDate, editTrainDays, showToast: toast, sessions, checkins, manualOverride, todayISO, checkinTier, selectedSports, weeklyTemplate, rehabIssues, rehabExercises, guestMode } = get();
-    try {
-      if (guestMode) {
-        saveGuestSettings({ startDate: editStartDate, trainDays: editTrainDays });
+    // ── Async actions ──
+    handleSaveSettings: async () => {
+      const { editStartDate, editTrainDays, showToast: toast, sessions, checkins, manualOverride, todayISO, checkinTier, selectedSports, weeklyTemplate, rehabIssues, rehabExercises, guestMode } = get();
+      try {
+        if (guestMode) {
+          saveGuestSettings({ startDate: editStartDate, trainDays: editTrainDays });
+          const derived = computeDerived(sessions, checkins, editStartDate, editTrainDays, manualOverride, todayISO, checkinTier, 0, selectedSports, weeklyTemplate, rehabIssues, rehabExercises, get().profileLevel, get().profileGoals, get().profileEquipment);
+          set({ startDate: editStartDate, trainDays: editTrainDays, showSettings: false, ...derived, showGuestModal: true });
+          toast('Настройки сохранены временно');
+          return;
+        }
+        await saveSettings({ startDate: editStartDate, trainDays: editTrainDays });
         const derived = computeDerived(sessions, checkins, editStartDate, editTrainDays, manualOverride, todayISO, checkinTier, 0, selectedSports, weeklyTemplate, rehabIssues, rehabExercises, get().profileLevel, get().profileGoals, get().profileEquipment);
-        set({ startDate: editStartDate, trainDays: editTrainDays, showSettings: false, ...derived, showGuestModal: true });
-        toast('Настройки сохранены временно');
-        return;
+        set({ startDate: editStartDate, trainDays: editTrainDays, showSettings: false, ...derived });
+        toast('Настройки сохранены');
+      } catch (err) {
+        console.error('Failed to save settings:', err);
+        toast('Ошибка при сохранении настроек', 'error');
       }
-      await saveSettings({ startDate: editStartDate, trainDays: editTrainDays });
-      const derived = computeDerived(sessions, checkins, editStartDate, editTrainDays, manualOverride, todayISO, checkinTier, 0, selectedSports, weeklyTemplate, rehabIssues, rehabExercises, get().profileLevel, get().profileGoals, get().profileEquipment);
-      set({ startDate: editStartDate, trainDays: editTrainDays, showSettings: false, ...derived });
-      toast('Настройки сохранены');
-    } catch (err) {
-      console.error('Failed to save settings:', err);
-      toast('Ошибка при сохранении настроек', 'error');
-    }
-  },
+    },
 
-  handleSaveCheckin: async () => {
-    const s = get();
-    const checkin: Checkin = {
-      date: s.todayISO,
-      sleepHours: s.sleepHours,
-      restHR: s.restHR,
-      hrv: s.hrv,
-      hipPain: s.hipPain,
-      shoulderPain: s.shoulderPain,
-      breathing: s.breathing,
-      weight: s.weight,
-      notes: s.notes,
-      muscleSoreness: s.muscleSoreness,
-      energy: s.energy,
-      mood: s.mood,
-      sleepQuality: s.sleepQuality,
-      stress: s.stress,
-      readiness: s.autoReadiness,
-      ts: Date.now(),
-    };
-    try {
-      const newCheckins = [...s.checkins.filter(c => c.date !== s.todayISO), checkin];
+    handleSaveCheckin: async () => {
+      const s = get();
+      const checkin: Checkin = {
+        date: s.todayISO,
+        sleepHours: s.sleepHours,
+        restHR: s.restHR,
+        hrv: s.hrv,
+        hipPain: s.hipPain,
+        shoulderPain: s.shoulderPain,
+        breathing: s.breathing,
+        weight: s.weight,
+        notes: s.notes,
+        muscleSoreness: s.muscleSoreness,
+        energy: s.energy,
+        mood: s.mood,
+        sleepQuality: s.sleepQuality,
+        stress: s.stress,
+        readiness: s.autoReadiness,
+        ts: Date.now(),
+      };
+      try {
+        const newCheckins = [...s.checkins.filter(c => c.date !== s.todayISO), checkin];
+
+        if (s.guestMode) {
+          saveGuestCheckins(newCheckins);
+          const derived = computeDerived(s.sessions, newCheckins, s.startDate, s.trainDays, s.manualOverride, s.todayISO, s.checkinTier, s.virtualTodayOffset, s.selectedSports, s.weeklyTemplate, s.rehabIssues, s.rehabExercises, s.profileLevel, s.profileGoals, s.profileEquipment);
+          set({ checkins: newCheckins, ...derived, showGuestModal: true });
+          s.showToast('Чек-ин сохранён временно');
+          return;
+        }
+
+        await saveCheckin(checkin);
+
+        // Check for newly unlocked achievements
+        const newAchievements = await checkAchievements(
+          s.sessions,
+          newCheckins,
+          s.trainDays,
+          s.startDate
+        );
+
+        const derived = computeDerived(s.sessions, newCheckins, s.startDate, s.trainDays, s.manualOverride, s.todayISO, s.checkinTier, s.virtualTodayOffset, s.selectedSports, s.weeklyTemplate, s.rehabIssues, s.rehabExercises, s.profileLevel, s.profileGoals, s.profileEquipment);
+
+        // Show achievement toast for the first new achievement
+        if (newAchievements.length > 0) {
+          set({
+            checkins: newCheckins,
+            ...derived,
+            pendingAchievement: {
+              key: newAchievements[0].key,
+              name: newAchievements[0].name,
+              tier: newAchievements[0].tier,
+              icon: newAchievements[0].icon,
+            }
+          });
+        } else {
+          set({ checkins: newCheckins, ...derived });
+        }
+
+        s.showToast('Чек-ин сохранён');
+      } catch (err) {
+        console.error('Failed to save checkin:', err);
+        s.showToast('Ошибка при сохранении чек-ина', 'error');
+      }
+    },
+
+    handleManualOverrideChange: async status => {
+      const { todayISO, sessions, checkins, startDate, trainDays, checkinTier, selectedSports, weeklyTemplate, rehabIssues, rehabExercises } = get();
+      await saveManualStatus(todayISO, status);
+      const derived = computeDerived(sessions, checkins, startDate, trainDays, status, todayISO, checkinTier, 0, selectedSports, weeklyTemplate, rehabIssues, rehabExercises, get().profileLevel, get().profileGoals, get().profileEquipment);
+      set({ manualOverride: status, ...derived });
+    },
+
+    handleMarkMorning: async () => {
+      const { todayISO, sessions, checkins, startDate, trainDays, manualOverride, autoReadiness, checkinTier, selectedSports, guestMode } = get();
+      const key = `${todayISO}_morning`;
+      const existing = sessions.find(s => s.key === key);
+      let newSessions: Session[];
+      if (existing) {
+        if (!guestMode) await deleteSession(key);
+        newSessions = sessions.filter(s => s.key !== key);
+      } else {
+        const session: Session = { key, date: todayISO, type: 'morning', completed: true, readiness: autoReadiness, rpe: 0, notes: '', updatedAt: Date.now() };
+        if (!guestMode) await saveSession(session);
+        newSessions = [...sessions.filter(s => s.key !== key), session];
+      }
+      if (guestMode) saveGuestSessions(newSessions);
+      const derived = computeDerived(newSessions, checkins, startDate, trainDays, manualOverride, todayISO, checkinTier, 0, selectedSports, get().weeklyTemplate, get().rehabIssues, get().rehabExercises, get().profileLevel, get().profileGoals, get().profileEquipment);
+      set({ sessions: newSessions, ...derived, ...(guestMode ? { showGuestModal: true } : {}) });
+    },
+
+    handleMarkEvening: async () => {
+      const { todayISO, sessions, checkins, startDate, trainDays, manualOverride, autoReadiness, checkinTier, selectedSports, guestMode } = get();
+      const key = `${todayISO}_evening`;
+      const existing = sessions.find(s => s.key === key);
+      let newSessions: Session[];
+      if (existing) {
+        if (!guestMode) await deleteSession(key);
+        newSessions = sessions.filter(s => s.key !== key);
+      } else {
+        const session: Session = { key, date: todayISO, type: 'evening', completed: true, readiness: autoReadiness, rpe: 0, notes: '', updatedAt: Date.now() };
+        if (!guestMode) await saveSession(session);
+        newSessions = [...sessions.filter(s => s.key !== key), session];
+      }
+      if (guestMode) saveGuestSessions(newSessions);
+      const derived = computeDerived(newSessions, checkins, startDate, trainDays, manualOverride, todayISO, checkinTier, 0, selectedSports, get().weeklyTemplate, get().rehabIssues, get().rehabExercises, get().profileLevel, get().profileGoals, get().profileEquipment);
+      set({ sessions: newSessions, ...derived, ...(guestMode ? { showGuestModal: true } : {}) });
+    },
+
+    handleToggleTraining: async () => {
+      const s = get();
+      const key = `${s.todayISO}_${s.sessionPlan?.sport || s.sessionPlan?.sessionType || 'unknown'}`;
+      const existing = s.sessions.find(sess => sess.key === key);
+      let newSessions: Session[];
+      if (existing && existing.completed) {
+        if (!s.guestMode) await deleteSession(key);
+        newSessions = s.sessions.filter(sess => sess.key !== key);
+        s.showToast('Тренировка отменена');
+      } else {
+        const sessionLoad = calculateSessionLoad(s.rpe, s.durationMinutes);
+        // Group pendingSetResults by exerciseName to build ExerciseResult[]
+        const exerciseMap: Record<string, { completedSets: number; repsPerSet: number[] }> = {};
+        for (const sr of s.pendingSetResults) {
+          const name = sr.exerciseName || 'unknown';
+          if (!exerciseMap[name]) exerciseMap[name] = { completedSets: 0, repsPerSet: [] };
+          if (sr.completed) {
+            exerciseMap[name].completedSets += 1;
+            exerciseMap[name].repsPerSet.push(sr.repsDone);
+          }
+        }
+        const exerciseResults = Object.entries(exerciseMap).map(([exerciseName, data]) => ({
+          exerciseName,
+          plannedSets: 0,
+          completedSets: data.completedSets,
+          repsPerSet: data.repsPerSet,
+          completed: data.completedSets > 0,
+        }));
+        const session: Session = {
+          key,
+          date: s.todayISO,
+          type: s.sessionPlan?.sport as Session['type'] || s.sessionPlan?.sessionType as Session['type'] || 'unknown',
+          completed: true,
+          readiness: s.autoReadiness,
+          rpe: s.rpe,
+          durationMinutes: s.durationMinutes,
+          sessionLoad,
+          hipPain: s.hipPain,
+          shoulderPain: s.shoulderPain,
+          notes: s.sessionNote,
+          testResults: { pullUps: s.testPullUps, pushUps: s.testPushUps, plankSec: s.testPlank },
+          mode: s.sessionPlan?.mode || 'full',
+          updatedAt: Date.now(),
+          ...(s.pendingApreResults.length > 0 && { apreResults: s.pendingApreResults }),
+          ...(exerciseResults.length > 0 && { exerciseResults }),
+          ...(s.postSessionFatigue !== undefined && { postSessionFatigue: s.postSessionFatigue }),
+          ...(s.postSessionPain !== undefined && { postSessionPain: s.postSessionPain }),
+        };
+        if (!s.guestMode) await saveSession(session);
+        newSessions = [...s.sessions.filter(sess => sess.key !== key), session];
+        s.showToast('Тренировка сохранена');
+      }
 
       if (s.guestMode) {
-        saveGuestCheckins(newCheckins);
-        const derived = computeDerived(s.sessions, newCheckins, s.startDate, s.trainDays, s.manualOverride, s.todayISO, s.checkinTier, s.virtualTodayOffset, s.selectedSports, s.weeklyTemplate, s.rehabIssues, s.rehabExercises, s.profileLevel, s.profileGoals, s.profileEquipment);
-        set({ checkins: newCheckins, ...derived, showGuestModal: true });
-        s.showToast('Чек-ин сохранён временно');
+        saveGuestSessions(newSessions);
+        const derived = computeDerived(newSessions, s.checkins, s.startDate, s.trainDays, s.manualOverride, s.todayISO, s.checkinTier, s.virtualTodayOffset, s.selectedSports, s.weeklyTemplate, s.rehabIssues, s.rehabExercises, s.profileLevel, s.profileGoals, s.profileEquipment);
+        set({ sessions: newSessions, rpe: 0, sessionNote: '', durationMinutes: 45, pendingApreResults: [], pendingSetResults: [], postSessionFatigue: undefined, postSessionPain: undefined, ...derived, showGuestModal: true });
         return;
       }
-
-      await saveCheckin(checkin);
 
       // Check for newly unlocked achievements
       const newAchievements = await checkAchievements(
-        s.sessions,
-        newCheckins,
+        newSessions,
+        s.checkins,
         s.trainDays,
         s.startDate
       );
 
-      const derived = computeDerived(s.sessions, newCheckins, s.startDate, s.trainDays, s.manualOverride, s.todayISO, s.checkinTier, s.virtualTodayOffset, s.selectedSports, s.weeklyTemplate, s.rehabIssues, s.rehabExercises, s.profileLevel, s.profileGoals, s.profileEquipment);
+      const derived = computeDerived(newSessions, s.checkins, s.startDate, s.trainDays, s.manualOverride, s.todayISO, s.checkinTier, s.virtualTodayOffset, s.selectedSports, s.weeklyTemplate, s.rehabIssues, s.rehabExercises, s.profileLevel, s.profileGoals, s.profileEquipment);
 
-      // Show achievement toast for the first new achievement
       if (newAchievements.length > 0) {
         set({
-          checkins: newCheckins,
+          sessions: newSessions,
+          rpe: 0,
+          sessionNote: '',
+          durationMinutes: 45,
+          pendingApreResults: [],
+          pendingSetResults: [],
+          postSessionFatigue: undefined,
+          postSessionPain: undefined,
           ...derived,
           pendingAchievement: {
             key: newAchievements[0].key,
@@ -818,538 +868,397 @@ export const useAppStore = create<AppStore>((set, get) => ({
           }
         });
       } else {
-        set({ checkins: newCheckins, ...derived });
+        set({ sessions: newSessions, rpe: 0, sessionNote: '', durationMinutes: 45, pendingApreResults: [], pendingSetResults: [], postSessionFatigue: undefined, postSessionPain: undefined, ...derived });
       }
+    },
 
-      s.showToast('Чек-ин сохранён');
-    } catch (err) {
-      console.error('Failed to save checkin:', err);
-      s.showToast('Ошибка при сохранении чек-ина', 'error');
-    }
-  },
-
-  handleManualOverrideChange: async status => {
-    const { todayISO, sessions, checkins, startDate, trainDays, checkinTier, selectedSports, weeklyTemplate, rehabIssues, rehabExercises } = get();
-    await saveManualStatus(todayISO, status);
-    const derived = computeDerived(sessions, checkins, startDate, trainDays, status, todayISO, checkinTier, 0, selectedSports, weeklyTemplate, rehabIssues, rehabExercises, get().profileLevel, get().profileGoals, get().profileEquipment);
-    set({ manualOverride: status, ...derived });
-  },
-
-  handleMarkMorning: async () => {
-    const { todayISO, sessions, checkins, startDate, trainDays, manualOverride, autoReadiness, checkinTier, selectedSports, guestMode } = get();
-    const key = `${todayISO}_morning`;
-    const existing = sessions.find(s => s.key === key);
-    let newSessions: Session[];
-    if (existing) {
-      if (!guestMode) await deleteSession(key);
-      newSessions = sessions.filter(s => s.key !== key);
-    } else {
-      const session: Session = { key, date: todayISO, type: 'morning', completed: true, readiness: autoReadiness, rpe: 0, notes: '', updatedAt: Date.now() };
-      if (!guestMode) await saveSession(session);
-      newSessions = [...sessions.filter(s => s.key !== key), session];
-    }
-    if (guestMode) saveGuestSessions(newSessions);
-    const derived = computeDerived(newSessions, checkins, startDate, trainDays, manualOverride, todayISO, checkinTier, 0, selectedSports, get().weeklyTemplate, get().rehabIssues, get().rehabExercises, get().profileLevel, get().profileGoals, get().profileEquipment);
-    set({ sessions: newSessions, ...derived, ...(guestMode ? { showGuestModal: true } : {}) });
-  },
-
-  handleMarkEvening: async () => {
-    const { todayISO, sessions, checkins, startDate, trainDays, manualOverride, autoReadiness, checkinTier, selectedSports, guestMode } = get();
-    const key = `${todayISO}_evening`;
-    const existing = sessions.find(s => s.key === key);
-    let newSessions: Session[];
-    if (existing) {
-      if (!guestMode) await deleteSession(key);
-      newSessions = sessions.filter(s => s.key !== key);
-    } else {
-      const session: Session = { key, date: todayISO, type: 'evening', completed: true, readiness: autoReadiness, rpe: 0, notes: '', updatedAt: Date.now() };
-      if (!guestMode) await saveSession(session);
-      newSessions = [...sessions.filter(s => s.key !== key), session];
-    }
-    if (guestMode) saveGuestSessions(newSessions);
-    const derived = computeDerived(newSessions, checkins, startDate, trainDays, manualOverride, todayISO, checkinTier, 0, selectedSports, get().weeklyTemplate, get().rehabIssues, get().rehabExercises, get().profileLevel, get().profileGoals, get().profileEquipment);
-    set({ sessions: newSessions, ...derived, ...(guestMode ? { showGuestModal: true } : {}) });
-  },
-
-  handleToggleTraining: async () => {
-    const s = get();
-    const key = `${s.todayISO}_${s.sessionPlan?.sport || s.sessionPlan?.sessionType || 'unknown'}`;
-    const existing = s.sessions.find(sess => sess.key === key);
-    let newSessions: Session[];
-    if (existing && existing.completed) {
-      if (!s.guestMode) await deleteSession(key);
-      newSessions = s.sessions.filter(sess => sess.key !== key);
-      s.showToast('Тренировка отменена');
-    } else {
-      const sessionLoad = calculateSessionLoad(s.rpe, s.durationMinutes);
-      // Group pendingSetResults by exerciseName to build ExerciseResult[]
-      const exerciseMap: Record<string, { completedSets: number; repsPerSet: number[] }> = {};
-      for (const sr of s.pendingSetResults) {
-        const name = sr.exerciseName || 'unknown';
-        if (!exerciseMap[name]) exerciseMap[name] = { completedSets: 0, repsPerSet: [] };
-        if (sr.completed) {
-          exerciseMap[name].completedSets += 1;
-          exerciseMap[name].repsPerSet.push(sr.repsDone);
-        }
-      }
-      const exerciseResults = Object.entries(exerciseMap).map(([exerciseName, data]) => ({
-        exerciseName,
-        plannedSets: 0,
-        completedSets: data.completedSets,
-        repsPerSet: data.repsPerSet,
-        completed: data.completedSets > 0,
-      }));
-      const session: Session = {
-        key,
-        date: s.todayISO,
-        type: s.sessionPlan?.sport as Session['type'] || s.sessionPlan?.sessionType as Session['type'] || 'unknown',
-        completed: true,
-        readiness: s.autoReadiness,
-        rpe: s.rpe,
-        durationMinutes: s.durationMinutes,
-        sessionLoad,
-        hipPain: s.hipPain,
-        shoulderPain: s.shoulderPain,
-        notes: s.sessionNote,
-        testResults: { pullUps: s.testPullUps, pushUps: s.testPushUps, plankSec: s.testPlank },
-        mode: s.sessionPlan?.mode || 'full',
-        updatedAt: Date.now(),
-        ...(s.pendingApreResults.length > 0 && { apreResults: s.pendingApreResults }),
-        ...(exerciseResults.length > 0 && { exerciseResults }),
-        ...(s.postSessionFatigue !== undefined && { postSessionFatigue: s.postSessionFatigue }),
-        ...(s.postSessionPain !== undefined && { postSessionPain: s.postSessionPain }),
-      };
-      if (!s.guestMode) await saveSession(session);
-      newSessions = [...s.sessions.filter(sess => sess.key !== key), session];
-      s.showToast('Тренировка сохранена');
-    }
-
-    if (s.guestMode) {
-      saveGuestSessions(newSessions);
-      const derived = computeDerived(newSessions, s.checkins, s.startDate, s.trainDays, s.manualOverride, s.todayISO, s.checkinTier, s.virtualTodayOffset, s.selectedSports, s.weeklyTemplate, s.rehabIssues, s.rehabExercises, s.profileLevel, s.profileGoals, s.profileEquipment);
-      set({ sessions: newSessions, rpe: 0, sessionNote: '', durationMinutes: 45, pendingApreResults: [], pendingSetResults: [], postSessionFatigue: undefined, postSessionPain: undefined, ...derived, showGuestModal: true });
-      return;
-    }
-
-    // Check for newly unlocked achievements
-    const newAchievements = await checkAchievements(
-      newSessions,
-      s.checkins,
-      s.trainDays,
-      s.startDate
-    );
-
-    const derived = computeDerived(newSessions, s.checkins, s.startDate, s.trainDays, s.manualOverride, s.todayISO, s.checkinTier, s.virtualTodayOffset, s.selectedSports, s.weeklyTemplate, s.rehabIssues, s.rehabExercises, s.profileLevel, s.profileGoals, s.profileEquipment);
-
-    if (newAchievements.length > 0) {
-      set({
-        sessions: newSessions,
-        rpe: 0,
-        sessionNote: '',
-        durationMinutes: 45,
-        pendingApreResults: [],
-        pendingSetResults: [],
-        postSessionFatigue: undefined,
-        postSessionPain: undefined,
-        ...derived,
-        pendingAchievement: {
-          key: newAchievements[0].key,
-          name: newAchievements[0].name,
-          tier: newAchievements[0].tier,
-          icon: newAchievements[0].icon,
-        }
-      });
-    } else {
-      set({ sessions: newSessions, rpe: 0, sessionNote: '', durationMinutes: 45, pendingApreResults: [], pendingSetResults: [], postSessionFatigue: undefined, postSessionPain: undefined, ...derived });
-    }
-  },
-
-  handleExportData: async () => {
-    const { todayISO, showToast: toast, sessions, checkins } = get();
-    try {
-      const data = await exportAllData();
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `fitness-export-${todayISO}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-      toast(`Экспортировано: ${sessions.length} тренировок, ${checkins.length} чек-инов`);
-    } catch (err) {
-      console.error('Export failed:', err);
-      toast('Ошибка при экспорте данных', 'error');
-    }
-  },
-
-  handleImportData: async (file: File) => {
-    const { showToast: toast, startDate, trainDays, manualOverride, todayISO, checkinTier, sessions: currentSessions, checkins: currentCheckins } = get();
-    try {
-      // File size check (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        throw new Error('Файл слишком большой (макс. 5 МБ)');
-      }
-      // File type check
-      if (!file.name.endsWith('.json') && file.type !== 'application/json') {
-        throw new Error('Ожидается файл JSON');
-      }
-
-      const text = await file.text();
-      if (!text.trim()) {
-        throw new Error('Файл пуст');
-      }
-
-      let data: any;
+    handleExportData: async () => {
+      const { todayISO, showToast: toast, sessions, checkins } = get();
       try {
-        data = JSON.parse(text);
-      } catch {
-        throw new Error('Невалидный JSON: проверьте синтаксис файла');
+        const data = await exportAllData();
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `fitness-export-${todayISO}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        toast(`Экспортировано: ${sessions.length} тренировок, ${checkins.length} чек-инов`);
+      } catch (err) {
+        console.error('Export failed:', err);
+        toast('Ошибка при экспорте данных', 'error');
       }
+    },
 
-      // Validate data structure
-      if (!data || typeof data !== 'object' || Array.isArray(data)) {
-        throw new Error('Некорректный формат: ожидался объект с данными');
+    handleImportData: async (file: File) => {
+      const { showToast: toast, startDate, trainDays, manualOverride, todayISO, checkinTier, sessions: currentSessions, checkins: currentCheckins } = get();
+      try {
+        // File size check (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+          throw new Error('Файл слишком большой (макс. 5 МБ)');
+        }
+        // File type check
+        if (!file.name.endsWith('.json') && file.type !== 'application/json') {
+          throw new Error('Ожидается файл JSON');
+        }
+
+        const text = await file.text();
+        if (!text.trim()) {
+          throw new Error('Файл пуст');
+        }
+
+        let data: any;
+        try {
+          data = JSON.parse(text);
+        } catch {
+          throw new Error('Невалидный JSON: проверьте синтаксис файла');
+        }
+
+        // Validate data structure
+        if (!data || typeof data !== 'object' || Array.isArray(data)) {
+          throw new Error('Некорректный формат: ожидался объект с данными');
+        }
+
+        // Check version compatibility
+        if (data.version && typeof data.version === 'number' && data.version > 3) {
+          throw new Error(`Неподдерживаемая версия экспорта: ${data.version}. Обновите приложение.`);
+        }
+
+        // Warn if replacing existing data
+        const hasExistingData = (currentSessions && currentSessions.length > 0) || (currentCheckins && currentCheckins.length > 0);
+        if (hasExistingData) {
+          // Create backup before import
+          try {
+            const backup = await exportAllData();
+            const backupKey = `fitness-backup-before-import-${Date.now()}`;
+            localStorage.setItem(backupKey, JSON.stringify(backup));
+            // Keep only last 5 backups
+            const backupKeys = Object.keys(localStorage).filter(k => k.startsWith('fitness-backup-')).sort();
+            while (backupKeys.length > 5) {
+              localStorage.removeItem(backupKeys.shift()!);
+            }
+          } catch (backupErr) {
+            console.warn('Failed to create backup before import:', backupErr);
+          }
+        }
+
+        await importAllData(data);
+        const [allSessions, allCheckins] = await Promise.all([getAllSessions(), getAllCheckins()]);
+        const derived = computeDerived(allSessions, allCheckins, startDate, trainDays, manualOverride, todayISO, checkinTier, 0, get().selectedSports, get().weeklyTemplate, get().rehabIssues, get().rehabExercises, get().profileLevel, get().profileGoals, get().profileEquipment);
+        set({ sessions: allSessions, checkins: allCheckins, ...derived });
+        toast(`Данные импортированы: ${allSessions.length} тренировок, ${allCheckins.length} чек-инов`);
+      } catch (err) {
+        console.error('Import failed:', err);
+        const msg = err instanceof Error ? err.message : 'Не удалось импортировать файл. Проверьте формат JSON.';
+        toast(msg, 'error');
+        throw err; // Re-throw so caller can handle
       }
+    },
 
-      // Check version compatibility
-      if (data.version && typeof data.version === 'number' && data.version > 3) {
-        throw new Error(`Неподдерживаемая версия экспорта: ${data.version}. Обновите приложение.`);
+    handleResetAll: () => {
+      set({ showResetConfirm: true });
+    },
+
+    confirmResetData: async () => {
+      const { todayISO, showToast, selectedSports } = get();
+      try {
+        await clearAllData();
+        await saveSettings({ startDate: todayISO, trainDays: [1, 3, 5] });
+         const derived = computeDerived([], [], todayISO, [1, 3, 5], 'unknown', todayISO, 'medium', 0, selectedSports, get().weeklyTemplate, [], [], 'intermediate', [], {});
+        set({
+          sessions: [],
+          checkins: [],
+          rpe: 0,
+          sessionNote: '',
+          startDate: todayISO,
+          trainDays: [1, 3, 5],
+          showResetConfirm: false,
+          pendingAchievement: null,
+          ...derived,
+        });
+        showToast('Все данные удалены');
+      } catch (err) {
+        console.error('Reset failed:', err);
+        showToast('Ошибка при сбросе данных', 'error');
       }
+    },
 
-      // Warn if replacing existing data
+  // ── Demo Mode ──
+    activateDemoMode: async () => {
+      const { showToast, sessions: currentSessions, checkins: currentCheckins } = get();
+
+      // Backup existing data before activating demo
       const hasExistingData = (currentSessions && currentSessions.length > 0) || (currentCheckins && currentCheckins.length > 0);
       if (hasExistingData) {
-        // Create backup before import
         try {
           const backup = await exportAllData();
-          const backupKey = `fitness-backup-before-import-${Date.now()}`;
+          const backupKey = `fitness-backup-before-demo-${Date.now()}`;
           localStorage.setItem(backupKey, JSON.stringify(backup));
           // Keep only last 5 backups
           const backupKeys = Object.keys(localStorage).filter(k => k.startsWith('fitness-backup-')).sort();
           while (backupKeys.length > 5) {
             localStorage.removeItem(backupKeys.shift()!);
           }
+          showToast('Резервная копия создана перед активацией демо');
         } catch (backupErr) {
-          console.warn('Failed to create backup before import:', backupErr);
+          console.warn('Failed to create backup before demo:', backupErr);
         }
       }
 
-      await importAllData(data);
-      const [allSessions, allCheckins] = await Promise.all([getAllSessions(), getAllCheckins()]);
-      const derived = computeDerived(allSessions, allCheckins, startDate, trainDays, manualOverride, todayISO, checkinTier, 0, get().selectedSports, get().weeklyTemplate, get().rehabIssues, get().rehabExercises, get().profileLevel, get().profileGoals, get().profileEquipment);
-      set({ sessions: allSessions, checkins: allCheckins, ...derived });
-      toast(`Данные импортированы: ${allSessions.length} тренировок, ${allCheckins.length} чек-инов`);
-    } catch (err) {
-      console.error('Import failed:', err);
-      const msg = err instanceof Error ? err.message : 'Не удалось импортировать файл. Проверьте формат JSON.';
-      toast(msg, 'error');
-      throw err; // Re-throw so caller can handle
-    }
-  },
+      const { generateDemoData } = await import('../core/demoData.js');
+      const demoData = generateDemoData();
+      await activateDemoData(demoData);
+      // Reload all data from demo DB
+      const [allSessions, allCheckins] = await Promise.all([
+        getActiveDatabase().sessions.toArray() as any,
+        getActiveDatabase().checkins.toArray() as any,
+      ]);
+      // Set offset to -15 (midpoint of 30-day demo data) so first day of demo is shown
+      const demoOffset = -15;
+      // Use 'running' as default sport for demo data
+      const selectedSports = ['running'];
+        const derived = computeDerived(allSessions, allCheckins, allSessions.length > 0 ? allSessions[0].date : null, [1, 3, 5], 'unknown', allCheckins.length > 0 ? allCheckins[allCheckins.length - 1].date : formatISO(new Date()), 'medium', demoOffset, selectedSports, {
+          days: ['running', 'strength', null, 'running', 'strength', null, 'running'],
+          sportOrder: ['running'],
+        }, [], [], 'intermediate', [], {});
+      setVirtualTodayOffsetHelper(demoOffset);
+      set({ ...derived, demoMode: true, dataLoaded: true, trainDays: [1, 3, 5], selectedSports, startDate: allSessions.length > 0 ? allSessions[0].date : formatISO(new Date()), virtualTodayOffset: demoOffset });
+    },
 
-  handleResetAll: () => {
-    set({ showResetConfirm: true });
-  },
+    deactivateDemoMode: async () => {
+      await deactivateDemoData();
+      setVirtualTodayOffsetHelper(0);
+      set({ demoMode: false, dataLoaded: true, sessions: [], checkins: [], virtualTodayOffset: 0 });
+    },
 
-confirmResetData: async () => {
-    const { todayISO, showToast, selectedSports } = get();
-    try {
-      await clearAllData();
-      await saveSettings({ startDate: todayISO, trainDays: [1, 3, 5] });
-       const derived = computeDerived([], [], todayISO, [1, 3, 5], 'unknown', todayISO, 'medium', 0, selectedSports, get().weeklyTemplate, [], [], 'intermediate', [], {});
+    // ── Demo Mode with Profile ──
+    activateDemoModeWithProfile: async (profile: import('../core/demoData.js').DemoProfile) => {
+      const { showToast, sessions: currentSessions, checkins: currentCheckins } = get();
+
+      // Backup existing data
+      const hasExistingData = (currentSessions && currentSessions.length > 0) || (currentCheckins && currentCheckins.length > 0);
+      if (hasExistingData) {
+        try {
+          const backup = await exportAllData();
+          const backupKey = `fitness-backup-before-demo-${profile}-${Date.now()}`;
+          localStorage.setItem(backupKey, JSON.stringify(backup));
+          const backupKeys = Object.keys(localStorage).filter(k => k.startsWith('fitness-backup-')).sort();
+          while (backupKeys.length > 5) {
+            localStorage.removeItem(backupKeys.shift()!);
+          }
+        } catch (backupErr) {
+          console.warn('Failed to create backup before demo:', backupErr);
+        }
+      }
+
+      const { generateDemoDataForProfile, DEMO_PROFILES } = await import('../core/demoData.js');
+      const profileConfig = DEMO_PROFILES[profile];
+      const demoData = generateDemoDataForProfile(profile);
+      await activateDemoData(demoData);
+
+      const [allSessions, allCheckins] = await Promise.all([
+        getActiveDatabase().sessions.toArray() as any,
+        getActiveDatabase().checkins.toArray() as any,
+      ]);
+
+      const demoOffset = -15;
+      const selectedSports = profileConfig.settings.selectedSports || ['running'];
+      const profileLevel = (profileConfig.settings.level || 'intermediate') as import('../core/types.js').FitnessLevel;
+      const profileEquipment = profileConfig.settings.equipment ? JSON.parse(profileConfig.settings.equipment) : {};
+      const checkinTier = profileConfig.settings.checkinTier || 'medium';
+
+      const derived = computeDerived(
+        allSessions, allCheckins,
+        allSessions.length > 0 ? allSessions[0].date : null,
+        profileConfig.settings.trainDays || [1, 3, 5],
+        'unknown',
+        allCheckins.length > 0 ? allCheckins[allCheckins.length - 1].date : formatISO(new Date()),
+        checkinTier,
+        demoOffset,
+        selectedSports,
+        profileConfig.weeklyTemplate,
+        [], [], profileLevel, profileConfig.settings.goals as import('../core/types.js').FitnessGoal[] || [], profileEquipment
+      );
+
+      setVirtualTodayOffsetHelper(demoOffset);
       set({
+        ...derived,
+        demoMode: true,
+        dataLoaded: true,
+        trainDays: profileConfig.settings.trainDays || [1, 3, 5],
+        selectedSports,
+        startDate: allSessions.length > 0 ? allSessions[0].date : formatISO(new Date()),
+        virtualTodayOffset: demoOffset,
+        profileLevel,
+        profileGoals: profileConfig.settings.goals as import('../core/types.js').FitnessGoal[] || [],
+        profileEquipment,
+        checkinTier,
+      });
+
+      showToast(`Демо: ${profileConfig.name} — ${allSessions.length} тренировок, ${allCheckins.length} чек-инов`);
+    },
+
+    // ── Onboarding ──
+    completeOnboarding: async data => {
+      const { todayISO, showToast } = get();
+      try {
+        // Save training days + tier + gadgets + sports to settings DB
+        const tier = data.checkinTier || 'medium';
+        await saveSettings({
+          startDate: todayISO,
+          trainDays: data.trainDays,
+          checkinTier: tier,
+          selectedGadgets: data.selectedGadgets || [],
+          selectedSports: data.selectedSports || [],
+        });
+
+        // Save goal and APRE protocol preference to localStorage for future use
+        if (data.selectedGoal) {
+          localStorage.setItem('fitness-tracker-goal', data.selectedGoal);
+        }
+        if (data.apreProtocol) {
+          localStorage.setItem('fitness-tracker-apre-protocol', data.apreProtocol);
+        }
+
+        // Update store state
+        const allCheckins = await getAllCheckins();
+        const derived = computeDerived(
+          get().sessions,
+          allCheckins,
+          todayISO,
+          data.trainDays,
+          'unknown',
+          todayISO,
+          tier,
+          0,
+          data.selectedSports || [],
+          get().weeklyTemplate,
+          get().rehabIssues,
+          get().rehabExercises,
+          'intermediate',
+          [],
+          {},
+        );
+
+        set({
+          trainDays: data.trainDays,
+          startDate: todayISO,
+          editTrainDays: data.trainDays,
+          editStartDate: todayISO,
+          checkinTier: tier,
+          selectedGadgets: data.selectedGadgets || [],
+          selectedSports: data.selectedSports || [],
+          checkins: allCheckins,
+          ...derived,
+        });
+
+        // Mark onboarding as completed in localStorage (persists across app remounts)
+        markOnboardingCompleted();
+
+        showToast('Настройка завершена!');
+      } catch (err) {
+        console.error('Onboarding completion failed:', err);
+        showToast('Ошибка при сохранении настроек', 'error');
+      }
+    },
+
+    // ── Guest Mode ──
+    setShowGuestModal: (v: boolean) => set({ showGuestModal: v }),
+
+    startTracking: () => {
+      clearGuestData();
+      set({
+        guestMode: false,
         sessions: [],
         checkins: [],
-        rpe: 0,
-        sessionNote: '',
-        startDate: todayISO,
-        trainDays: [1, 3, 5],
-        showResetConfirm: false,
-        pendingAchievement: null,
-        ...derived,
-      });
-      showToast('Все данные удалены');
-    } catch (err) {
-      console.error('Reset failed:', err);
-      showToast('Ошибка при сбросе данных', 'error');
-    }
-  },
-
-// ── Demo Mode ──
-  activateDemoMode: async () => {
-    const { showToast, sessions: currentSessions, checkins: currentCheckins } = get();
-
-    // Backup existing data before activating demo
-    const hasExistingData = (currentSessions && currentSessions.length > 0) || (currentCheckins && currentCheckins.length > 0);
-    if (hasExistingData) {
-      try {
-        const backup = await exportAllData();
-        const backupKey = `fitness-backup-before-demo-${Date.now()}`;
-        localStorage.setItem(backupKey, JSON.stringify(backup));
-        // Keep only last 5 backups
-        const backupKeys = Object.keys(localStorage).filter(k => k.startsWith('fitness-backup-')).sort();
-        while (backupKeys.length > 5) {
-          localStorage.removeItem(backupKeys.shift()!);
-        }
-        showToast('Резервная копия создана перед активацией демо');
-      } catch (backupErr) {
-        console.warn('Failed to create backup before demo:', backupErr);
-      }
-    }
-
-    const { generateDemoData } = await import('../core/demoData.js');
-    const demoData = generateDemoData();
-    await activateDemoData(demoData);
-    // Reload all data from demo DB
-    const [allSessions, allCheckins] = await Promise.all([
-      getActiveDatabase().sessions.toArray() as any,
-      getActiveDatabase().checkins.toArray() as any,
-    ]);
-    // Set offset to -15 (midpoint of 30-day demo data) so first day of demo is shown
-    const demoOffset = -15;
-    // Use 'running' as default sport for demo data
-    const selectedSports = ['running'];
-      const derived = computeDerived(allSessions, allCheckins, allSessions.length > 0 ? allSessions[0].date : null, [1, 3, 5], 'unknown', allCheckins.length > 0 ? allCheckins[allCheckins.length - 1].date : formatISO(new Date()), 'medium', demoOffset, selectedSports, {
-        days: ['running', 'strength', null, 'running', 'strength', null, 'running'],
-        sportOrder: ['running'],
-      }, [], [], 'intermediate', [], {});
-    setVirtualTodayOffsetHelper(demoOffset);
-    set({ ...derived, demoMode: true, dataLoaded: true, trainDays: [1, 3, 5], selectedSports, startDate: allSessions.length > 0 ? allSessions[0].date : formatISO(new Date()), virtualTodayOffset: demoOffset });
-  },
-
-  deactivateDemoMode: async () => {
-    await deactivateDemoData();
-    setVirtualTodayOffsetHelper(0);
-    set({ demoMode: false, dataLoaded: true, sessions: [], checkins: [], virtualTodayOffset: 0 });
-  },
-
-  // ── Demo Mode with Profile ──
-  activateDemoModeWithProfile: async (profile: import('../core/demoData.js').DemoProfile) => {
-    const { showToast, sessions: currentSessions, checkins: currentCheckins } = get();
-
-    // Backup existing data
-    const hasExistingData = (currentSessions && currentSessions.length > 0) || (currentCheckins && currentCheckins.length > 0);
-    if (hasExistingData) {
-      try {
-        const backup = await exportAllData();
-        const backupKey = `fitness-backup-before-demo-${profile}-${Date.now()}`;
-        localStorage.setItem(backupKey, JSON.stringify(backup));
-        const backupKeys = Object.keys(localStorage).filter(k => k.startsWith('fitness-backup-')).sort();
-        while (backupKeys.length > 5) {
-          localStorage.removeItem(backupKeys.shift()!);
-        }
-      } catch (backupErr) {
-        console.warn('Failed to create backup before demo:', backupErr);
-      }
-    }
-
-    const { generateDemoDataForProfile, DEMO_PROFILES } = await import('../core/demoData.js');
-    const profileConfig = DEMO_PROFILES[profile];
-    const demoData = generateDemoDataForProfile(profile);
-    await activateDemoData(demoData);
-
-    const [allSessions, allCheckins] = await Promise.all([
-      getActiveDatabase().sessions.toArray() as any,
-      getActiveDatabase().checkins.toArray() as any,
-    ]);
-
-    const demoOffset = -15;
-    const selectedSports = profileConfig.settings.selectedSports || ['running'];
-    const profileLevel = (profileConfig.settings.level || 'intermediate') as import('../core/types.js').FitnessLevel;
-    const profileEquipment = profileConfig.settings.equipment ? JSON.parse(profileConfig.settings.equipment) : {};
-    const checkinTier = profileConfig.settings.checkinTier || 'medium';
-
-    const derived = computeDerived(
-      allSessions, allCheckins,
-      allSessions.length > 0 ? allSessions[0].date : null,
-      profileConfig.settings.trainDays || [1, 3, 5],
-      'unknown',
-      allCheckins.length > 0 ? allCheckins[allCheckins.length - 1].date : formatISO(new Date()),
-      checkinTier,
-      demoOffset,
-      selectedSports,
-      profileConfig.weeklyTemplate,
-      [], [], profileLevel, profileConfig.settings.goals as import('../core/types.js').FitnessGoal[] || [], profileEquipment
-    );
-
-    setVirtualTodayOffsetHelper(demoOffset);
-    set({
-      ...derived,
-      demoMode: true,
-      dataLoaded: true,
-      trainDays: profileConfig.settings.trainDays || [1, 3, 5],
-      selectedSports,
-      startDate: allSessions.length > 0 ? allSessions[0].date : formatISO(new Date()),
-      virtualTodayOffset: demoOffset,
-      profileLevel,
-      profileGoals: profileConfig.settings.goals as import('../core/types.js').FitnessGoal[] || [],
-      profileEquipment,
-      checkinTier,
-    });
-
-    showToast(`Демо: ${profileConfig.name} — ${allSessions.length} тренировок, ${allCheckins.length} чек-инов`);
-  },
-
-  // ── Onboarding ──
-  completeOnboarding: async data => {
-    const { todayISO, showToast } = get();
-    try {
-      // Save training days + tier + gadgets + sports to settings DB
-      const tier = data.checkinTier || 'medium';
-      await saveSettings({
-        startDate: todayISO,
-        trainDays: data.trainDays,
-        checkinTier: tier,
-        selectedGadgets: data.selectedGadgets || [],
-        selectedSports: data.selectedSports || [],
-      });
-
-      // Save goal and APRE protocol preference to localStorage for future use
-      if (data.selectedGoal) {
-        localStorage.setItem('fitness-tracker-goal', data.selectedGoal);
-      }
-      if (data.apreProtocol) {
-        localStorage.setItem('fitness-tracker-apre-protocol', data.apreProtocol);
-      }
-
-      // Update store state
-      const allCheckins = await getAllCheckins();
-      const derived = computeDerived(
-        get().sessions,
-        allCheckins,
-        todayISO,
-        data.trainDays,
-        'unknown',
-        todayISO,
-        tier,
-        0,
-        data.selectedSports || [],
-        get().weeklyTemplate,
-        get().rehabIssues,
-        get().rehabExercises,
-        'intermediate',
-        [],
-        {},
-      );
-
-      set({
-        trainDays: data.trainDays,
-        startDate: todayISO,
-        editTrainDays: data.trainDays,
-        editStartDate: todayISO,
-        checkinTier: tier,
-        selectedGadgets: data.selectedGadgets || [],
-        selectedSports: data.selectedSports || [],
-        checkins: allCheckins,
-        ...derived,
-      });
-
-      // Mark onboarding as completed in localStorage (persists across app remounts)
-      markOnboardingCompleted();
-
-      showToast('Настройка завершена!');
-    } catch (err) {
-      console.error('Onboarding completion failed:', err);
-      showToast('Ошибка при сохранении настроек', 'error');
-    }
-  },
-
-  // ── Guest Mode ──
-  setShowGuestModal: (v: boolean) => set({ showGuestModal: v }),
-
-  startTracking: () => {
-    clearGuestData();
-    set({
-      guestMode: false,
-      sessions: [],
-      checkins: [],
-      showGuestModal: false,
-      startDate: null,
-      trainDays: [1, 3, 5],
-      editStartDate: '',
-      editTrainDays: [1, 3, 5],
-      selectedSports: [],
-      selectedGadgets: [],
-    });
-  },
-
-  completeGuestModeOnboarding: async data => {
-    const { showToast } = get();
-    try {
-      const tier = data.checkinTier || 'medium';
-      // Migrate guest sessionStorage data to real IndexedDB
-      const guestSessions = getGuestSessions();
-      const guestCheckins = getGuestCheckins();
-
-      // Save all guest sessions to IndexedDB
-      for (const session of guestSessions) {
-        await saveSession(session);
-      }
-      // Save all guest checkins to IndexedDB
-      for (const checkin of guestCheckins) {
-        await saveCheckin(checkin);
-      }
-
-      await saveSettings({
-        startDate: makeTodayISO(),
-        trainDays: data.trainDays,
-        checkinTier: tier,
-        selectedGadgets: data.selectedGadgets || [],
-        selectedSports: data.selectedSports || [],
-      });
-
-      if (data.selectedGoal) {
-        localStorage.setItem('fitness-tracker-goal', data.selectedGoal);
-      }
-      if (data.apreProtocol) {
-        localStorage.setItem('fitness-tracker-apre-protocol', data.apreProtocol);
-      }
-
-      // Reload real data
-      const [allSessions, allCheckins] = await Promise.all([
-        getAllSessions(),
-        getAllCheckins(),
-      ]);
-      const derived = computeDerived(
-        allSessions,
-        allCheckins,
-        makeTodayISO(),
-        data.trainDays,
-        'unknown',
-        makeTodayISO(),
-        tier,
-        0,
-        data.selectedSports || [],
-        get().weeklyTemplate,
-        get().rehabIssues,
-        get().rehabExercises,
-        'intermediate',
-        [],
-        {},
-      );
-
-      clearGuestData();
-
-      set({
-        sessions: allSessions,
-        checkins: allCheckins,
-        trainDays: data.trainDays,
-        startDate: makeTodayISO(),
-        editTrainDays: data.trainDays,
-        editStartDate: makeTodayISO(),
-        checkinTier: tier,
-        selectedGadgets: data.selectedGadgets || [],
-        selectedSports: data.selectedSports || [],
-        guestMode: false,
         showGuestModal: false,
-        ...derived,
+        startDate: null,
+        trainDays: [1, 3, 5],
+        editStartDate: '',
+        editTrainDays: [1, 3, 5],
+        selectedSports: [],
+        selectedGadgets: [],
       });
+    },
 
-      markOnboardingCompleted();
-      showToast('Настройка завершена! Данные сохранены.');
-    } catch (err) {
-      console.error('Guest mode onboarding completion failed:', err);
-      showToast('Ошибка при сохранении настроек', 'error');
-    }
-  },
-}));
+    completeGuestModeOnboarding: async data => {
+      const { showToast } = get();
+      try {
+        const tier = data.checkinTier || 'medium';
+        // Migrate guest sessionStorage data to real IndexedDB
+        const guestSessions = getGuestSessions();
+        const guestCheckins = getGuestCheckins();
+
+        // Save all guest sessions to IndexedDB
+        for (const session of guestSessions) {
+          await saveSession(session);
+        }
+        // Save all guest checkins to IndexedDB
+        for (const checkin of guestCheckins) {
+          await saveCheckin(checkin);
+        }
+
+        await saveSettings({
+          startDate: makeTodayISO(),
+          trainDays: data.trainDays,
+          checkinTier: tier,
+          selectedGadgets: data.selectedGadgets || [],
+          selectedSports: data.selectedSports || [],
+        });
+
+        if (data.selectedGoal) {
+          localStorage.setItem('fitness-tracker-goal', data.selectedGoal);
+        }
+        if (data.apreProtocol) {
+          localStorage.setItem('fitness-tracker-apre-protocol', data.apreProtocol);
+        }
+
+        // Reload real data
+        const [allSessions, allCheckins] = await Promise.all([
+          getAllSessions(),
+          getAllCheckins(),
+        ]);
+        const derived = computeDerived(
+          allSessions,
+          allCheckins,
+          makeTodayISO(),
+          data.trainDays,
+          'unknown',
+          makeTodayISO(),
+          tier,
+          0,
+          data.selectedSports || [],
+          get().weeklyTemplate,
+          get().rehabIssues,
+          get().rehabExercises,
+          'intermediate',
+          [],
+          {},
+        );
+
+        clearGuestData();
+
+        set({
+          sessions: allSessions,
+          checkins: allCheckins,
+          trainDays: data.trainDays,
+          startDate: makeTodayISO(),
+          editTrainDays: data.trainDays,
+          editStartDate: makeTodayISO(),
+          checkinTier: tier,
+          selectedGadgets: data.selectedGadgets || [],
+          selectedSports: data.selectedSports || [],
+          guestMode: false,
+          showGuestModal: false,
+          ...derived,
+        });
+
+        markOnboardingCompleted();
+        showToast('Настройка завершена! Данные сохранены.');
+      } catch (err) {
+        console.error('Guest mode onboarding completion failed:', err);
+        showToast('Ошибка при сохранении настроек', 'error');
+      }
+    },
+  };
+});

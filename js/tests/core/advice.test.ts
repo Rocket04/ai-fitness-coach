@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getExplanation } from '../../core/advice.js';
+import { getExplanation, getCoachAdvice } from '../../core/advice.js';
 import type { Checkin, TrendPoint } from '../../core/types.js';
 
 function makeCheckin(overrides: Partial<Checkin> = {}): Checkin {
@@ -96,5 +96,52 @@ describe('getExplanation', () => {
     const mods = ['a', 'b', 'c', 'd', 'e'];
     const result = getExplanation(40, 'red', true, checkin, trend, trend, mods, mockT);
     expect(result.length).toBeLessThanOrEqual(5);
+  });
+});
+
+describe('getCoachAdvice — score-based advice', () => {
+  it('returns training advice for high score (>=80)', () => {
+    const advice = getCoachAdvice(85, {});
+    expect(advice.length).toBeGreaterThan(0);
+    expect(advice.some(a => a.includes('отлично') || a.includes('полный'))).toBe(true);
+  });
+
+  it('returns recovery advice for low score (<60)', () => {
+    const advice = getCoachAdvice(35, {});
+    expect(advice.length).toBeGreaterThan(0);
+    expect(advice.some(a => a.includes('низкий') || a.includes('лёгкий') || a.includes('отдых'))).toBe(true);
+  });
+
+  it('returns moderate advice for medium score (60-79)', () => {
+    const advice = getCoachAdvice(70, {});
+    expect(advice.length).toBeGreaterThan(0);
+  });
+});
+
+describe('getCoachAdvice — biometrics warnings', () => {
+  it('warns about low sleep', () => {
+    const advice = getCoachAdvice(70, { sleepHours: 5 });
+    expect(advice.some(a => a.includes('Сон'))).toBe(true);
+  });
+
+  it('warns about low HRV', () => {
+    const advice = getCoachAdvice(70, { hrv: 30 });
+    expect(advice.some(a => a.includes('HRV'))).toBe(true);
+  });
+
+  it('warns about high resting HR', () => {
+    const advice = getCoachAdvice(70, { restHR: 75 });
+    expect(advice.some(a => a.includes('ЧСС'))).toBe(true);
+  });
+
+  it('warns about high pain', () => {
+    const advice = getCoachAdvice(70, { hipPain: 6, shoulderPain: 2 });
+    expect(advice.some(a => a.includes('Боль'))).toBe(true);
+  });
+
+  it('no warnings for normal biometrics', () => {
+    const advice = getCoachAdvice(80, { sleepHours: 8, hrv: 50, restHR: 55, hipPain: 1 }, [], { green: 4 });
+    const warnings = advice.filter(a => a.includes('мало') || a.includes('ниже') || a.includes('выше') || a.includes('Боль'));
+    expect(warnings.length).toBe(0);
   });
 });

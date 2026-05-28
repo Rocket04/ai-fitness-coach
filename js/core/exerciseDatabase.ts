@@ -2,6 +2,8 @@
 // Exercise library with rehabilitation metadata
 // Each exercise has: id, name, targetMuscles, equipment, avoidIf (contraindicated for rehabIssues), rehabFor (helps with rehabIssues)
 
+import type { Exercise } from './types.js';
+
 export interface ExerciseInfo {
   id: string;
   name: string;
@@ -371,4 +373,21 @@ export function filterExercisesForRehab(
   }
 
   return { exercises: result, wasAdapted };
+}
+
+const FALLBACK_STRETCHING: Exercise[] = [
+  { n: 'Mobilnost (bezopasnaya)', s: '2', r: '5 min', w: 'bez nagruzki na problemnye zony' },
+  { n: 'Dykhatelnaya gimnastika', s: '3', r: '10 vdokhov', w: 'rasslablenie' },
+];
+
+export function filterStretchingForRehab(exercises: Exercise[], rehabIssues: string[]): Exercise[] {
+  if (!rehabIssues || rehabIssues.length === 0) return exercises;
+  const filtered = exercises.filter(ex => {
+    const exId = (ex as any).id as string | undefined;
+    if (!exId) return true;
+    const info = exerciseLibrary[exId];
+    if (!info) return true;
+    return !info.avoidIf.some(item => rehabIssues.includes(item));
+  });
+  return filtered.length > 0 ? filtered : FALLBACK_STRETCHING;
 }

@@ -67,11 +67,14 @@ Input → IndexedDB → Zustand → derived state → UI recommendation
 Core files:
 
 - `js/stores/useAppStore.ts`;
+- `js/stores/slices/` — Zustand store slices (checkin, session, ui, data, demo);
 - `js/core/recoveryScore.ts`;
 - `js/core/readiness.ts`;
 - `js/core/planning.ts`;
 - `js/core/apre/engine.js`;
 - `js/core/exerciseDatabase.ts`;
+- `js/core/completionRate.ts`;
+- `js/core/import/csvParser.ts`;
 - `js/core/analytics.ts`;
 - `js/core/sessionLoad.ts`.
 
@@ -103,6 +106,12 @@ Core files:
 - User data belongs in IndexedDB.
 - LocalStorage is acceptable only for small UI/settings flags.
 - Any integration must track data source and timestamp.
+
+### Commit Discipline
+
+- Documentation is part of the commit: every commit that changes API, data model, architecture, or user-facing behavior must update the relevant README/docs/
+- Split commits by concern: one logical change per commit, not a dump of unrelated files
+- Commit messages summarize the "why" in one line, then list changed files/areas
 
 ## Feature Honesty Rules
 

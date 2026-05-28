@@ -5,7 +5,7 @@
 
 [![PWA Ready](https://img.shields.io/badge/PWA-ready-brightgreen)]()
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)]()
-[![Tests](https://img.shields.io/badge/tests-240%2B%20passed%20(26%20files)-brightgreen)]()
+[![Tests](https://img.shields.io/badge/tests-300%2B%20passed%20(33%20files)-brightgreen)]()
 [![E2E Tests](https://img.shields.io/badge/E2E-51%20specs%20(Playwright)-brightgreen)]()
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue)]()
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)]()
@@ -66,6 +66,11 @@
 - ✅ **PWA** — работает офлайн, Workbox
 - ✅ **Полная приватность** — все данные локально в IndexedDB (Dexie.js)
 - ✅ **TypeScript strict** — полная типизация
+- ✅ **Exercise set completion tracking** — non-APRE per-set checkboxes
+- ✅ **Weekly completion rate** — adherence-based volume multiplier auto-adjusts next week's load
+- ✅ **CSV biometrics import** — Health Sync CSV parser
+- ✅ **Rehab-aware stretching** — auto-filters contraindicated exercises
+- ✅ **Modular Zustand store** — 5 slices + orchestrator pattern
 
 ---
 
@@ -101,7 +106,7 @@ npm run dev
 ```bash
 npm run type-check   # TypeScript проверка
 npm run lint         # ESLint
-npm test             # 250+ unit-тестов (Vitest)
+npm test             # 300+ unit-тестов (Vitest)
 npm run test:e2e     # 51 E2E-спеков (Playwright, Chromium + Firefox + Mobile)
 npm run build        # Production сборка
 ```
@@ -114,7 +119,7 @@ npm run build        # Production сборка
 |---|---|
 | **React 18** | UI-фреймворк |
 | **Vite 8** | Бандлер и dev-сервер |
-| **TypeScript 6** | Строгая типизация |
+| **TypeScript 6.0** | Строгая типизация |
 | **Zustand 5** | Глобальный стейт (единый стор) |
 | **Dexie.js 4** | IndexedDB-обёртка |
 | **@base-ui/react 1.5** | UI-примитивы (Collapsible, Dialog) |
@@ -164,16 +169,21 @@ npm run build        # Production сборка
 │   │   ├── planning.ts         # getWorkoutType, buildSessionFromMonth
 │   │   ├── loadAdjustments.ts  # applyMultiplier, applyApre
 │   │   ├── sessionLoad.ts      # calculateSessionLoad
+│   │   ├── completionRate.ts   # session/weekly completion rate
+│   │   ├── exerciseDatabase.ts # exercise library with rehab contraindications
 │   │   ├── stats.ts            # getWeeklySummary, getMonthStats, getStreak
 │   │   ├── analytics.ts        # getTrendData, detectNegativeTrends
 │   │   ├── advice.ts           # getCoachAdvice, getApreExplanation
 │   │   ├── helpers.ts          # Утилиты дат
 │   │   ├── onboardingStorage.ts # Хранение статуса онбординга
+│   │   ├── import/
+│   │   │   └── csvParser.ts    # Health Sync CSV parser + biometrics merger
 │   │   ├── apre/
 │   │   │   └── engine.js       # APRE-движок (Mann tables)
 │   │   └── engine.test.js      # Node.js тест-раннер (legacy)
 │   │
 │   ├── stores/
+│   │   ├── slices/             # Zustand store slices (checkin, session, ui, data, demo)
 │   │   ├── useAppStore.ts      # Центральный стор
 │   │   ├── useSessionStore.ts  # Состояние формы сессии
 │   │   └── useTourStore.ts     # Состояние для guided tour

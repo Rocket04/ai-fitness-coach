@@ -2,7 +2,7 @@
 
 ## Quality Gates ✅
 - TypeScript: 0 errors (`npx tsc --noEmit`)
-- Tests: 263 passing (30 files)
+- Tests: 300 passing (33 files)
 - Build: Clean compilation (Vite 8)
 
 ## Complete Feature Set
@@ -52,7 +52,12 @@
 - manifest.json: shortcuts (Today/Checkin/Analytics)
 - SW update detection via useServiceWorkerUpdate hook
 
-## Test Coverage (263 tests, 30 files)
+### Phase 8: Documentation Sync ✅
+- README.md: test counts (300/33), feature list, file tree (import/, slices/)
+- AGENTS.md: core files list, commit discipline rule
+- memory-bank/progress.md: phases, file structure
+
+## Test Coverage (300 tests, 33 files)
 ### Core (NEW)
 - `completionRate.test.ts` (6) — session/weekly completion rate
 - `adherenceMultiplier.test.ts` (7) — volume multiplier boundaries
@@ -69,13 +74,16 @@
 - `js/core/storage.ts` — Dexie CRUD + demo mode + export/import
 - `js/core/apre/engine.js` — APRE engine
 - `js/core/recoveryScore.ts` — Tiered recovery scoring
-- `js/core/completionRate.ts` — NEW: session/weekly completion rate
+- `js/core/completionRate.ts` — session/weekly completion rate
+- `js/core/exerciseDatabase.ts` — exercise library with rehab contraindications
+- `js/core/import/csvParser.ts` — Health Sync CSV parser + biometrics merger
 - `js/core/analytics.ts` — Trend analysis, correlation detection
 - `js/core/planning.ts` — Periodized plans + adherence multiplier
 - `js/core/advice.ts` — Coach advice generation
 
 ### Stores
 - `js/stores/useAppStore.ts` — Central store + set result tracking + export/import/reset
+- `js/stores/slices/` — 5 modular slices (checkin, session, ui, data, demo)
 
 ### UI Components
 - `js/ui/components/ExerciseCard.jsx` — Per-set checkboxes (non-APRE) + APRE AMRAP inputs
@@ -96,8 +104,8 @@
 |-------|-------------|---------------|
 | Phase 0 (cleanup) | Preparation | ✅ Done — dead code, demo-mode bug, launch_handler |
 | Phase 1 (tracking loop) | Core Logic (W1-4) | ✅ Done — per-set tracking, completion rate, adherence multiplier |
-| Phase 2 (CSV import) | Data Integration (W5-6) | ⏳ Not started |
-| Phase 3 (rehab stretching) | Additional Features (W7-8) | ⏳ Not started |
-| Phase 4 (store refactor) | Refactoring (W9-10) | ⏳ Not started |
-| Phase 5 (test coverage) | Testing (W11-12) | ⏳ Not started |
-| Phase 3-6 (docs-i18n) | Documentation (Ongoing) | ⏳ Not started |
+| Phase 2 (CSV import) | Data Integration (W5-6) | ✅ Done — CSV biometrics parser, exerciseDatabase |
+| Phase 3 (rehab stretching) | Additional Features (W7-8) | ✅ Done — rehab-aware stretching, contraindication filter |
+| Phase 4 (store refactor) | Refactoring (W9-10) | ✅ Done — 5-slice Zustand store |
+| Phase 5 (test coverage) | Testing (W11-12) | ✅ Done — 300 tests (33 files) |
+| Phase 6 (docs-i18n) | Documentation (Ongoing) | ✅ Done — README, AGENTS.md, progress.md sync |
