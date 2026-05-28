@@ -236,6 +236,12 @@ export function getSessionForDate(
   } as SessionPlan;
 }
 
+export function getVolumeMultiplierFromAdherence(completionRate: number): number {
+  if (completionRate >= 0.8) return 1.2;
+  if (completionRate >= 0.6) return 1.0;
+  return 0.8;
+}
+
 /**
  * Get session for date with full readiness + rehab adaptation
  * This is the main function that should be used by the store
@@ -255,10 +261,11 @@ export function getAdaptedSessionForDate(
   virtualTodayOffset: number = 0,
   profileLevel: FitnessLevel = 'intermediate',
   profileGoals: FitnessGoal[] = [],
-  profileEquipment: Equipment = {}
+  profileEquipment: Equipment = {},
+  completionRate: number = 0
 ): { session: SessionPlan; modifications: string[] } | null {
   const baseSession = getSessionForDate(date, selectedSports, startDate, weeklyTemplate, virtualTodayOffset);
-  return applyReadinessToSession(baseSession, readiness, recoveryDebt, totalMultiplier, apreSession, weekNumber, rehabIssues, rehabExercises, profileLevel, profileGoals, profileEquipment);
+  return applyReadinessToSession(baseSession, readiness, recoveryDebt, totalMultiplier, apreSession, weekNumber, rehabIssues, rehabExercises, profileLevel, profileGoals, profileEquipment, completionRate);
 }
 export function applyReadinessToSession(
   session: SessionPlan | null,
@@ -271,7 +278,8 @@ export function applyReadinessToSession(
   rehabExercises: string[] = [],
   profileLevel: FitnessLevel = 'intermediate',
   profileGoals: FitnessGoal[] = [],
-  profileEquipment: Equipment = {}
+  profileEquipment: Equipment = {},
+  completionRate: number = 0
 ): { session: SessionPlan; modifications: string[] } | null {
   if (!session) return null;
 
@@ -346,6 +354,19 @@ export function applyReadinessToSession(
   // Annotate with APRE metadata
   const prevApreResults = apreSession?.apreResults ?? [];
   exercises = annotateExercisesWithApre(exercises, prevApreResults);
+
+  if (completionRate > 0) {
+    const volumeMultiplier = getVolumeMultiplierFromAdherence(completionRate);
+    if (volumeMultiplier !== 1.0) {
+      exercises = exercises.map(ex => {
+        const sets = parseInt(ex.s, 10);
+        if (isNaN(sets)) return ex;
+        const newSets = Math.max(1, Math.round(sets * volumeMultiplier));
+        return { ...ex, s: String(newSets) };
+      });
+      modifications.push(`Adherence-based volume: ${volumeMultiplier}x (completion ${(completionRate * 100).toFixed(0)}%)`);
+    }
+  }
 
   return {
     session: {

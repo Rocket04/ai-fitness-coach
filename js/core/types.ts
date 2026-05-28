@@ -119,6 +119,8 @@ export interface SetResult {
   setNumber: number;
   completed: boolean;
   repsDone: number;
+  /** Exercise name this set belongs to */
+  exerciseName?: string;
 }
 
 /** Результат выполнения упражнения (для не-APRE упражнений) */
@@ -164,6 +166,14 @@ export interface Session {
   updatedAt: number;
   /** Результаты APRE-упражнений текущей тренировки */
   apreResults?: ApreExerciseResult[];
+  /** Results of non-APRE exercises (set completion tracking) */
+  exerciseResults?: ExerciseResult[];
+  /** User-reported fatigue after training (1-10 scale, optional) */
+  postSessionFatigue?: number;
+  /** User-reported pain after training (0-10 scale, optional) */
+  postSessionPain?: number;
+  /** Total planned sets for this session (computed at plan generation, used for completion rate) */
+  plannedTotalSets?: number;
 }
 
 export type PhaseType = 'base' | 'build' | 'peak' | 'deload';
@@ -374,4 +384,7 @@ export interface AppDispatch {
   handleExportData: () => Promise<void>;
   handleImportData: (file: File) => Promise<void>;
   handleResetAll: () => Promise<void>;
+  updateSetResult: (result: SetResult) => void;
+  setPostSessionFatigue: (v: number) => void;
+  setPostSessionPain: (v: number) => void;
 }

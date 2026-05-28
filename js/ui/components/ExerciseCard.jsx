@@ -73,13 +73,14 @@ function RecoveryBanner({ recoveryScore, recoveryReduction, unit, t }) {
  *   onConfigure    — callback() открывает модал настройки упражнения
  *   isConfigured   — флаг: настроено ли упражнение (currentRM !== null или currentLevel !== null)
  */
-export default function ExerciseCard({ ex, recoveryScore = 100, onApreResult, onConfigure, isConfigured = true }) {
+export default function ExerciseCard({ ex, recoveryScore = 100, onApreResult, onConfigure, isConfigured = true, onSetComplete }) {
   const { t } = useTranslation();
   const isApre = Boolean(ex?.isApre);
 
   // ── Локальный state для AMRAP-повторений ────────────────────────────────
   const [set3Reps, setSet3Reps] = useState(null);
   const [set4Reps, setSet4Reps] = useState(null);
+  const [completedSets, setCompletedSets] = useState([]);
 
   // Сбрасываем при смене упражнения
   useEffect(() => {
@@ -147,19 +148,53 @@ export default function ExerciseCard({ ex, recoveryScore = 100, onApreResult, on
 
   // ── Обычная карточка (не APRE) ──────────────────────────────────────────
   if (!isApre || !sets) {
-    const setsReps = ex.s && ex.s !== '—' ? `${ex.s} × ` : '';
-    return React.createElement('div', {
-      className: `exercise-row${ex.isTest ? ' exercise-row--test' : ''}`,
-    },
-      React.createElement('span', { className: 'exercise-name' },
-        ex.isTest && React.createElement('span', { className: 'text-yellow mr-xs', 'aria-hidden': 'true' }, React.createElement(Dumbbell, { size: 20 }), ' '),
-        ex.n
+    let numSets = 3;
+    if (ex.s) {
+      const match = ex.s.match(/(\d+)/);
+      if (match) numSets = parseInt(match[1], 10);
+    }
+    const repsLabel = ex.r || '—';
+    const weightNote = ex.w || ex.c || '';
+    const setsArray = Array.from({ length: numSets }, (_, i) => i + 1);
+
+    return React.createElement('div', { className: 'exercise-row' },
+      React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' } },
+        React.createElement('span', { className: 'exercise-name' }, ex.n),
+        React.createElement('span', { style: { fontSize: '0.75rem', color: 'var(--text3)' } }, `${ex.s || '3'} × ${repsLabel}`)
       ),
-      React.createElement('span', { className: 'exercise-sets' }, `${setsReps}${ex.r}`),
-      (ex.w || ex.c) && React.createElement('span', {
-        className: 'exercise-note',
-        style: { display: 'block', fontSize: '0.75rem', color: 'var(--text2)', marginTop: '0.15rem' },
-      }, ex.w || ex.c)
+      ...setsArray.map(setNum => {
+        const isChecked = completedSets.includes(setNum);
+        return React.createElement('label', {
+          key: setNum,
+          style: {
+            display: 'flex', alignItems: 'center', gap: '8px',
+            padding: '6px 8px', borderRadius: 'var(--radius-sm)',
+            background: isChecked ? 'rgba(74, 222, 128, 0.1)' : 'transparent',
+            border: `1px solid ${isChecked ? 'var(--green)' : 'var(--border)'}`,
+            marginBottom: '4px', cursor: 'pointer',
+            transition: 'all var(--transition-fast)',
+          },
+        },
+          React.createElement('input', {
+            type: 'checkbox',
+            checked: isChecked,
+            onChange: () => {
+              if (isChecked) {
+                setCompletedSets(prev => prev.filter(s => s !== setNum));
+              } else {
+                setCompletedSets(prev => [...prev, setNum]);
+                if (typeof onSetComplete === 'function') {
+                  onSetComplete(ex.n, setNum, parseInt(ex.r, 10) || 0);
+                }
+              }
+            },
+            style: { accentColor: 'var(--green)' },
+          }),
+          React.createElement('span', { style: { fontSize: '0.85rem', color: isChecked ? 'var(--green)' : 'var(--text2)' } },
+            `Подход ${setNum}: ${repsLabel} повт.${weightNote ? ` • ${weightNote}` : ''}`
+          )
+        );
+      })
     );
   }
 

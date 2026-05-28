@@ -17,6 +17,7 @@ import type {
   TrendWarning,
   OvertrainingWarning,
   ApreExerciseResult,
+  SetResult,
   WeeklyTemplate,
   PhaseType,
 } from '../core/types.js';
@@ -282,6 +283,12 @@ interface AppStore {
   testPlank: number;
   /** Накопленные APRE-результаты текущей тренировки, ещё не сохранённые в Dexie */
   pendingApreResults: ApreExerciseResult[];
+  /** Accumulated set completions during current workout UI session, not yet saved to Dexie */
+  pendingSetResults: SetResult[];
+  /** User-reported fatigue after training (1-10) */
+  postSessionFatigue: number;
+  /** User-reported pain after training (0-10) */
+  postSessionPain: number;
 
   // ── UI ──
   activeTab: number;
@@ -375,6 +382,9 @@ interface AppStore {
   handleMarkEvening: () => Promise<void>;
   handleToggleTraining: () => Promise<void>;
   updateApreResult: (result: ApreExerciseResult) => void;
+  updateSetResult: (result: SetResult) => void;
+  setPostSessionFatigue: (v: number) => void;
+  setPostSessionPain: (v: number) => void;
   handleExportData: () => Promise<void>;
   handleImportData: (file: File) => Promise<void>;
   handleResetAll: () => void;
@@ -454,6 +464,9 @@ export const useAppStore = create<AppStore>((set, get) => ({
   testPushUps: 0,
   testPlank: 0,
   pendingApreResults: [],
+  pendingSetResults: [],
+  postSessionFatigue: 0,
+  postSessionPain: 0,
 
   // ── Achievement notification ──
   pendingAchievement: null,
@@ -467,6 +480,23 @@ export const useAppStore = create<AppStore>((set, get) => ({
     ];
     set({ pendingApreResults: updated });
   },
+
+  // ── Set result tracking ──
+  updateSetResult: (result: SetResult) => {
+    const { pendingSetResults } = get();
+    const idx = pendingSetResults.findIndex(
+      r => r.exerciseName === result.exerciseName && r.setNumber === result.setNumber
+    );
+    if (idx >= 0) {
+      const updated = [...pendingSetResults];
+      updated[idx] = result;
+      set({ pendingSetResults: updated });
+    } else {
+      set({ pendingSetResults: [...pendingSetResults, result] });
+    }
+  },
+  setPostSessionFatigue: (v: number) => set({ postSessionFatigue: v }),
+  setPostSessionPain: (v: number) => set({ postSessionPain: v }),
 
   // UI
   activeTab: 0,
@@ -852,6 +882,23 @@ export const useAppStore = create<AppStore>((set, get) => ({
       s.showToast('Тренировка отменена');
     } else {
       const sessionLoad = calculateSessionLoad(s.rpe, s.durationMinutes);
+      // Group pendingSetResults by exerciseName to build ExerciseResult[]
+      const exerciseMap: Record<string, { completedSets: number; repsPerSet: number[] }> = {};
+      for (const sr of s.pendingSetResults) {
+        const name = sr.exerciseName || 'unknown';
+        if (!exerciseMap[name]) exerciseMap[name] = { completedSets: 0, repsPerSet: [] };
+        if (sr.completed) {
+          exerciseMap[name].completedSets += 1;
+          exerciseMap[name].repsPerSet.push(sr.repsDone);
+        }
+      }
+      const exerciseResults = Object.entries(exerciseMap).map(([exerciseName, data]) => ({
+        exerciseName,
+        plannedSets: 0,
+        completedSets: data.completedSets,
+        repsPerSet: data.repsPerSet,
+        completed: data.completedSets > 0,
+      }));
       const session: Session = {
         key,
         date: s.todayISO,
@@ -868,6 +915,9 @@ export const useAppStore = create<AppStore>((set, get) => ({
         mode: s.sessionPlan?.mode || 'full',
         updatedAt: Date.now(),
         ...(s.pendingApreResults.length > 0 && { apreResults: s.pendingApreResults }),
+        ...(exerciseResults.length > 0 && { exerciseResults }),
+        ...(s.postSessionFatigue !== undefined && { postSessionFatigue: s.postSessionFatigue }),
+        ...(s.postSessionPain !== undefined && { postSessionPain: s.postSessionPain }),
       };
       if (!s.guestMode) await saveSession(session);
       newSessions = [...s.sessions.filter(sess => sess.key !== key), session];
@@ -877,7 +927,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
     if (s.guestMode) {
       saveGuestSessions(newSessions);
       const derived = computeDerived(newSessions, s.checkins, s.startDate, s.trainDays, s.manualOverride, s.todayISO, s.checkinTier, s.virtualTodayOffset, s.selectedSports, s.weeklyTemplate, s.rehabIssues, s.rehabExercises, s.profileLevel, s.profileGoals, s.profileEquipment);
-      set({ sessions: newSessions, rpe: 0, sessionNote: '', durationMinutes: 45, pendingApreResults: [], ...derived, showGuestModal: true });
+      set({ sessions: newSessions, rpe: 0, sessionNote: '', durationMinutes: 45, pendingApreResults: [], pendingSetResults: [], postSessionFatigue: undefined, postSessionPain: undefined, ...derived, showGuestModal: true });
       return;
     }
 
@@ -898,6 +948,9 @@ export const useAppStore = create<AppStore>((set, get) => ({
         sessionNote: '',
         durationMinutes: 45,
         pendingApreResults: [],
+        pendingSetResults: [],
+        postSessionFatigue: undefined,
+        postSessionPain: undefined,
         ...derived,
         pendingAchievement: {
           key: newAchievements[0].key,
@@ -907,7 +960,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
         }
       });
     } else {
-      set({ sessions: newSessions, rpe: 0, sessionNote: '', durationMinutes: 45, pendingApreResults: [], ...derived });
+      set({ sessions: newSessions, rpe: 0, sessionNote: '', durationMinutes: 45, pendingApreResults: [], pendingSetResults: [], postSessionFatigue: undefined, postSessionPain: undefined, ...derived });
     }
   },
 

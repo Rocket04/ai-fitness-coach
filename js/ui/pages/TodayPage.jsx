@@ -294,9 +294,10 @@ export default function TodayPage() {
     durationMinutes, lastCheckin, streak, trendData7, rpeTrend7,
     setRpe, setSessionNote, setDurationMinutes, setTestPullUps, setTestPushUps, setTestPlank,
     handleToggleTraining, handleMarkMorning, handleMarkEvening,
-    coachAdvice, updateApreResult, checkinTier, checkins, planModifications,
-    demoMode, dataLoaded, setActiveTab,
-  } = useAppStore();
+     coachAdvice, updateApreResult, checkinTier, checkins, planModifications,
+     demoMode, dataLoaded, setActiveTab, updateSetResult, postSessionFatigue,
+     postSessionPain, setPostSessionFatigue, setPostSessionPain,
+   } = useAppStore();
 
   // Inject demo data for guided tour
   useEffect(() => {
@@ -625,6 +626,9 @@ export default function TodayPage() {
                   onApreResult: updateApreResult,
                   isConfigured,
                   onConfigure: () => handleConfigureExercise(idx),
+                  onSetComplete: (exName, setNum, reps) => {
+                    updateSetResult({ exerciseName: exName, setNumber: setNum, completed: reps > 0, repsDone: reps });
+                  },
                 });
               })
             ),
@@ -635,7 +639,44 @@ export default function TodayPage() {
               onClose: () => setConfigModalOpen(false),
               exercise: selectedExercise,
               onSave: handleSaveExerciseConfig,
-            })
+            }),
+
+            // Post-session fatigue / pain feedback
+            React.createElement(Collapsible, {
+              title: 'Самочувствие после тренировки',
+              defaultOpen: false,
+            },
+              React.createElement('div', { style: { padding: 'var(--spacing-sm) 0' } },
+                React.createElement('label', { style: { display: 'block', marginBottom: 'var(--spacing-sm)' } },
+                  React.createElement('span', { style: { fontSize: '0.85rem', color: 'var(--text2)', display: 'block', marginBottom: '4px' } },
+                    'Усталость (1-10)'
+                  ),
+                  React.createElement('input', {
+                    type: 'range', min: 1, max: 10,
+                    value: postSessionFatigue || 1,
+                    onChange: e => setPostSessionFatigue(Number(e.target.value)),
+                    style: { width: '100%' },
+                  }),
+                  React.createElement('span', { style: { fontSize: '0.75rem', color: 'var(--text3)' } },
+                    postSessionFatigue ? `${postSessionFatigue}/10` : '—'
+                  )
+                ),
+                React.createElement('label', { style: { display: 'block' } },
+                  React.createElement('span', { style: { fontSize: '0.85rem', color: 'var(--text2)', display: 'block', marginBottom: '4px' } },
+                    'Боль (0-10)'
+                  ),
+                  React.createElement('input', {
+                    type: 'range', min: 0, max: 10,
+                    value: postSessionPain || 0,
+                    onChange: e => setPostSessionPain(Number(e.target.value)),
+                    style: { width: '100%' },
+                  }),
+                  React.createElement('span', { style: { fontSize: '0.75rem', color: 'var(--text3)' } },
+                    postSessionPain !== undefined ? `${postSessionPain}/10` : '—'
+                  )
+                )
+              )
+            ),
           ),
           // Test inputs if test day
           sessionPlan?.isTestDay && React.createElement('div', { className: 'grid-3', style: { padding: '0 var(--spacing-md) var(--spacing-md)' } },
