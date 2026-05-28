@@ -10,7 +10,8 @@ import { useFitnessData, isExerciseConfigured, DEFAULT_EXERCISES } from '../../h
 import Modal from '../components/Modal.jsx';
 import ExerciseConfigModal from '../components/ExerciseConfigModal.jsx';
 import { getUnlockedAchievements } from '../../core/achievements.js';
-import { saveSetting } from '../../core/storage.js';
+import { saveCheckin, getAllCheckins, saveSetting } from '../../core/storage.js';
+import { parseHealthSyncCSV, mergeImportedBiometrics } from '../../core/import/csvParser.js';
 
 function findHrvRange(hrv, guide) {
   if (!hrv || hrv <= 0) return null;
@@ -60,6 +61,7 @@ export default function ProfilePage() {
     setShowSettings, setShowResetConfirm, setEditStartDate, setEditTrainDays,
     toggleDay, handleSaveSettings, setActiveTab,
     handleExportData, handleImportData, handleResetAll, confirmResetData,
+    showToast,
     checkinTier, setCheckinTier,
     virtualTodayOffset,
     demoMode,
@@ -421,6 +423,40 @@ export default function ProfilePage() {
     // ── Data section ──
     React.createElement(ProfileSection, { title: t('profile.data.title') },
       React.createElement('div', { className: 'flex gap-sm flex-wrap' },
+        React.createElement('button', {
+          className: 'btn',
+          onClick: async () => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.csv';
+            input.onchange = async (e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              try {
+                const text = await file.text();
+                const records = parseHealthSyncCSV(text);
+                if (records.length === 0) {
+                  alert('CSV файл пуст или имеет неверный формат');
+                  return;
+                }
+                const allCheckins = await getAllCheckins();
+                const result = mergeImportedBiometrics(records, allCheckins);
+                for (const c of result.checkins) {
+                  const orig = allCheckins.find(oc => oc.date === c.date);
+                  if (!orig) continue;
+                  const wasModified = c.sleepHours !== orig.sleepHours || c.restHR !== orig.restHR || c.hrv !== orig.hrv;
+                  if (wasModified) await saveCheckin(c);
+                }
+                showToast(t('profile.data.importCSVSuccess', { merged: result.merged, skipped: result.skipped }), 'success');
+                await useAppStore.getState().initApp();
+              } catch (err) {
+                console.error('CSV import failed:', err);
+                alert(t('profile.importError', { error: err instanceof Error ? err.message : 'Неверный формат' }));
+              }
+            };
+            input.click();
+          },
+        }, t('profile.data.importCSV')),
         React.createElement('button', {
           className: 'btn',
           onClick: handleExportData,

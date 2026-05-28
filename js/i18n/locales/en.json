@@ -279,6 +279,7 @@
       "title": "💾 Data",
       "export": "💾 Export",
       "import": "📂 Import",
+      "importCSV": "📲 Import Health Sync (CSV)",
       "reset": "🗑️ Reset",
       "resetConfirm": "Confirm Deletion",
       "resetWarning": "Delete all data? This action cannot be undone.",
