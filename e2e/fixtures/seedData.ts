@@ -1,8 +1,8 @@
 // e2e/fixtures/seedData.ts
 // Data seeding utilities for Playwright E2E tests.
-// Uses Dexie API directly via the app's db instance.
+// Uses Dexie API directly via the app's getActiveDatabase() instance.
 
-import { db } from '../../js/core/storage.js';
+import { getActiveDatabase } from '../../js/core/storage.js';
 import type { Checkin, Session } from '../../js/core/types.js';
 
 // ── Low-level helpers ────────────────────────────────────────────────────────
@@ -31,7 +31,7 @@ function randomFloat(min: number, max: number, decimals = 1): number {
  * - sessionStorage (all fitness-tracker prefixed keys)
  */
 export async function clearAllData(): Promise<void> {
-  // Clear Dexie stores via db instance
+  const db = getActiveDatabase();
   await db.transaction('rw', db.sessions, db.checkins, db.settings, db.achievements, async () => {
     await Promise.all([
       db.sessions.clear(),
@@ -81,7 +81,7 @@ export async function seedCheckinHistory(count: number): Promise<Checkin[]> {
     });
   }
 
-  await db.checkins.bulkPut(checkins);
+  await getActiveDatabase().checkins.bulkPut(checkins);
   return checkins;
 }
 
@@ -125,7 +125,7 @@ export async function seedWorkoutSessions(count: number): Promise<Session[]> {
     });
   }
 
-  await db.sessions.bulkPut(sessions);
+  await getActiveDatabase().sessions.bulkPut(sessions);
   return sessions;
 }
 

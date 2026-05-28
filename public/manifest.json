@@ -10,9 +10,6 @@
   "lang": "ru",
   "categories": ["fitness", "health", "sports"],
   "id": "/",
-  "launch_handler": {
-    "client_mode": "focus-existing"
-  },
   "icons": [
     {
       "src": "/icons/icon-192.png",

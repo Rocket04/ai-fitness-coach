@@ -3,7 +3,7 @@
 
 import type { Checkin, Session } from './types.js';
 import ACHIEVEMENTS from '../config/achievements.js';
-import { db } from './storage.js';
+import { getActiveDatabase } from './storage.js';
 import { getAllStreaks } from './streak.js';
 
 export interface Achievement {
@@ -27,7 +27,7 @@ export interface UserAchievement {
  */
 export async function getUnlockedAchievements(): Promise<UserAchievement[]> {
   try {
-    return await db.achievements.toArray();
+    return await getActiveDatabase().achievements.toArray();
   } catch {
     return [];
   }
@@ -78,7 +78,7 @@ export async function saveUnlockedAchievements(achievements: Achievement[]): Pro
       achievementKey: a.key,
       earnedAt: a.earnedAt || Date.now(),
     }));
-    await db.achievements.bulkAdd(records);
+    await getActiveDatabase().achievements.bulkAdd(records);
   } catch (err) {
     console.error('Failed to save achievements:', err);
   }
@@ -115,7 +115,7 @@ export async function getAchievementStatus(
  * Reset all achievements (for testing or fresh start)
  */
 export async function resetAchievements(): Promise<void> {
-  await db.achievements.clear();
+  await getActiveDatabase().achievements.clear();
 }
 
 /**

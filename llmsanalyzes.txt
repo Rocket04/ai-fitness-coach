@@ -1,0 +1,993 @@
+﻿here are my full project: 
+
+This is Gemini`s analyze: Comprehensive Technical Audit and Strategic Roadmap for the Smart Fitness Coach (Aetos) RepositoryExecutive Summary and Repository DNAThe Smart Fitness Coach repository, developed under the technical codename Aetos, is a client-side, offline-first progressive web application designed to deliver deterministic, adaptive athletic training plans. The system stands in stark contrast to the modern industry trend toward subscription-based, cloud-dependent "Health OS" platforms. By adhering to a strict local-first architecture, the application processes all physiological signals, user diaries, and workout logs directly within the client's web browser, persisting state in a local database and computing recommendations in real time without external server dependencies. This design ensures complete user data privacy and eliminates latency.The core identity of the platform rests upon three pillars: transparent Autoregulatory Progressive Resistance Exercise (APRE) algorithms, a tiered physiological recovery scoring system, and local data ownership. This scientific approach aims to mitigate the "paralysis of choice" and prevent overtraining injuries in self-directed athletes by replacing generic workout templates with highly specific daily instructions. The application operates with explicit functional boundaries, acknowledging that its algorithms do not undergo clinical validation and that it requires manual data entry rather than automated wearable syncing at its current development stage. By maintaining an open-source codebase and a deterministic rule-based advice engine, the application provides an explainable alternative to commercial "black-box" fitness trackers.Comprehensive Repository Health and Structural AuditThe current state of the repository represents a stable and clean foundation, following a comprehensive technical audit and structural reorganization. The codebase compiles without errors under strict TypeScript configurations, and the production build compiles cleanly under Vite 8.The repository's testing infrastructure contains 28 active test files executing 250 individual Vitest tests. In contrast to previous iterations or conflicting documentation reports of test failures, the active Vitest test suite is verified as completely stable, showing zero failures. The core statement coverage of the domain modules stands at 43.76%. The testing suite displays highly uneven coverage, with some core modules tested thoroughly while several critical modules and the entire user interface layer remain untested.Module PathCore ResponsibilityStatement Coverage (%)Uncovered Linesjs/core/validation.tsInput data validation rules100.00% None js/core/correlations.tsHabit and recovery correlation maths95.09% 127, 141, 182 js/core/recoveryScore.tsTiered physiological recovery scoring94.73% 101–103 js/core/achievements.tsGamified milestone evaluation92.68% 32, 83, 118 js/core/stats.tsStatistical and rolling-window helpers88.33% 88–89 js/core/readiness.tsTri-balance readiness flag calculation77.50% 77–81, 86, 89–113 js/core/streak.tsTraining streak tracking engine68.11% 130–165 js/core/helpers.tsChronological and general utilities55.55% 33–65, 82 js/core/analytics.tsTrend and overtraining detection55.81% 96–297, 300–301 js/core/demoData.tsSeeded synthetic data generator50.00% 287–402 js/core/planning.tsWorkout type and module scheduling37.03% 347, 388–404, 415 js/core/advice.tsCoach advice generation heuristics30.33% 10–112 js/stores/useAppStore.tsCore state manager and action dispatcher25.05% 766–805, 845–1299 js/core/importSchemas.tsSchema definitions for data imports22.22% 83–141 js/core/storage.tsDatabase CRUD operations wrapper15.24% 558, 468, 520–527 js/core/onboardingStorage.tsOnboarding persistence abstraction9.09% 13–39 js/core/exerciseDatabase.tsRehabilitation and equipment catalog2.63% 310–373 js/core/loadAdjustments.tsMultipliers and deload rules1.06% 11–110, 123–157 js/core/sessionLoad.tsFoster TRIMP session load calculations0.00% Line 9 js/stores/useTourStore.tsGuided tour state manager0.00% 27–123 An in-depth structural review revealed significant dead code stemming from historical transitions. The repository contains several obsolete files, legacy page modules, and unused state managers that should be removed to reduce bundle size and prevent developer confusion.Directory LocationFile NameFile Size / ClassificationTechnical Justification for Deletionui/ (Root legacy directory)Collapsible.js, MiniChart.js, Modal.js, Pill.js, InfoPage.js, LogPage.js, NutritionPage.js, RehabPage.js8 files (~22.5 KB) Legacy components based on Radix UI; fully superseded by the modern Base UI implementations in the js/ui/ directory.js/ui/components/MiniChart.jsx, ReadinessRing.jsx, RecoveryBar.jsx3 files (Stubs) Empty render-stubs that return null and are never imported.js/ui/components/SVGRing.jsx, TomorrowPreview.jsx, Tooltip.jsx3 files (Unused) Fully written, orphaned components with zero active import paths.js/ui/pages/InfoPage.jsx, NutritionPage.jsx, QuickStats.jsx, RecoveryScoreCard.jsx, RehabPage.jsx, SessionPlan.jsx, CoachAdvice.jsx7 files (~53.7 KB) Obsolete full-page layouts that are never registered or loaded by the application router in app.tsx.js/stores/useSettingsStore.ts, useCheckinStore.ts, useUIStore.ts3 files (~5.4 KB) Standalone stores whose responsibilities have been consolidated into the global Zustand store.js/config/achievements.js1 file (~1.2 KB) Redundant configuration file, never imported.Root Directoryconstants.js, engine.js, fitness-tracker, js/core/engine.js, js/core/storage.js5 files (Zero-byte) Empty file stubs with no active reference or execution pathways.Root Directory.aider.chat.history.md, .aider.input.history2 files (~1.35 MB) Temporary AI assistant development logs that should be excluded from Git tracking.Algorithmic Architecture and Autoregulation ModelsThe heart of the application's athletic planning engine is its dual-adaptive feedback loop. This system combines short-term, daily stress-tolerance scaling with weekly training load updates.Daily Loop:
+  [Morning Check-In] ───> ───>
+
+Weekly Loop:
+  ───> ───>
+Tiered Recovery Score and Readiness CalculationsThe application evaluates recovery daily through a tiered, device-agnostic calculation model. The system automatically adjusts its algorithm based on the user's available hardware. If an athlete has an advanced wearable capable of tracking Heart Rate Variability (HRV), the application executes in its Full Tier, assigning a heavy 40% weight to HRV, 30% to sleep metrics, 10% to Resting Heart Rate (RHR), and 20% to subjective wellness. If the user only has a basic smartwatch, the Medium Tier redistributes the weights, assigning 30% to RHR, 30% to sleep, and 40% to subjective wellness. For users with no wearables, the Light Tier relies entirely on subjective ratings.Subjective wellness is calculated by normalizing daily ratings for muscle soreness, energy levels, mood, sleep quality, and perceived stress. For biometric calculations in the Full and Medium tiers, the system establishes a personalized baseline. Daily readings are evaluated using a standardized z-score method, comparing the daily metric against a 14-day moving average and standard deviation :$$z = \frac{x_{\text{Daily}} - \mu_{14}}{\sigma_{14}}$$The resulting z-score is mapped to a 0-100 scale. This ensures that the overall Recovery Score is fully personalized, accounting for individual physiological variations.Once calculated, the final score dictates the daily Readiness Status: "green" (optimal recovery, $\ge 70$), "yellow" (moderate fatigue, $40-69$), or "red" (overtraining risk, $< 40$). This status actively modifies the day's training session, scaling intensity and volume to match the athlete's current physical state.The APRE Computational ModelThe application's strength training engine utilizes the Autoregulatory Progressive Resistance Exercise (APRE) protocol, popularized by Dr. Bryan Mann. APRE dynamically adjusts training intensity on a set-by-set and week-by-week basis, matching an athlete's physical capability with the appropriate training stimulus.The system implements three distinct APRE protocols, each targeting a specific physical quality: the 10RM protocol for hypertrophy, the 6RM protocol for strength and hypertrophy, and the 3RM protocol for maximal strength and power. A standard APRE session consists of four sets, where the first two are warm-ups, the third is an "As Many Reps As Possible" (AMRAP) set, and the fourth adjusts load based on the third set's performance.Set 1 (Warmup): 10 reps @ 50% of estimated 6RM (Readonly)
+Set 2 (Warmup):  6 reps @ 75% of estimated 6RM (Readonly)
+Set 3 (AMRAP):   Max reps @ 100% of estimated 6RM (User enters reps)
+Set 4 (AMRAP):   Adjusted reps @ Adjusted load (Computed using Set 3 reps)
+The load for Set 4 is adjusted based on the number of repetitions completed in Set 3, utilizing the deterministic Mann table adjustments. The adjustment $\Delta w$ is added directly to the Set 3 load, and this adjusted Set 4 performance subsequently dictates the athlete's training maximum ($RM$) for the following week :$$\Delta w_{\text{NextWeek}} = f(\text{Reps}_{\text{Set4}})$$$$RM_{\text{NextWeek}} = RM_{\text{Current}} + \Delta w_{\text{NextWeek}}$$These mathematical adjustments are rounded to the nearest standard load increments, ensuring that all recommended weights map to real-world plate configurations.For bodyweight training, such as the customized calisthenics module, the system adapts the APRE model by substituting load adjustments with progression levels. Rather than adding weight, Set 4 adjustments and next-week progressions scale the movement's complexity up or down within a 1-to-5 level system (e.g., transitioning from incline push-ups to push-up plus variations to improve scapular control).Modular Sport Planning and PersonalizationThe planning layer integrates eight distinct sports modules into a unified periodization framework. Running, strength, cycling, swimming, calisthenics, yoga, stretching, and walking are registered in the global SPORT_MODULES directory. Each module implements a 12-week periodized plan, structured into four consecutive blocks: a Base Phase to build work capacity, a Build Phase to increase intensity, a Peak Phase for maximum performance, and a periodic Deload Phase to allow for physiological recovery.The calisthenics module has been tailored for a 20-year-old developer with specific physical limitations and athletic goals. The program targets "gamer posture," shoulder hypermobility, and a clicking right hip (shortened iliopsoas) while managing bronchial asthma. Rather than prescribing generic movements, the program incorporates specific, rehab-safe exercises designed to address these pathologies.Pathological ObservationPrescribed ExerciseSet/Rep SchemeBiomechanical Mechanism and Intended OutcomeGamer PosturePush-up Plus $3 \times 8$ Integrates standard push-up mechanics with active scapular protraction at the top, strengthening the serratus anterior to correct shoulder rounding.Wall Slides $3 \times 10$Activates the lower trapezius and rhomboids to promote thoracic extension and open up chest posture.Hypermobile Left ShoulderScapular Pull-ups $3 \times 8$ Focuses entirely on the initial, muscular phase of the pull-up, building stability in the shoulder girdle while avoiding dangerous passive dead-hang states.W-Raises (with 1.5kg weights) $3 \times 10$ Targets the posterior deltoids and lower traps, reinforcing joint stability without hyperextending the shoulder.Clicking Right HipUnilateral Glute Bridge $3 \times 10$ Activates and strengthens the gluteus maximus, reducing dominance of the overactive, clicking iliopsoas muscle.Clamshells $3 \times 12$ Strengthens the gluteus medius, improving lateral hip stability and protecting the joint labrum.Bronchial AsthmaBox Breathing (during deload) $5 \text{ minutes}$Uses equal duration inhales, holds, exhales, and holds to regulate breathing, lower resting heart rate, and prevent asthma flare-ups.This highly customized approach demonstrates the application's unique value, proving that deterministic, rule-based systems can deliver highly personalized, rehab-safe programming without relying on complex, external machine-learning models.Diagnostic Assessment of Active Gaps and Engineering BottlenecksThe Chronological Day-Index Mapping ErrorA critical planning bug was recently identified where the TodayPage failed to display modular training programs, such as strength training or running, and instead rendered a rest day. A diagnostic review traced this issue to a mismatch in the planning module's day-index mapping. The legacy MONTHS plan assumed a fixed seven-day layout, mapping workout types "A", "B", and "C" to Monday (index 0), Wednesday (index 2), and Friday (index 4) respectively. However, the modular running and strength plans did not follow this seven-day array pattern; instead, they grouped sessions sequentially as three-day or four-day modules.Because the computeDerived store method evaluated the plan by querying the static seven-day indexes without passing the active sport variable, the search defaulted to the generic MONTHS template. When a user selected a strength-only plan, querying workout "B" mapped to index 2, which did not exist in the sequential three-day strength module. This returned a null pointer, rendering an incorrect rest day. The issue was resolved by introducing sequential, chronological day-index mapping for modular sport profiles, ensuring correct plan generation across all selected sports.Vite Hot Module Replacement (HMR) and CDP Proxy BarriersDuring automated testing, developers encountered a critical blocker where the application rendered a blank screen when accessed via headless browsers running over the Chrome DevTools Protocol (CDP). Console logs revealed a JavaScript runtime error: ReferenceError: $RefreshReg$ is not defined.This error stems from a known conflict between Vite's Hot Module Replacement (HMR) dev-server runtime and CDP proxy layers. In development mode, Vite injects HMR boundary wrappers around React components to allow for stateful code refreshes. However, when traffic is proxied through CDP, the browser's WebSocket connection back to Vite's dev-server is often dropped or blocked. This causes the HMR runtime to fail, leaving component files partially evaluated and throwing the $RefreshReg$ error. This issue does not affect the production build, which compiles successfully without HMR overhead. Serving the static production build of the application via a local server rather than testing directly against the Vite dev-server resolves this problem.React 18 Testing Library and Act WarningsThe Vitest test suite currently includes over 240 unit and integration tests. However, running these tests throws a large number of console errors regarding React's testing utility wrappers :Console Error: Warning: The current testing environment is not configured to support act(...)
+This warning occurs because component and integration tests perform asynchronous operations or fire UI events that trigger React state updates outside of the active test call stack. In React 18, any interaction that updates a component's state must be wrapped in the act(...) utility. This guarantees that all state updates and side effects are completely processed before assertions run.While React Testing Library automatically wraps standard helpers, like render and fireEvent, in act(...) , asynchronous side effects within hooks or custom store mock setups often bypass these wrappers, triggering warnings. Setting the global variable IS_REACT_ACT_ENVIRONMENT to true in the Vitest setup file, combined with upgrading the testing library, resolves these warnings and ensures a clean, warning-free test output.Technical Strategy and Actionable Implementation RoadmapTo guide the next stage of development, the repository will execute a structured, sequential roadmap focusing on set-level tracking, plan adaptation, localized rehabilitation, and automated data import. ───> [Phase 2: Plan Adaptation] ───> ───>
+Phase 1: Granular Set-Level Performance LoggingThe training execution layer must be upgraded from basic session logging to granular, set-by-set tracking. Currently, users can only log an overall rating of perceived exertion (RPE) and total duration, limiting the APRE engine's ability to track long-term performance trends. Implementing granular set logging provides the data needed for precise, long-term autoregulation.The updated data model will introduce dedicated types for tracking individual sets within a session :TypeScript// js/core/types.ts
+export interface SetResult {
+  setNumber: number;
+  plannedWeight?: number;
+  actualWeight?: number;
+  plannedReps: number;
+  completedReps: number;
+  completed: boolean;
+  rpe?: number; // 0-10 RPE per set
+}
+
+export interface ExerciseResult {
+  exerciseId: string;
+  exerciseName: string;
+  sets: SetResult;
+  completed: boolean;
+}
+
+export interface Session {
+  //... existing properties
+  completedExercises: ExerciseResult;
+  postSessionPainScore?: number;
+  postSessionFatigueScore?: number;
+}
+The ExerciseCard.jsx interface will be updated to display an interactive grid where athletes can check off sets as they complete them and adjust the completed reps inline. When saving a completed workout, the Zustand store will calculate the total volume, intensity distribution, and average RPE from the set-level data, storing this performance history in IndexedDB to drive the APRE adjustment engine.Phase 2: Weekly Plan Adaptation based on Performance TrendsBuilding on set-level logging, the planning module will implement weekly volume and intensity adjustments based on the athlete's completion rate. This ensures that the training load scales dynamically with the user's real-world capacity, automatically backing off if workouts are missed or scaling up if the athlete is consistently hitting all planned sets.The adaptation module will calculate a weekly completion rate by comparing the total completed sets against the planned sets :$$\text{Completion Rate} = \frac{\sum \text{Completed Sets}}{\sum \text{Planned Sets}}$$This completion rate then scales the volume for the following week's training block :High Adherence ($\ge 80\%$): Volume increases by 20% for the next week, signaling optimal adaptation and readiness for progressive overload.Moderate Adherence ($60\% - 79\%$): Volume remains the same, maintaining the current training load to allow the athlete to adapt.Low Adherence ($< 60\%$): Volume is reduced by 20%, implementing an automated back-off week to prevent chronic fatigue and reduce injury risk.These calculations are calculated synchronously during the store's derived state update, adjusting the weekly plan without requiring manual user intervention.Phase 3: Rehab-Aware Stretching and LocalizationThe stretching and mobility modules will be upgraded to dynamically adapt to the user's physical limitations. When generating a stretching session, the system will read the user's active rehabilitation issues (e.g., shoulder, back, or hip issues) from their profile and filter the movement library accordingly :Shoulder Issues: The system excludes loaded overhead stretches and shoulder extension movements, replacing them with thoracic spine openers and wall slides to improve range of motion safely.Back Issues: The system excludes loaded forward flexion and extreme spine rotation, prioritizing bird-dogs, cat-cows, and glute bridges to stabilize the core and protect the lower back.Hip Issues: The system avoids deep, loaded hip flexion, incorporating 90/90 mobility work and clamshells to strengthen the gluteal stabilizers.Simultaneously, the stretching exercises will undergo a complete localization audit. Legacy transliterated names (e.g., "Plevoy sustav") will be replaced with clean, localized translation keys in the ru.json and en.json translation files, ensuring a professional user experience across all supported languages.Phase 4: Automated Import of Wearable DataTo reduce manual data entry and improve daily metric accuracy, the application will introduce automated import pipelines. The initial phase will focus on supporting CSV files exported from third-party tools, such as the Health Sync app, which aggregates biometrics from Huawei Health and Apple Health.The import utility will expose a standard file upload interface in the settings menu , pointing to a parser configured for typical Health Sync CSV formats:TypeScript// js/core/import/csvParser.ts
+export interface ParsedBiometrics {
+  date: string;
+  sleepHours: number;
+  restingHR: number;
+  hrv: number;
+}
+
+export function parseHealthSyncCSV(csvContent: string): ParsedBiometrics {
+  const lines = csvContent.split('\n');
+  if (lines.length < 2) return;
+  
+  const headers = lines.split(',');
+  const dateIdx = headers.indexOf('Date');
+  const sleepIdx = headers.indexOf('Sleep duration (h)');
+  const rhrIdx = headers.indexOf('Resting heart rate (bpm)');
+  const hrvIdx = headers.indexOf('HRV (ms)');
+  
+  const records: ParsedBiometrics =;
+  
+  for (let i = 1; i < lines.length; i++) {
+    const fields = lines[i].split(',');
+    if (fields.length < headers.length) continue;
+    
+    records.push({
+      date: fields[dateIdx].trim(),
+      sleepHours: parseFloat(fields[sleepIdx]) || 0,
+      restingHR: parseInt(fields[rhrIdx], 10) || 0,
+      hrv: parseInt(fields[hrvIdx], 10) || 0
+    });
+  }
+  
+  return records;
+}
+The parsed records will be checked against the database using a transaction, updating missing check-in data without overwriting existing manual entries.Architectural Refactoring and Actionable TimelineThe final technical recommendations outline a structured timeline to execute these upgrades while maintaining clean architecture and comprehensive test coverage.Roadmap PhaseCore Files ModifiedArchitectural Changes and DeliverablesTarget CompletionPhase 1: Set-Level Loggingjs/core/types.ts, ExerciseCard.jsx, useAppStore.ts Introduce granular set-by-set tracking, update saving logic in store, and update the UI card.Weeks 1 - 2Phase 2: Plan Adaptationjs/core/analytics.ts, js/core/planning.ts Implement weekly completion calculations and volume-scaling rules based on target thresholds.Weeks 3 - 4Phase 3: Rehab Stretchingjs/plans/stretching.ts, ru.json, en.json Implement active rehabilitation filtering and localize transliterated stretching names.Weeks 5 - 6Phase 4: CSV Data Ingestjs/ui/pages/ProfilePage.jsx, js/core/storage.ts Build CSV parsing utilities and add file upload controls to settings to automate health metrics.Weeks 7 - 8This structured roadmap ensures that the Smart Fitness Coach matures from a local-first prototype into a robust, professional training platform, maintaining scientific accuracy and data privacy.
+Deepseek`s analyzes: Based on the codebase and the additional external research, here is my significantly deepened re-analysis:
+
+---
+
+## Enhanced Architecture Assessment (with External Validation)
+
+### 1. Scientific Foundation — Legitimate and Well-Cited
+
+The app's core scientific claims hold up under scrutiny:
+
+* **APRE (Mann et al., 2010)**: The original paper published in the *Journal of Strength and Conditioning Research* (24(7): 1718-1723) confirms that APRE produced significantly greater 1RM bench press improvement (93.4 ± 103 N vs. −0.40 ± 49.6 N for linear periodization, p = 0.02) and squat improvement (192.7 ± 199 N vs. 37.2 ± 155 N, p = 0.05) over a 6-week training period. The `engine.js` implementation's use of 3RM/6RM/10RM tables with set-4 adjustment and next-week RM calculation correctly follows the Mann methodology. The 56 unit tests are appropriate for safety-critical calculations.
+
+* **Foster sRPE (sessionLoad.ts)**: The `calculateSessionLoad` function (RPE × duration) correctly implements the Foster method, which is the most widely validated approach for quantifying internal training load. A 2018 study in *Frontiers in Physiology* confirmed that "Training load was calculated using the session-RPE method proposed by Foster, et al. and involved multiplying the total duration of a bout or exercise session in minutes by the training intensity."
+
+* **WHOOP/Oura Comparison**: WHOOP Recovery uses HRV, Resting Heart Rate, Sleep Performance, and Respiratory Rate with green (67-99%), yellow (34-66%), red (1-33%) thresholds. Oura Readiness uses 14-day weighted averages (with 2-5 days weighted heavier) compared to two-month long-term baselines. This project's Recovery Score uses z-score normalization against 14-day baselines — a similar statistical approach but with transparent weights (full: HRV 40%, sleep 30%, RHR 10%, subjective 20%). The three-tier system (light/medium/full) is a genuine differentiator: neither WHOOP nor Oura offers a subjective-only recovery mode.
+
+### 2. Market Timing — Favorable
+
+The fitness app market was valued at **$15.18 billion in 2025** and is projected to reach **$19.56 billion in 2026** with a **30.94% CAGR**, reaching $100.22 billion by 2032. The Digital Health Coaching market is also strong: $13.26B in 2025, growing at 15.3% CAGR to $15.29B in 2026.
+
+Critically, the market report notes: "on-device intelligence have elevated personalization from an experimental differentiator to a baseline expectation among engaged users." This project's local-first architecture aligns with the growing regulatory scrutiny on data privacy and "rethinking of telemetry collection."
+
+### 3. PWA Implementation — Well-Executed but with an Experimental Feature
+
+The manifest includes `launch_handler` with `client_mode: "focus-existing"` — this is an **experimental feature** that only works in Chromium-based browsers (not Firefox or Safari). MDN notes: "This feature is not Baseline because it does not work in some of the most widely-used browsers." The `shortcuts` array is a well-supported PWA feature across browsers.
+
+The service worker (`sw.js`) correctly skips dev-mode Vite HMR requests (localhost check), implements cache-first for same-origin and stale-while-revalidate for CDN resources, and handles `SKIP_WAITING` messages for update management. The `useServiceWorkerUpdate` hook in the React layer with 30-second polling is a good pattern.
+
+### 4. Zustand Slice Pattern — Confirmed Best Practice
+
+The Zustand community officially recommends the slices pattern for large stores: "The slices pattern organizes large stores into modular, composable pieces using `StateCreator` functions... making the store more maintainable, testable, and type-safe." The pattern enables "separate concerns by domain, make each slice independently testable, enable multiple developers to work on different slices without conflicts, maintain type safety across slice boundaries."
+
+The project's 1300-line `useAppStore.ts` would benefit from this pattern. Currently it mixes ~10 domains (raw data, checkin form, session form, UI state, derived computation, demo mode, guest mode, onboarding, achievements, import/export) into a single `create()` call.
+
+### 5. ACWR — Correctly Cautioned
+
+The master-plan.md wisely states: "Decide whether to implement ACWR or explicitly reject it." External research confirms this caution is warranted. A 2022 Bayesian analysis concluded: "time to dismiss ACWR" and a meta-analysis found "no consistent manner through which the ACWR was associated with injury risk." However, another 2024 study found "the association between the ACWR and RRI was significant, varying from a small to a moderate association (1-10%)." The scientific debate remains unresolved, so the project's "decide later" stance is the right call.
+
+### 6. Calisthenics Progression Design — Validated
+
+The calisthenics module's approach (scapular pull-ups → active pull-ups → weighted, push-up plus → knee push-ups → full push-ups) aligns with established programming principles. Expert sources confirm: "Linear progression with pulling emphasis. Build to 12+ pull-ups and 12+ dips before dedicated muscle-up work" is the recommended intermediate path, and "12-week programs for beginner, intermediate, and advanced levels" with long-term progression planning is standard.
+
+---
+
+## Updated Technical Debt Priority (with Research Validation)
+
+| Priority | Item | Impact | External Evidence |
+|----------|------|--------|-------------------|
+| **Critical** | Fix `storage.ts` demo DB leakage (`_db()` vs `db`) | Data corruption risk | Dexie.js supports multiple database instances; the closure-capture bug is a known pattern in singleton DB designs |
+| **High** | Implement exercise completion tracking (Subtask 1) | Core feedback loop broken | Without per-set logging, APRE can only use session-level RPE — the Mann methodology expects per-set AMRAP results |
+| **High** | Remove dead `engine.test.js` and consolidation scripts | Confusion for contributors | Legacy CommonJS in ESM project confirmed broken |
+| **Medium** | Split `useAppStore.ts` using Zustand slices | Maintainability ceiling | Slices pattern is official Zustand recommendation for large stores |
+| **Medium** | Wire `t()` i18n into all components | English mode half-broken | Translations exist (en.json: 16KB), but components use hardcoded Russian |
+| **Low** | Extract CSS modules | Code organization | Vite supports CSS modules natively; 70KB monolithic CSS is unsustainable |
+| **Low** | Rewrite TodayPage to JSX | Developer experience | React.createElement is legacy; no JSX in critical page is a maintenance risk |
+| **Info** | Remove `launch_handler` from manifest | Compatibility | Experimental feature, not Baseline — only works in Chromium |
+
+---
+
+## Summary of New Findings (Beyond Initial Analysis)
+
+1. **Scientific legitimacy confirmed.** The APRE engine, Foster sRPE, and z-score recovery scoring are all grounded in peer-reviewed research. The codebase's methodology claims are honest and verifiable.
+
+2. **The market is enormous and growing.** At $15-17B in 2025 with ~30% CAGR, this is not a niche. The report specifically highlights "on-device intelligence" and "biometric integration" as key differentiators — both are core to this project's architecture.
+
+3. **The tiered Recovery Score is a genuine product differentiator.** Neither WHOOP nor Oura offers a subjective-only mode. The light/medium/full tiering with auto-detection (`detectOptimalTier`) creates an onboarding path for users without wearables that competitors lack.
+
+4. **The Zustand slices pattern is the community-recommended solution** for the exact problem this codebase has (monolithic store with multiple domains).
+
+5. **The Vitest 4 `poolOptions` fix was correct.** The breaking change removed `poolOptions` entirely in v4; top-level options are now the standard.
+
+6. **The PWA implementation has one experimental feature** (`launch_handler`) that should be noted as a progressive enhancement, not a core requirement, since it only works in Chromium.
+
+7. **ACWR hesitation is scientifically justified.** The literature is genuinely divided on whether ACWR predicts injury risk — the project's "decide later" approach is the honest one.
+Now that the full codebase is in view, here's my thorough analysis:
+
+---
+
+## Overall Architecture Assessment
+
+**Smart Fitness Coach** is a serious, well-architected local-first PWA. The data model (`Input → IndexedDB → Zustand → derived state → UI recommendation`) is clean and principled. The separation between pure domain logic (`js/core/`), state management (`js/stores/`), and UI (`js/ui/`) is unusually disciplined for a side-project.
+
+---
+
+## Strengths
+
+1. **Genuinely transparent autoregulation.** The APRE engine in `js/core/apre/engine.js` exposes Mann-table logic with clear pure functions (`applyApre`, `calcApreSets`, `calcNextWeekRM`) and has 56 unit tests. Every weight change has a traceable reason, which aligns with the product philosophy.
+
+2. **Tiered Recovery Score is correctly implemented.** `js/core/recoveryScore.ts` has three weight vectors (full/medium/light) with graceful degradation. The `detectOptimalTier()` function scans real check-in patterns to suggest a tier — a thoughtful UX touch that avoids asking users to decide what data they have.
+
+3. **Multi-sport periodization is real, not skin-deep.** The `js/plans/` directory contains 8 sport modules, each with base→build→peak→deload phases. The registry in `planning.ts` (`SPORT_MODULES`) and the `getAdaptedSessionForDate` pipeline genuinely compose readiness, profile, rehab, equipment, and APRE into a daily session.
+
+4. **Domain logic is testable.** `validation.ts`, `readiness.ts`, `stats.ts`, `correlations.ts` all have matching test files. The store test (`useAppStore.test.ts`) tests user-visible actions rather than internal state — good TDD alignment.
+
+5. **The `planning.ts` deprecation pattern** is well-executed. Old functions like `getMonthAndDayIndex` and `buildSessionFromMonth` are marked `@deprecated` with `return null` shims, while `getSessionForDate` and `getAdaptedSessionForDate` carry the real logic forward. This is how you migrate without breaking the store's `computeDerived`.
+
+6. **Demo mode with profile personas.** `demoData.ts` supports profiles (marathoner, yogi, crossfitter, rehab) with per-profile parameters, and there's a backup-before-activate pattern in `storage.ts`.
+
+---
+
+## Issues and Risks
+
+### 1. **`useAppStore.ts` is too large (~1300 lines).**
+It mixes raw data, form fields, derived computation, demo mode logic, import/export, toast notification, guest mode, onboarding, and achievement checks. The `computeDerived` function alone calls 10+ domain modules. This creates:
+- Slow store initialization (Dexie load → `computeDerived` → 10 derived computations)
+- Difficulty adding features without touching the store
+- Test fragility (reset state before each test, heavy mocking)
+
+**Recommendation:** Split into focused slices (Zustand slices or separate stores): `useCheckinStore`, `useSessionStore`, `useDemoStore`, `usePlanStore`. Keep `useAppStore` as the orchestrator that calls `computeDerived`.
+
+### 2. **`TodayPage.jsx` is legacy React.createElement style (~800 lines).**
+It's the most critical page but uses the least maintainable pattern. No JSX, no hooks for sub-components, everything in one file. The AGENTS.md rule says "Do not expand legacy style unless required" — but this page IS the product.
+
+**Recommendation:** A phased JSX rewrite of `TodayPage.jsx` with extracted components (`HeroRing`, `SparklineCard`, `ExerciseList`, `WeeklyStrip`) would dramatically improve maintainability.
+
+### 3. **Test coverage is uneven.**
+- `apre/engine.js`: 56 tests (excellent)
+- `sessionLoad.ts`: **0%** coverage (the file has `Number()`/`Math.max()` defensive code but no tests exercise it)
+- `loadAdjustments.ts`: **1.06%** — critical for deload/injury/travel multiplier logic
+- `storage.ts`: **15.24%** — the IndexedDB wrapper is barely tested
+- `useAppStore.ts`: **~25%** — the most complex file has the least coverage
+
+**Recommendation:** Prioritize tests for `sessionLoad.ts` and `loadAdjustments.ts` since they directly affect training safety.
+
+### 4. **`js/core/engine.test.js` is dead code.**
+It uses CommonJS `require()` and fails in the ESM project. The file still exists in the directory listing but `sessionLoad.test.ts` now covers its functionality. **Remove it** to avoid confusion.
+
+### 5. **No per-set rep logging.**
+The `ExerciseResult` type in `types.ts` has `repsPerSet: number[]` and `completedSets` — but the store's `handleToggleTraining` does NOT write these. ExerciseCard.jsx shows checkboxes, but there's no persistence path from click → store → Dexie → APRE adjustment. This is the gap the `plans/2026-05-27-exercise-tracking-swarm.md` correctly identifies.
+
+**Recommendation:** Implement Subtask 1 from the swarm plan (exercise completion tracking) as the highest-priority feature.
+
+### 6. **`storage.ts` demo mode is fragile.**
+The `_db()` function returns the active DB, but if `activateDemoData` is called after `init()`, the demo DB is created but `db` still refers to the real DB. The `getActiveDatabase()` export exists but isn't consistently used by `getAllSessions()`/`getAllCheckins()` — they use the closure-captured `db`.
+
+**Recommendation:** Audit ALL data-access functions in `storage.ts` to use `getActiveDatabase()` instead of `db`.
+
+### 7. **CSS is 70KB monolithic.**
+All styles (base, pages, components, tour, onboarding, heatmap, APRE cards) live in one file. This makes it hard to find which component's styles are where, and increases the risk of specificity conflicts.
+
+**Recommendation:** At minimum, extract component-specific CSS to co-located `.module.css` files. Vite supports CSS modules natively.
+
+### 8. **i18n keys are hardcoded in components.**
+The `.json` files have `"today.title": "Сегодня"` but `TodayPage.jsx` doesn't use `t('today.title')` — it uses Russian text directly. The English translations are complete, but the language switcher only partially works because components aren't using the i18n hook.
+
+**Recommendation:** Wire the `t()` function into all user-visible strings. This is high-effort but essential for the "English UI activation" feature.
+
+### 9. **Test configuration fragility.**
+The `vite.config.ts` note says `pool` and `poolOptions` were removed because Vitest 4 deprecated them. The `test_output.txt` shows `test_webapp.py` and `scripts/test_automation.cjs` are separate test runners, and `scripts/test_automation.py` has a 600-line Playwright script that duplicates what the `e2e/` directory does.
+
+**Recommendation:** Consolidate testing: Vitest for unit/component, Playwright for E2E. Delete `scripts/test_automation.cjs`, `scripts/test_automation.py`, and `test_webapp.py`.
+
+### 10. **Documentation is partially stale.**
+- `README.md` says "TypeScript 6" but `tsconfig.json` has `"target": "ES2020"` and `package.json` shows TS 5.x.
+- `docs/reference/PROJECT_CONTEXT.md` says "Phase 5 — Экосистема: ⏳ 20%" but the swarm plan and progress files show Phase 5 with Premium Dashboard features added.
+- The `memory-bank/progress.md` mentions "142 failures all from pre-existing act() incompatibility" — the `test_output.txt` shows 244 tests with 0 failures, so this was fixed but the doc wasn't updated.
+
+---
+
+## What's Not Done (from the Swarm Plans)
+
+The `plans/2026-05-27-exercise-tracking-swarm.md` has 6 subtasks, all marked `[ ] pending`:
+
+1. Exercise completion tracking (per-set checkboxes → Dexie)
+2. Weekly plan adaptation (completion rate → volume adjustment)
+3. Rehab-aware stretching (filter stretches by rehab zones)
+4. Stretching translations (transliterated → proper Russian/English)
+5. Daily 100% achievement (unlock when all sets completed)
+6. Achievements list page (new route in app)
+
+These are well-scoped, non-overlapping, and build on each other. Implementing them would close the loop from "plan shows exercises" → "user marks completion" → "system adapts next week."
+
+---
+
+## Technical Debt Priority
+
+| Priority | Item | Impact |
+|----------|------|--------|
+| **Critical** | Fix `storage.ts` demo DB leakage | Data corruption risk in demo mode |
+| **High** | Implement exercise completion tracking (Subtask 1) | Core feedback loop is broken |
+| **High** | Remove dead `engine.test.js` and consolidation scripts | Confusion for new contributors |
+| **Medium** | Split `useAppStore.ts` | Maintainability ceiling |
+| **Medium** | Wire i18n `t()` into all components | English mode is half-broken |
+| **Low** | Extract CSS modules | Code organization |
+| **Low** | Rewrite TodayPage.jsx to JSX | Developer experience |
+
+---
+
+## Summary
+
+This is a rare project: a fitness app with actual science under the hood, not just motivational quotes. The architecture is sound, the domain logic is well-tested where it matters most (APRE, recovery score, readiness), and the swarm plans identify exactly the right next steps. The main risks are the monolithic store, the untested load-adjustment layer, and the broken demo DB pointer. These are fixable with focused effort — the hard part (getting the training recommendation right) is already done.
+Claude analyze: Прочитал всё. Вот честная картина.
+
+**Что реально хорошо:**
+- Архитектура чистая: Zustand стор, чистые функции в core, IndexedDB через Dexie — всё правильно структурировано
+- APRE движок с 56 тестами — реально работает и хорошо покрыт
+- Recovery Score с тремя тирами — логика звучная
+- TypeScript strict, 0 ошибок компиляции
+- 244 unit-теста проходят
+
+**Реальные проблемы:**
+
+Первое и главное — **продукт не используется**. Это хорошо спроектированная система, которая никогда не видела реальных данных реального пользователя каждый день. Весь смысл приложения — "открываю утром, вижу что делать" — но ты его не открываешь каждое утро.
+
+Второе — **покрытие 43%** при 244 тестах означает, что основная логика стора (`useAppStore.ts` — 1200+ строк, 25% покрытие) фактически не тестируется. Это самое сложное место и самое хрупкое.
+
+Третье — **E2E тесты написаны, но не запускаются** в реальном браузере из-за Vite HMR/CDP проблемы. 51 спек есть, пользы от них ноль пока сервер не поднят.
+
+Четвёртое — **feature creep**: 8 видов спорта, Playwright E2E, i18n, guided tour, achievement system, interactive simulators в MethodologyPage — при том что основная петля (checkin → recovery score → план) ещё не валидирована на реальных данных.
+
+**Что делать конкретно:**
+
+Первый шаг — начни пользоваться приложением сам, каждый день, 2 недели. Это важнее любого кода. Ты обнаружишь баги и UX-проблемы, которые никакой тест не найдёт.
+
+Второй шаг — удали или спрячь всё что не нужно для ежедневной петли: guided tour, methodology simulators, 6 из 8 видов спорта. Оставь calisthenics + walking + stretching (твой реальный план). Меньше кода = меньше bugs.
+
+Третий шаг — добавь тесты для `useAppStore.ts`, особенно `computeDerived()`. Это центр всей системы и она почти не покрыта.
+
+Четвёртый шаг — реши вопрос с данными. Ты используешь Huawei Band 11 + Health Connect, данные уже текут в Google Drive. CSV импортер — это конкретная ценность, он устранит главную боль ручного ввода.
+
+**Вывод:** Проект технически приличный, но стоит на грани "impressive demo" vs "daily driver". Разница только в реальном использовании.
+2nd: # Полный план Smart Fitness Coach — от протипа до daily driver
+
+---
+
+## Нулевая точка: что имеем сейчас
+
+**Реально работает:** APRE движок (56 тестов), Recovery Score (3 тира), planning.ts с 8 спортами, IndexedDB, PWA, i18n структура.
+
+**Реально сломано или не завершено:**
+- `storage.ts` — `getAllSessions()`/`getAllCheckins()` используют closure-captured `db` вместо `getActiveDatabase()`, из-за чего demo mode течёт в реальную БД
+- `ExerciseResult` в types.ts есть, но путь click → store → Dexie → APRE не существует
+- `TodayPage.jsx` — 800 строк React.createElement, критическая страница без JSX
+- `useAppStore.ts` — 1300 строк, 25% coverage, 10 доменов в одном файле
+- i18n переводы есть в JSON, компоненты используют хардкод на русском
+- `engine.test.js` — мёртвый CommonJS в ESM проекте
+- 6 скриптов тестирования (vitest + playwright + scripts/test_automation.cjs + scripts/test_automation.py + test_webapp.py) — хаос
+- `loadAdjustments.ts` — 1% coverage, напрямую влияет на безопасность нагрузки
+- `launch_handler` в manifest — experimental, только Chromium
+
+---
+
+## Принципы плана
+
+1. **Сначала использование, потом код.** Никакая архитектура не заменяет 14 дней реального ежедневного открытия приложения.
+2. **Одна задача = один PR = один тест доказывает что работает.**
+3. **Никакого feature creep.** Каждый шаг либо закрывает дыру в основной петле, либо не делается.
+4. **Документация обновляется в том же коммите что и код.** Никогда отдельно.
+
+---
+
+## Фаза 0 — Неделя 0: Санитария и реальное использование (параллельно)
+
+Это делается один раз прежде чем писать новый код.
+
+### 0.1 Удаление мёртвого кода (2-3 часа)
+
+```bash
+# Удалить legacy ui/ директорию (корень)
+rm -rf ui/
+
+# Удалить unused stubs в js/ui/components/
+rm js/ui/components/MiniChart.jsx
+rm js/ui/components/ReadinessRing.jsx
+rm js/ui/components/RecoveryBar.jsx
+rm js/ui/components/SVGRing.jsx
+rm js/ui/components/TomorrowPreview.jsx
+rm js/ui/components/Tooltip.jsx
+
+# Удалить unused pages
+rm js/ui/pages/InfoPage.jsx
+rm js/ui/pages/NutritionPage.jsx
+rm js/ui/pages/QuickStats.jsx
+rm js/ui/pages/RecoveryScoreCard.jsx
+rm js/ui/pages/RehabPage.jsx
+rm js/ui/pages/SessionPlan.jsx
+rm js/ui/pages/CoachAdvice.jsx
+
+# Удалить unused stores
+rm js/stores/useSettingsStore.ts
+rm js/stores/useCheckinStore.ts
+rm js/stores/useUIStore.ts
+
+# Удалить мёртвый legacy тест
+rm js/core/engine.test.js
+
+# Удалить дубликаты тест-скриптов
+rm scripts/test_automation.cjs
+rm scripts/test_automation.py
+rm test_webapp.py
+
+# Удалить zero-byte файлы
+rm constants.js engine.js fitness-tracker
+
+# Добавить в .gitignore (уже есть .aider*, проверить)
+```
+
+После удаления: `npm run type-check && npm test` — должно быть зелёным.
+
+### 0.2 Критический баг: storage.ts demo DB (1 час)
+
+Это единственный баг который может молча портить данные.
+
+```typescript
+// В storage.ts найти ВСЕ функции которые используют bare `db`
+// вместо getActiveDatabase() / _db()
+
+// ТЕКУЩИЙ БАГИ (пример):
+export async function getAllSessions() {
+  return db.sessions.toArray(); // НЕПРАВИЛЬНО — игнорирует demo mode
+}
+
+// ИСПРАВЛЕНИЕ:
+export async function getAllSessions() {
+  return _db().sessions.toArray(); // _db() возвращает demo или real
+}
+```
+
+Найти grep'ом все вхождения `db.sessions`, `db.checkins`, `db.settings`, `db.achievements` внутри функций (не в schema definition) и заменить на `_db().sessions` и т.д.
+
+Написать тест:
+```typescript
+// js/tests/core/storage.demoMode.test.ts
+it('demo mode sessions не попадают в реальную БД', async () => {
+  await activateDemoData(mockDemoData);
+  const demoSessions = await getAllSessions();
+  await deactivateDemoData();
+  const realSessions = await getAllSessions();
+  expect(realSessions.length).toBe(0); // реальная БД чистая
+});
+```
+
+### 0.3 Manifest: убрать experimental feature (10 минут)
+
+```json
+// public/manifest.json — удалить:
+// "launch_handler": { "client_mode": "focus-existing" }
+// Это experimental, только Chromium, ничего не даёт рядовому пользователю
+```
+
+### 0.4 Начать использовать приложение — 14 дней подряд
+
+Это не метафора. Без этого всё остальное — театр.
+
+**Протокол:**
+- Каждое утро: открыть, заполнить чек-ин (medium tier: RHR + сон + субъективное)
+- После тренировки: отметить выполнение, RPE
+- Записывать в заметки всё что раздражает, непонятно, или ломается
+
+После 14 дней у тебя будет список реальных проблем, а не гипотетических.
+
+---
+
+## Фаза 1 — Недели 1-2: Закрыть основную петлю
+
+**Цель:** Пользователь выполняет тренировку → отмечает каждый подход → система сохраняет → APRE использует реальные данные.
+
+Сейчас эта петля разорвана: ExerciseResult тип есть, но данные никуда не сохраняются.
+
+### 1.1 Granular set tracking — types.ts
+
+```typescript
+// js/core/types.ts — уточнить существующий ExerciseResult
+export interface SetResult {
+  setNumber: number;       // 1-4
+  plannedReps: number;     // из плана
+  completedReps: number;   // пользователь ввёл
+  plannedWeight?: number;  // из APRE расчёта
+  actualWeight?: number;   // пользователь ввёл (может отличаться)
+  completed: boolean;
+  rpe?: number;            // 0-10, опционально
+}
+
+export interface ExerciseResult {
+  exerciseName: string;
+  plannedSets: number;
+  completedSets: number;
+  sets: SetResult[];        // ДОБАВИТЬ — детальные данные по подходам
+  completed: boolean;
+}
+
+// Session — добавить поле:
+export interface Session {
+  // ... существующие поля ...
+  exerciseResults?: ExerciseResult[];  // уже есть, но не заполняется
+  postSessionPainScore?: number;       // 0-10, боль после
+  postSessionFatigueScore?: number;    // 0-10, усталость после
+}
+```
+
+### 1.2 ExerciseCard.jsx — UI для ввода подходов
+
+```jsx
+// Для APRE упражнений — уже есть 4 сета в UI
+// Добавить: чекбокс "подход выполнен" + поле "сколько повторений"
+// Для non-APRE упражнений — добавить простой чекбокс на каждый подход
+
+// Принцип: минимальный ввод
+// Лучшее: просто галочка "выполнено" (completedReps = plannedReps)
+// Опционально: поле для корректировки числа повторений
+
+// callback onSetComplete(exerciseName, setNumber, completedReps)
+// вызывается при каждом чеке
+```
+
+### 1.3 useAppStore.ts — сохранение set results
+
+```typescript
+// В handleToggleTraining() добавить:
+// 1. Собрать pendingExerciseResults из store state
+// 2. Записать в Session.exerciseResults перед saveSession()
+// 3. Использовать completedReps из set 4 для APRE nextWeekRM расчёта
+
+// Уже есть: pendingApreResults: ApreExerciseResult[]
+// Нужно добавить: pendingExerciseResults: ExerciseResult[]
+
+// Setter:
+updateSetResult: (exerciseName: string, setResult: SetResult) => {
+  set(state => ({
+    pendingExerciseResults: mergeSetResult(
+      state.pendingExerciseResults, 
+      exerciseName, 
+      setResult
+    )
+  }));
+}
+```
+
+### 1.4 Тест для новой логики
+
+```typescript
+// js/tests/core/exerciseTracking.test.ts
+it('completed sets rate вычисляется корректно', () => {
+  const result: ExerciseResult = {
+    exerciseName: 'Pull-ups',
+    plannedSets: 4,
+    completedSets: 3,
+    sets: [...],
+    completed: false
+  };
+  expect(completionRate([result])).toBe(0.75);
+});
+
+it('APRE nextWeekRM обновляется из set4 данных', () => {
+  // Verify that if set4 completedReps = 8 (APRE_6 protocol),
+  // nextWeekRM increases by correct Mann table amount
+});
+```
+
+---
+
+## Фаза 2 — Недели 3-4: Weekly Plan Adaptation
+
+**Цель:** Система видит что ты выполняешь/не выполняешь план и адаптирует следующую неделю.
+
+### 2.1 calculateWeeklyCompletionRate() — analytics.ts
+
+```typescript
+// js/core/analytics.ts
+export function calculateWeeklyCompletionRate(
+  sessions: Session[],
+  weekStart: Date
+): number {
+  const weekSessions = sessions.filter(s => isInWeek(s.date, weekStart));
+  
+  const totalPlanned = weekSessions.reduce((sum, s) => 
+    sum + (s.exerciseResults?.reduce((es, er) => es + er.plannedSets, 0) ?? 0), 0
+  );
+  
+  const totalCompleted = weekSessions.reduce((sum, s) => 
+    sum + (s.exerciseResults?.reduce((es, er) => es + er.completedSets, 0) ?? 0), 0
+  );
+  
+  if (totalPlanned === 0) return 1; // нет данных — не наказывать
+  return Math.min(1, totalCompleted / totalPlanned);
+}
+```
+
+### 2.2 adaptNextWeekVolume() — planning.ts
+
+```typescript
+// js/core/planning.ts
+export function getVolumeMultiplierFromAdherence(completionRate: number): number {
+  if (completionRate >= 0.8) return 1.2;   // +20%: прогресс
+  if (completionRate >= 0.6) return 1.0;   // сохранить
+  return 0.8;                               // -20%: бэк-офф неделя
+}
+```
+
+Интегрировать в `computeDerived()` — передавать multiplier в `getAdaptedSessionForDate()`.
+
+### 2.3 Тесты
+
+```typescript
+// js/tests/core/analytics.test.ts — добавить
+it('completion rate 75% → multiplier 1.0 (no change)', () => {
+  expect(getVolumeMultiplierFromAdherence(0.75)).toBe(1.0);
+});
+it('completion rate 85% → multiplier 1.2 (volume increase)', () => {
+  expect(getVolumeMultiplierFromAdherence(0.85)).toBe(1.2);
+});
+it('completion rate 50% → multiplier 0.8 (back-off week)', () => {
+  expect(getVolumeMultiplierFromAdherence(0.50)).toBe(0.8);
+});
+```
+
+---
+
+## Фаза 3 — Недели 5-6: Автоматический импорт данных из Huawei Health
+
+Это самая высокоценная фича для тебя лично. Ты уже используешь Huawei Band 11 + Health Sync → Google Drive. Это нужно было сделать давно.
+
+### 3.1 CSV парсер — новый файл
+
+```typescript
+// js/core/import/csvParser.ts
+
+export interface ParsedBiometrics {
+  date: string;        // YYYY-MM-DD
+  sleepHours: number;
+  restingHR: number;
+  hrv: number;
+}
+
+// Health Sync экспортирует CSV с заголовками
+// Нужно определить реальные заголовки из твоего экспорта
+// Типичные варианты: "Date", "Sleep duration (h)", "Resting heart rate (bpm)", "HRV (ms)"
+
+export function parseHealthSyncCSV(csvContent: string): ParsedBiometrics[] {
+  const lines = csvContent.trim().split('\n');
+  if (lines.length < 2) return [];
+  
+  const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+  
+  // Flexible header matching — Health Sync меняет заголовки между версиями
+  const findCol = (...candidates: string[]) => {
+    for (const c of candidates) {
+      const idx = headers.findIndex(h => h.includes(c.toLowerCase()));
+      if (idx !== -1) return idx;
+    }
+    return -1;
+  };
+  
+  const dateIdx = findCol('date', 'дата');
+  const sleepIdx = findCol('sleep duration', 'сон', 'sleep hours');
+  const rhrIdx = findCol('resting heart rate', 'rhr', 'пульс покоя');
+  const hrvIdx = findCol('hrv', 'вариабельность');
+  
+  if (dateIdx === -1) throw new Error('Не найдена колонка даты в CSV');
+  
+  const records: ParsedBiometrics[] = [];
+  
+  for (let i = 1; i < lines.length; i++) {
+    const fields = lines[i].split(',');
+    if (fields.length < 2) continue;
+    
+    const record: ParsedBiometrics = {
+      date: normalizeDate(fields[dateIdx]?.trim() ?? ''),
+      sleepHours: sleepIdx !== -1 ? parseFloat(fields[sleepIdx]) || 0 : 0,
+      restingHR: rhrIdx !== -1 ? parseInt(fields[rhrIdx], 10) || 0 : 0,
+      hrv: hrvIdx !== -1 ? parseInt(fields[hrvIdx], 10) || 0 : 0,
+    };
+    
+    if (record.date) records.push(record);
+  }
+  
+  return records;
+}
+
+export async function mergeImportedBiometrics(
+  records: ParsedBiometrics[],
+  getAllCheckins: () => Promise<Checkin[]>
+): Promise<{ updated: number; skipped: number }> {
+  const existing = await getAllCheckins();
+  const existingByDate = new Map(existing.map(c => [c.date, c]));
+  
+  let updated = 0;
+  let skipped = 0;
+  
+  for (const record of records) {
+    const existing = existingByDate.get(record.date);
+    
+    if (existing) {
+      // Не перезаписывать если уже есть данные этого типа
+      const needsUpdate = 
+        (record.sleepHours > 0 && !existing.sleepHours) ||
+        (record.restingHR > 0 && !existing.restHR) ||
+        (record.hrv > 0 && !existing.hrv);
+      
+      if (needsUpdate) {
+        await saveCheckin({
+          ...existing,
+          sleepHours: existing.sleepHours || record.sleepHours,
+          restHR: existing.restHR || record.restingHR,
+          hrv: existing.hrv || record.hrv,
+        });
+        updated++;
+      } else {
+        skipped++;
+      }
+    }
+    // Если нет чекина за эту дату — создаём минимальный
+    // (только биометрика, без субъективных данных)
+  }
+  
+  return { updated, skipped };
+}
+```
+
+### 3.2 UI — добавить в ProfilePage.jsx
+
+```jsx
+// В секцию "Данные" добавить отдельную кнопку:
+// "📲 Импорт из Health Sync (CSV)"
+// С описанием: "Загрузи CSV из Health Sync для автоматического заполнения сна и пульса"
+
+// После импорта показать toast:
+// "Обновлено 12 записей, пропущено 3 (уже заполнены)"
+```
+
+### 3.3 Тесты
+
+```typescript
+// js/tests/core/csvParser.test.ts
+const mockCSV = `Date,Sleep duration (h),Resting heart rate (bpm),HRV (ms)
+2026-05-28,7.5,62,55
+2026-05-27,6.0,65,48`;
+
+it('парсит корректный CSV', () => {
+  const result = parseHealthSyncCSV(mockCSV);
+  expect(result).toHaveLength(2);
+  expect(result[0].sleepHours).toBe(7.5);
+  expect(result[0].hrv).toBe(55);
+});
+
+it('не падает на пустом CSV', () => {
+  expect(parseHealthSyncCSV('')).toEqual([]);
+});
+
+it('не перезаписывает существующие данные', async () => {
+  // Тест mergeImportedBiometrics
+});
+```
+
+---
+
+## Фаза 4 — Недели 7-8: Rehab-aware stretching + i18n
+
+### 4.1 Stretching.ts — rehab фильтрация
+
+```typescript
+// js/plans/stretching.ts
+// Добавить в exerciseDatabase.ts теги для растяжки:
+
+const rehabStretchMap: Record<string, { include: string[], exclude: string[] }> = {
+  shoulder: {
+    include: ['wall slides', 'thoracic rotation', 'chest opener'],
+    exclude: ['overhead stretch', 'behind-back stretch', 'shoulder extension']
+  },
+  back: {
+    include: ['cat-cow', 'bird-dog', 'knee-to-chest'],
+    exclude: ['loaded forward fold', 'extreme spine rotation', 'good morning stretch']
+  },
+  hips: {
+    include: ['90/90 hip mobility', 'clamshells', 'pigeon pose modified'],
+    exclude: ['deep loaded squat', 'extreme hip flexion', 'hurdler stretch']
+  }
+};
+
+// В basePhase/buildPhase/peakPhase:
+function filterStretchesForRehab(
+  exercises: Exercise[], 
+  rehabIssues: string[]
+): Exercise[] {
+  if (rehabIssues.length === 0) return exercises;
+  
+  const excludePatterns = rehabIssues
+    .flatMap(issue => rehabStretchMap[issue]?.exclude ?? [])
+    .map(p => p.toLowerCase());
+  
+  return exercises.filter(ex => 
+    !excludePatterns.some(pattern => 
+      ex.n.toLowerCase().includes(pattern)
+    )
+  );
+}
+```
+
+### 4.2 Исправить транслитерацию в stretching.ts
+
+Найти и заменить все "Plevoy sustav", "Zapyastya", "Raztyazhka" и аналоги на нормальные русские/английские названия через i18n ключи.
+
+```json
+// js/i18n/locales/ru.json — добавить:
+"exercises": {
+  "shoulder_mobility": "Мобильность плечевого сустава",
+  "wrist_stretch": "Растяжка запястий",
+  "full_body_stretch": "Растяжка всего тела",
+  "cat_cow": "Кошка-корова",
+  "bird_dog": "Берд-дог",
+  "wall_slides": "Скольжения по стене"
+}
+```
+
+### 4.3 Проводить i18n аудит постепенно
+
+Стратегия: не переписывать всё сразу (это огромный объём), а переходить по одному компоненту при каждом касании. Начать с:
+1. `CheckinForm.jsx` — все label строки через `t()`
+2. `OnboardingWizard.jsx` — все user-facing строки
+3. `TodayPage.jsx` — при рефакторинге (фаза 5)
+
+---
+
+## Фаза 5 — Недели 9-10: Рефакторинг TodayPage и Store
+
+Это самый трудозатратный шаг, но он разблокирует всё будущее развитие.
+
+### 5.1 useAppStore.ts — разбить на слайсы
+
+```typescript
+// Принцип Zustand slices pattern:
+// Каждый slice — StateCreator<FullStore, [], [], SliceState>
+
+// js/stores/slices/checkinSlice.ts
+// Поля: weight, restHR, hrv, sleepHours, hipPain, shoulderPain,
+//       breathing, notes, muscleSoreness, energy, mood, sleepQuality, stress
+// Actions: setWeight, setRestHR, ..., handleSaveCheckin
+
+// js/stores/slices/sessionSlice.ts  
+// Поля: rpe, sessionNote, durationMinutes, testPullUps, testPushUps, testPlank
+//       pendingApreResults, pendingExerciseResults
+// Actions: setRpe, setSessionNote, updateSetResult, handleToggleTraining
+
+// js/stores/slices/uiSlice.ts
+// Поля: activeTab, showReadiness, manualOverride, showSettings,
+//       toast, showGuestModal, showResetConfirm
+// Actions: setActiveTab, showToast, openSettings, setManualOverride
+
+// js/stores/slices/dataSlice.ts
+// Поля: sessions, checkins, dataLoaded, startDate, trainDays
+//       checkinTier, selectedGadgets, selectedSports, rehabIssues...
+// Actions: initApp, handleExportData, handleImportData, handleResetAll
+
+// js/stores/slices/demoSlice.ts
+// Поля: demoMode, guestMode, virtualTodayOffset
+// Actions: activateDemoMode, deactivateDemoMode, setVirtualTodayOffset
+
+// js/stores/useAppStore.ts — остаётся как тонкий оркестратор:
+export const useAppStore = create<FullStore>()((...a) => ({
+  ...createCheckinSlice(...a),
+  ...createSessionSlice(...a),
+  ...createUISlice(...a),
+  ...createDataSlice(...a),
+  ...createDemoSlice(...a),
+  // computeDerived остаётся здесь — он объединяет все слайсы
+}));
+```
+
+### 5.2 TodayPage.jsx — поэтапный рефакторинг
+
+Не переписывать всё сразу. Порядок:
+
+**Шаг 1:** Выносить функции-компоненты в отдельные файлы по одному:
+```
+js/ui/components/today/
+  HeroRing.tsx
+  SparklineCard.tsx
+  ExerciseList.tsx
+  WeeklyStrip.tsx
+  QuickActionToggle.tsx
+  TomorrowPreview.tsx
+  CoachTipsPanel.tsx
+```
+
+**Шаг 2:** Конвертировать каждый компонент из `React.createElement` в JSX при переносе.
+
+**Шаг 3:** TodayPage.jsx становится тонким оркестратором этих компонентов (~150 строк).
+
+**Шаг 4:** Добавить тесты для каждого выделенного компонента.
+
+---
+
+## Фаза 6 — Недели 11-12: Покрытие критических модулей тестами
+
+Приоритет: модули которые влияют на безопасность тренировки.
+
+### 6.1 loadAdjustments.ts (1% → 80%+)
+
+```typescript
+// js/tests/core/loadAdjustments.test.ts
+
+it('getWeeklyMultiplier возвращает 0.6 на 4-й неделе (deload)', () => {
+  expect(getWeeklyMultiplier({}, 1, 4)).toBe(0.6);
+});
+
+it('getWeeklyMultiplier возвращает 1.0 на 1-й неделе', () => {
+  expect(getWeeklyMultiplier({}, 1, 1)).toBe(1.0);
+});
+
+it('applyApreAdjustment не меняет упражнения если нет последней сессии', () => {
+  const exercises = [{ n: 'Bench Press', s: '3', r: '8' }];
+  expect(applyApreAdjustment(exercises, null)).toEqual(exercises);
+});
+
+it('adjustExercisesForMode возвращает только recovery упражнения в minimum режиме', () => {
+  const result = adjustExercisesForMode(exercises, 'minimum');
+  result.forEach(ex => expect(isRecoveryExercise(ex)).toBe(true));
+});
+```
+
+### 6.2 sessionLoad.ts (0% → 100%)
+
+```typescript
+// js/tests/core/sessionLoad.test.ts — уже существует, но coverage 0%
+// Проблема: file uses 'Number()' and 'Math.max()' defensive code
+// Добавить edge cases:
+
+it('возвращает 0 при RPE = 0', () => {
+  expect(calculateSessionLoad(0, 45)).toBe(0);
+});
+
+it('возвращает 0 при duration = 0', () => {
+  expect(calculateSessionLoad(7, 0)).toBe(0);
+});
+
+it('корректный расчёт: RPE 7 × 45 мин = 315', () => {
+  expect(calculateSessionLoad(7, 45)).toBe(315);
+});
+
+it('использует default duration 45 если не передан', () => {
+  expect(calculateSessionLoad(7)).toBe(315);
+});
+```
+
+### 6.3 advice.ts (30% → 70%+)
+
+```typescript
+// js/tests/core/advice.test.ts — расширить существующие тесты
+
+it('getCoachAdvice возвращает recovery совет при score < 40', () => {
+  const advice = getCoachAdvice(35, {});
+  expect(advice.some(a => a.toLowerCase().includes('отдых') || 
+                           a.toLowerCase().includes('восстановл'))).toBe(true);
+});
+
+it('getCoachAdvice возвращает training совет при score > 70', () => {
+  const advice = getCoachAdvice(80, {});
+  expect(advice.length).toBeGreaterThan(0);
+});
+```
+
+---
+
+## Фаза 7 — Ongoing: Документация и процессы
+
+### 7.1 Синхронизировать документацию (разово, 2 часа)
+
+Исправить конкретные несоответствия:
+- `README.md`: убрать "TypeScript 6" → "TypeScript 5.x"
+- `memory-bank/progress.md`: убрать "142 failures" — это уже неправда
+- `docs/reference/PROJECT_CONTEXT.md`: обновить Phase 5 статус
+- `AGENTS.md`: убрать несуществующие файлы из структуры (после удаления dead code)
+
+### 7.2 Правило: документация = часть коммита
+
+```
+// ЗАПРЕЩЕНО: отдельный коммит "update docs"
+// ОБЯЗАТЕЛЬНО: каждый коммит затрагивающий API или архитектуру
+// включает обновление соответствующего docs/domains/*/README.md
+```
+
+### 7.3 Session logging — упростить
+
+Создание `docs/sessions/YYYY-MM-DD-*.md` при каждой сессии — хорошая практика. Но структура должна быть минимальной:
+- Цель (1 строка)
+- Что сделано (bullets)
+- Что сломано/осталось (bullets)
+- Не больше
+
+---
+
+## Итоговая матрица: что когда делать
+
+| Неделя | Задача | Файлы | Критерий готовности |
+|--------|--------|-------|---------------------|
+| 0 | Удалить dead code | 30+ файлов | `npm test` зелёный |
+| 0 | Фикс storage.ts demo DB | storage.ts | Тест: demo не течёт в real |
+| 0 | Убрать launch_handler | manifest.json | Файл обновлён |
+| 0-2 | **Использовать приложение каждый день** | — | 14 записей в checkins |
+| 1-2 | Set-level tracking | types.ts, ExerciseCard, store | Тест save → load |
+| 3-4 | Weekly plan adaptation | analytics.ts, planning.ts | 3 новых теста зелёные |
+| 5-6 | CSV импорт Huawei | csvParser.ts, ProfilePage | Парсит реальный CSV |
+| 5-6 | Rehab stretching filter | stretching.ts, exerciseDatabase | Тест: shoulder → no overhead |
+| 5-6 | Исправить транслитерацию | stretching.ts, i18n JSON | Нет латиницы в названиях |
+| 7-8 | Тесты loadAdjustments | loadAdjustments.test.ts | Coverage 1% → 80% |
+| 7-8 | Тесты sessionLoad | sessionLoad.test.ts | Coverage 0% → 100% |
+| 9-10 | Zustand slices | useAppStore.ts разбивка | Coverage 25% → 40% |
+| 11-12 | TodayPage рефакторинг | today/ компоненты | JSX, тесты |
+| Ongoing | i18n аудит | по одному компоненту | Нет hardcoded RU строк |
+| Ongoing | Документация в коммитах | docs/domains/ | README обновлён |
+
+---
+
+## Чего не делать (явный список)
+
+- **Не добавлять социальные фичи** — leaderboards, sharing, community library
+- **Не делать PDF экспорт** пока основная петля не закрыта
+- **Не добавлять новые виды спорта** — 8 достаточно, ни один нормально не тестирован на реальных данных
+- **Не переписывать CSS в Tailwind** — кастомная система работает, миграция ради миграции
+- **Не добавлять ML/AI** — детерминированные алгоритмы правильнее для медицинских решений
+- **Не делать Apple Health интеграцию** раньше Huawei CSV — у тебя Huawei, начинай с того что используешь
+- **Не делать ACWR** — научная база противоречива, пропустить этот модуль
+- **Не расширять GuidedTour** — он уже переусложнён и никто им не пользуется
+
+---
+
+## Метрика успеха через 3 месяца
+
+Ты открываешь приложение каждое утро. Оно знает твой сон, пульс и HRV из вчерашнего экспорта. Показывает Recovery Score. Дает план тренировки адаптированный под твои лимиты (плечо, таз, астма). Ты отмечаешь подходы по мере выполнения. Следующая неделя адаптируется под фактическое выполнение.
+
+Это не 100 тысяч пользователей. Это один пользователь, которому это реально помогает. Всё остальное — потом.

@@ -41,13 +41,13 @@ const mockBulkAdd = vi.fn();
 const mockClear = vi.fn();
 
 vi.mock('../../core/storage.js', () => ({
-  db: {
+  getActiveDatabase: () => ({
     achievements: {
       toArray: () => mockToArray(),
       bulkAdd: (...args: any[]) => mockBulkAdd(...args),
       clear: () => mockClear(),
     },
-  },
+  }),
 }));
 
 describe('Achievement System', () => {
