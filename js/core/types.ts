@@ -316,7 +316,7 @@ export interface AppState {
   weekLabel: string;
   trainType: WorkoutType;
   tomorrowType: WorkoutType;
-  month: any;
+  month: unknown;
   dayIndex: number | null;
   weeklySummary: WeeklySummary;
   sessionPlan: SessionPlan | null;

@@ -1,13 +1,13 @@
 // js/core/loadAdjustments.ts
 // Множители нагрузки и APRE-корректировки
 
-import type { Session, Exercise, SessionMode } from './types.js';
+import type { Session, Exercise, SessionMode, WeeklySummary } from './types.js';
 
 /**
  * Недельный множитель на основе сводки за прошлую неделю.
  * Каждая 4-я неделя — разгрузочная (deload) с пониженной нагрузкой.
  */
-export function getWeeklyMultiplier(weeklySummary: any, dayOfWeek = 1, weekNumber = 1): number {
+export function getWeeklyMultiplier(weeklySummary: WeeklySummary, dayOfWeek = 1, weekNumber = 1): number {
   if (dayOfWeek !== 1) return 1.0;
 
   // Deload week: every 4th week reduces load by 40%

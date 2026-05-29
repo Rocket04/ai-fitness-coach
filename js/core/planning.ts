@@ -413,7 +413,7 @@ export function getMonthAndDayIndex(
   weekNumber: number,
   trainType: 'A' | 'B' | 'C' | null,
   _sport?: string | null
-): { month: any; dayIndex: number | null } {
+): { month: unknown; dayIndex: number | null } {
   if (!weekNumber || !trainType) return { month: null, dayIndex: null };
 
   // For backward compatibility, return null month
@@ -425,7 +425,7 @@ export function getMonthAndDayIndex(
  * Build session from month plan
  */
 export function buildSessionFromMonth(
-  _month: any,
+  _month: unknown,
   _dayIndex: number | null,
   _readiness: ReadinessStatus,
   _debt: boolean,

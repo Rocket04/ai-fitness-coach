@@ -30,7 +30,7 @@ export function getStreak(checkins: Checkin[]): number {
 /**
  * Формирует недельный итог по массиву сессий.
  */
-export function getWeeklySummary(sessions: Session[], _checkins: any, today: string | Date): { completed: number; avgRPE: number | null; green: number; yellow: number; red: number; dominantStatus: string } {
+export function getWeeklySummary(sessions: Session[], _checkins: Checkin[], today: string | Date): { completed: number; avgRPE: number | null; green: number; yellow: number; red: number; dominantStatus: string } {
   const todayDate = typeof today === 'string' ? parseLocalDate(today) || new Date() : new Date(today);
   const weekStart = addDays(todayDate, -6);
 

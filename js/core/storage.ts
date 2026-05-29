@@ -6,7 +6,25 @@ import type { Session, Checkin, TestResults, Settings, ManualStatus } from './ty
 import { validateImportData, detectImportFormat } from './importSchemas.js';
 
 /**
- * Dexie‑экземпляр для работы с IndexedDB.
+ * Types for validated import data (strict, no `any`)
+ */
+interface ImportedAchievement {
+  achievementKey?: string;
+  key?: string;
+  earnedAt?: number;
+  [key: string]: unknown;
+}
+
+interface ImportedData {
+  sessions?: Session[];
+  checkins?: Checkin[];
+  achievements?: ImportedAchievement[];
+  settings?: { key: string; value: string }[] | Record<string, unknown>;
+  [key: string]: unknown;
+}
+
+/**
+ * Dexie‑экземпляр for working with IndexedDB.
  * @type {Dexie}
  */
 const db = new Dexie('FitnessAppDB') as Dexie & {
@@ -329,7 +347,7 @@ export async function exportAllData(): Promise<any> {
  * @param {Object} data — импортируемые данные
  * @returns {Promise<void>}
  */
-export async function importAllData(data: any): Promise<void> {
+export async function importAllData(data: unknown): Promise<void> {
   if (!data || typeof data !== 'object' || Array.isArray(data)) {
     throw new Error('Некорректный формат файла: ожидался объект');
   }
@@ -350,7 +368,7 @@ export async function importAllData(data: any): Promise<void> {
   }
 
   // Use validated data
-  const validatedData = validationResult.data as any;
+  const validatedData = validationResult.data as ImportedData;
   const format = detectImportFormat(data);
 
   // Handle legacy format (minimal validation, basic structure only)
@@ -373,8 +391,9 @@ export async function importAllData(data: any): Promise<void> {
     });
   } else if (validatedData.settings && typeof validatedData.settings === 'object' && !Array.isArray(validatedData.settings)) {
     // Legacy format: settings is a plain object
-    settingsMap.startDate = { key: 'startDate', value: validatedData.settings.startDate };
-    settingsMap.trainDays = { key: 'trainDays', value: JSON.stringify(validatedData.settings.trainDays) };
+    const legacySettings = validatedData.settings as Record<string, unknown>;
+    settingsMap.startDate = { key: 'startDate', value: String(legacySettings.startDate ?? '') };
+    settingsMap.trainDays = { key: 'trainDays', value: JSON.stringify(legacySettings.trainDays ?? []) };
   }
 
   // ── Транзакция: очистка + запись ──
@@ -399,7 +418,7 @@ export async function importAllData(data: any): Promise<void> {
       if (checkins.length) writeOps.push(_db().checkins.bulkPut(checkins));
       if (Array.isArray(validatedData.achievements) && validatedData.achievements.length) {
         // achievements используют ++id — strips ids для избежания конфликтов
-        const cleanAchievements = validatedData.achievements.map((a: any) => ({
+  const cleanAchievements = (validatedData.achievements ?? []).map((a: ImportedAchievement) => ({
           achievementKey: a.achievementKey ?? a.key,
           earnedAt: a.earnedAt ?? Date.now(),
         }));

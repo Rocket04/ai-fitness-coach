@@ -9,7 +9,7 @@ import {
 import type { Exercise, Session } from '../../core/types.js';
 
 describe('getWeeklyMultiplier', () => {
-  const base = { completed: 2, dominantStatus: 'yellow', red: 1, yellow: 2, green: 0 };
+  const base = { completed: 2, dominantStatus: 'yellow', red: 1, yellow: 2, green: 0, avgRPE: null };
 
   it('returns 0.6 on deload week (every 4th)', () => {
     expect(getWeeklyMultiplier(base, 1, 4)).toBe(0.6);
@@ -23,19 +23,19 @@ describe('getWeeklyMultiplier', () => {
   });
 
   it('returns 1.1 for green week (completed>=3, dominant green, red=0, yellow<=1)', () => {
-    const green = { completed: 4, dominantStatus: 'green', red: 0, yellow: 1, green: 3 };
+    const green = { completed: 4, dominantStatus: 'green', red: 0, yellow: 1, green: 3, avgRPE: null };
     expect(getWeeklyMultiplier(green, 1, 1)).toBe(1.1);
   });
 
   it('returns 0.9 for bad week (red>=2 or yellow>=3)', () => {
-    const badRed = { completed: 3, dominantStatus: 'red', red: 2, yellow: 1, green: 0 };
-    const badYellow = { completed: 3, dominantStatus: 'yellow', red: 0, yellow: 3, green: 0 };
+    const badRed = { completed: 3, dominantStatus: 'red', red: 2, yellow: 1, green: 0, avgRPE: null };
+    const badYellow = { completed: 3, dominantStatus: 'yellow', red: 0, yellow: 3, green: 0, avgRPE: null };
     expect(getWeeklyMultiplier(badRed, 1, 1)).toBe(0.9);
     expect(getWeeklyMultiplier(badYellow, 1, 1)).toBe(0.9);
   });
 
   it('returns 1.0 when dayOfWeek !== 1', () => {
-    const green = { completed: 4, dominantStatus: 'green', red: 0, yellow: 0, green: 4 };
+    const green = { completed: 4, dominantStatus: 'green', red: 0, yellow: 0, green: 4, avgRPE: null };
     expect(getWeeklyMultiplier(green, 2, 1)).toBe(1.0);
   });
 });
