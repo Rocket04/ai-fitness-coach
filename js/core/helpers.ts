@@ -61,7 +61,7 @@ export function clamp(n: number, min: number, max: number): number {
 /**
  * Безопасный JSON.parse с fallback-значением.
  */
-export function safeJSONParse<T>(raw: any, fallback: T): T {
+export function safeJSONParse<T>(raw: string | null | undefined, fallback: T): T {
   try { return raw ? JSON.parse(raw) : fallback; } catch { return fallback; }
 }
 

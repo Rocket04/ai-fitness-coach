@@ -1,12 +1,12 @@
 // js/core/advice.ts
 // Советы тренера и объяснения авторегуляции (APRE)
 
-import type { Checkin, Session, ReadinessStatus, SessionMode, TrendPoint } from './types.js';
+import type { Checkin, Session, ReadinessStatus, SessionMode, TrendPoint, TestResults, WeeklySummary } from './types.js';
 
 /**
  * Генерирует советы тренера на основе Recovery Score и текущего состояния.
  */
-export function getCoachAdvice(recoveryScore: number, checkin: Partial<Checkin> = {}, _testHistory: any[] = [], weeklySummary: any = {}): string[] {
+export function getCoachAdvice(recoveryScore: number, checkin: Partial<Checkin> = {}, _testHistory: TestResults[] = [], weeklySummary: WeeklySummary = {} as WeeklySummary): string[] {
   const advice = [];
   const score = typeof recoveryScore === 'number' ? recoveryScore : 0;
 

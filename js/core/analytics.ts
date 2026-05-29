@@ -3,7 +3,7 @@
 
 import { calculateRecoveryScore } from './recoveryScore.js';
 import { parseLocalDate, formatISO, addDays } from './helpers.js';
-import type { Checkin, Session } from './types.js';
+import type { Checkin, Session, TrendPoint, TrendWarning, WeeklyAverage, WeeklySummary, OvertrainingWarning } from './types.js';
 
 /**
  * Строит массив данных трендов из чек-инов за последние N дней.
@@ -56,8 +56,8 @@ export function getRpeTrend(sessions: Session[], days = 30): Array<{date: string
  * Детектирует негативные тренды в данных восстановления.
  * Проверяет: падение Recovery Score 3+ дня, падение HRV 3+ дня, рост ЧСС покоя 3+ дня.
  */
-export function detectNegativeTrends(trendData: any[]): any[] {
-  const warnings: any[] = [];
+export function detectNegativeTrends(trendData: TrendPoint[]): TrendWarning[] {
+  const warnings: TrendWarning[] = [];
 
   if (trendData.length < 3) return warnings;
 
@@ -145,7 +145,7 @@ export function detectNegativeTrends(trendData: any[]): any[] {
 /**
  * Агрегирует данные трендов по неделям (среднее за неделю).
  */
-export function getWeeklyAverages(trendData: any[]): Array<{weekStart: string, avgRecoveryScore: number, avgHrv: number, avgRestHR: number}> {
+export function getWeeklyAverages(trendData: TrendPoint[]): WeeklyAverage[] {
   if (!trendData.length) return [];
 
   const weeks: Record<string, {scores: number[], hrv: number[], restHR: number[]}> = {};
@@ -185,7 +185,7 @@ export function getWeeklyAverages(trendData: any[]): Array<{weekStart: string, a
  * Генерирует комплексное предупреждение о перетренированности на основе трендов.
  * Если тренд идёт несколько недель подряд — даёт APRE-связанную рекомендацию.
  */
-export function getOvertrainingWarning(trendData: any[], weeklyAverages: any[], weeklySummary: any): any {
+export function getOvertrainingWarning(trendData: TrendPoint[], weeklyAverages: WeeklyAverage[], weeklySummary: WeeklySummary): OvertrainingWarning | null {
   const warnings = detectNegativeTrends(trendData);
   if (!warnings.length) return null;
 
@@ -263,7 +263,7 @@ export interface PeriodComparison {
  * @param sessions — array of completed sessions
  * @returns PeriodComparison or null if insufficient data
  */
-export function getPeriodComparison(trendData: any[], sessions: any[]): PeriodComparison | null {
+export function getPeriodComparison(trendData: TrendPoint[], sessions: Session[]): PeriodComparison | null {
   if (!trendData || trendData.length < 4) return null;
 
   const mid = Math.floor(trendData.length / 2);
@@ -272,41 +272,55 @@ export function getPeriodComparison(trendData: any[], sessions: any[]): PeriodCo
 
   if (previousHalf.length < 2 || currentHalf.length < 2) return null;
 
-  const avg = (arr: any[], key: number) => {
-    const values = arr.map(d => Number(d[key])).filter(v => v > 0);
+  const now = new Date();
+  const twoWeeksAgo = new Date(now); twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+  const oneWeekAgo = new Date(now); oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+  const avg = (arr: TrendPoint[], key: string) => {
+    const values = arr.map(d => Number(d[key as keyof TrendPoint])).filter(v => v > 0);
     if (!values.length) return 0;
     return values.reduce((a, b) => a + b, 0) / values.length;
   };
 
-  const compareMetric = (key: string): MetricComparison => {
-    const current = avg(currentHalf, key as any);
-    const previous = avg(previousHalf, key as any);
+  const compareMetric = (key: keyof TrendPoint): MetricComparison => {
+    const current = avg(currentHalf, key as string);
+    const previous = avg(previousHalf, key as string);
     const change = current - previous;
     const changePercent = previous > 0 ? Math.round((change / previous) * 100) : 0;
     const direction = change > 0.5 ? 'up' as const : change < -0.5 ? 'down' as const : 'flat' as const;
     return { current: Math.round(current), previous: Math.round(previous), change: Math.round(change), changePercent, direction };
   };
 
-  // Compare sessions completed in each half
-  const now = new Date();
-  const twoWeeksAgo = new Date(now); twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
-  const oneWeekAgo = new Date(now); oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+  // Compute RPE from sessions for each half
+  const avgRpe = (sessions: Session[]): number => {
+    const completed = sessions.filter(s => s.completed && s.rpe > 0);
+    if (!completed.length) return 0;
+    return completed.reduce((sum, s) => sum + s.rpe, 0) / completed.length;
+  };
 
-  const prevSessions = (sessions || []).filter((s: any) => {
-    const d = s.date || '';
-    return d >= twoWeeksAgo.toISOString().slice(0, 10) && d < oneWeekAgo.toISOString().slice(0, 10) && s.completed;
-  }).length;
-  const currSessions = (sessions || []).filter((s: any) => {
-    const d = s.date || '';
-    return d >= oneWeekAgo.toISOString().slice(0, 10) && s.completed;
-  }).length;
+  const prevSessionsList = sessions.filter((s: Session) => {
+    const d = s.date;
+    return d >= twoWeeksAgo.toISOString().slice(0, 10) && d < oneWeekAgo.toISOString().slice(0, 10);
+  });
+  const currSessionsList = sessions.filter((s: Session) => {
+    const d = s.date;
+    return d >= oneWeekAgo.toISOString().slice(0, 10);
+  });
+  const prevRpe = avgRpe(prevSessionsList);
+  const currRpe = avgRpe(currSessionsList);
+  const rpeChange = currRpe - prevRpe;
+  const rpeChangePercent = prevRpe > 0 ? Math.round((rpeChange / prevRpe) * 100) : 0;
+  const rpeDirection = rpeChange > 0.5 ? 'up' as const : rpeChange < -0.5 ? 'down' as const : 'flat' as const;
+
+  const prevSessions = prevSessionsList.length;
+  const currSessions = currSessionsList.length;
 
   return {
     recoveryScore: compareMetric('recoveryScore'),
     hrv: compareMetric('hrv'),
     restHR: compareMetric('restHR'),
     sleepHours: compareMetric('sleepHours'),
-    rpe: compareMetric('rpe'),
+    rpe: { current: Math.round(currRpe), previous: Math.round(prevRpe), change: Math.round(rpeChange), changePercent: rpeChangePercent, direction: rpeDirection },
     sessionsCompleted: { current: currSessions, previous: prevSessions, change: currSessions - prevSessions },
   };
 }
