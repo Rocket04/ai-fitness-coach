@@ -8,19 +8,22 @@ export class TodayPage {
 
   // ── Locators ─────────────────────────────────────────────────────────────────
 
-  /** Recovery score ring (SVG circle). NOTE: add data-testid="recovery-ring" */
-  readonly recoveryRing: Locator;
+  /** Recovery score card wrapper (outer div with data-testid="recovery-ring"). */
+  readonly recoveryCard: Locator;
 
-  /** Status pill below the ring (green/yellow/red). NOTE: add data-testid="status-pill" */
+  /** The clickable HeroRing button (data-testid="checkin-trigger" class="hero-ring--large"). */
+  readonly checkinTrigger: Locator;
+
+  /** Status pill below the ring (green/yellow/red). */
   readonly statusPill: Locator;
 
   /** Metrics / sparkline panel (tap ring to expand). */
   readonly metricsPanel: Locator;
 
-  /** Training / workout card header. NOTE: add data-testid="training-card" */
+  /** Training / workout card header. */
   readonly workoutCard: Locator;
 
-  /** Rest day card. NOTE: add data-testid="rest-day-card" */
+  /** Rest day card. */
   readonly restDayCard: Locator;
 
   /** Tomorrow preview card. */
@@ -38,12 +41,18 @@ export class TodayPage {
   /** Bottom nav "Сегодня" item. */
   readonly navToday: Locator;
 
-  /** Bottom nav "Журнал" item (leads to CheckinForm). */
-  readonly navLog: Locator;
+  /** Alias for checkinTrigger — the clickable HeroRing button. */
+  get recoveryRing(): Locator {
+    return this.checkinTrigger;
+  }
+
 
   constructor(page: Page) {
     this.page = page;
-    this.recoveryRing = page.locator('.hero-ring--large, [data-testid="recovery-ring"]');
+    // The outer card div — NOT the clickable ring button
+    this.recoveryCard = page.getByTestId('recovery-ring');
+    // The inner HeroRing button (class="hero-ring--large", data-testid="checkin-trigger")
+    this.checkinTrigger = page.getByTestId('checkin-trigger');
     this.statusPill = page.locator('.status-pill, [data-testid="status-pill"]');
     this.metricsPanel = page.locator('.sparkline-card, [data-testid="sparkline-card"]');
     this.workoutCard = page.locator('.training-header, [data-testid="training-card"]');
@@ -60,21 +69,23 @@ export class TodayPage {
 
   async goto(): Promise<void> {
     await this.navToday.click();
-    await this.page.waitForLoadState('networkidle');
+    // Use domcontentloaded instead of networkidle for Vite HMR compatibility
+    await this.page.waitForLoadState('domcontentloaded');
   }
 
   // ── Actions ──────────────────────────────────────────────────────────────────
 
   /**
-   * Reads the recovery score value displayed inside the ring.
+   * Reads the recovery score value displayed inside the SVG ring.
    * Returns the numeric score (0-100) or null if the ring shows "—".
    */
   async getRecoveryScore(): Promise<number | null> {
-    const ring = this.recoveryRing;
+    const ring = this.checkinTrigger;
     await ring.waitFor({ state: 'visible', timeout: 5000 });
 
-    // The score is in the <text> element with class readiness-ring__score
-    const scoreText = await ring.locator('.readiness-ring__score, text').textContent();
+    // The score is in the SVG <text> element with class readiness-ring__score
+    // Use page-level locator since SVG <text> is inside the ring's shadow DOM-like structure
+    const scoreText = await this.page.locator('[data-testid="checkin-trigger"] .readiness-ring__score').textContent();
     if (!scoreText || scoreText.trim() === '—') return null;
 
     const parsed = parseInt(scoreText.trim(), 10);
@@ -85,16 +96,14 @@ export class TodayPage {
    * Taps the recovery ring to expand/collapse the sparkline metrics panel.
    */
   async clickCheckin(): Promise<void> {
-    // In the current UI the ring toggles sparklines; if a dedicated
-    // check-in button exists elsewhere, adjust selector.
-    await this.recoveryRing.click();
+    await this.checkinTrigger.click();
   }
 
   /**
    * Expands the metrics panel by tapping the recovery ring.
    */
   async expandMetrics(): Promise<void> {
-    await this.recoveryRing.click();
+    await this.checkinTrigger.click();
     await this.metricsPanel.first().waitFor({ state: 'visible', timeout: 3000 });
   }
 

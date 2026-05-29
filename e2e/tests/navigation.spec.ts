@@ -1,20 +1,5 @@
 import { test, expect, Page } from '@playwright/test';
-
-// ─── Inline helpers ───
-
-async function clearAllData(page: Page) {
-  await page.goto('/');
-  await page.evaluate(() => {
-    localStorage.clear();
-    sessionStorage.clear();
-    const req = indexedDB.deleteDatabase('fitness-tracker-db');
-    return new Promise<void>((resolve, reject) => {
-      req.onsuccess = () => resolve();
-      req.onerror = () => reject(req.error);
-      req.onblocked = () => resolve();
-    });
-  });
-}
+import { clearAllStorage } from '../utils/clearStorage.js';
 
 async function completeOnboardingIfShown(page: Page) {
   const wizard = page.locator('.onboarding-content');
@@ -48,7 +33,8 @@ async function getActiveTabLabel(page: Page): Promise<string | null> {
 test.describe('Navigation', () => {
   test('Navigation — bottom nav → switches between Today/Log/Analytics/Profile', async ({ page }) => {
     await test.step('Clear data and complete onboarding', async () => {
-      await clearAllData(page);
+      await page.goto('/');
+      await clearAllStorage(page);
       await page.goto('/');
       await page.waitForFunction(() => !!document.querySelector('.bottom-nav'));
       await completeOnboardingIfShown(page);
@@ -76,7 +62,8 @@ test.describe('Navigation', () => {
 
   test('Navigation — active tab → highlighted', async ({ page }) => {
     await test.step('Clear data and complete onboarding', async () => {
-      await clearAllData(page);
+      await page.goto('/');
+      await clearAllStorage(page);
       await page.goto('/');
       await page.waitForFunction(() => !!document.querySelector('.bottom-nav'));
       await completeOnboardingIfShown(page);
@@ -97,7 +84,8 @@ test.describe('Navigation', () => {
 
   test('Navigation — page transitions → render correctly', async ({ page }) => {
     await test.step('Clear data and complete onboarding', async () => {
-      await clearAllData(page);
+      await page.goto('/');
+      await clearAllStorage(page);
       await page.goto('/');
       await page.waitForFunction(() => !!document.querySelector('.bottom-nav'));
       await completeOnboardingIfShown(page);
@@ -125,7 +113,8 @@ test.describe('Navigation', () => {
 
   test('Navigation — methodology → accessible from profile', async ({ page }) => {
     await test.step('Clear data and complete onboarding', async () => {
-      await clearAllData(page);
+      await page.goto('/');
+      await clearAllStorage(page);
       await page.goto('/');
       await page.waitForFunction(() => !!document.querySelector('.bottom-nav'));
       await completeOnboardingIfShown(page);

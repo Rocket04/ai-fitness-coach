@@ -220,11 +220,13 @@ function GadgetsStep({ selectedGadgets, onToggleGadget, derivedTier, onNext, onB
       React.createElement('button', {
         className: 'btn btn-outline',
         onClick: onBack,
+        'data-testid': 'gadgets-back',
       }, '←'),
       React.createElement('button', {
         className: 'btn btn-accent',
         onClick: onNext,
         disabled: !canProceed,
+        'data-testid': 'gadgets-next',
       }, 'Далее →')
     )
   );

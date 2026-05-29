@@ -1,6 +1,7 @@
 // js/ui/components/ExerciseCard.jsx
 // Карточка упражнения с поддержкой режима APRE (4 сета).
 // Фаза 3 — полная реализация.
+// Mobile-friendly layout + per-set RPE for non-APRE exercises.
 
 import React, { useState, useEffect } from 'react';
 import { Settings, Dumbbell } from 'lucide-react';
@@ -15,6 +16,30 @@ import HelpIcon from './HelpIcon.jsx';
 /** Читаемое название уровня калистеники */
 function levelLabel(level) {
   return CALISTHENICS_PROGRESSIONS[level] ?? `Уровень ${level}`;
+}
+
+/** RPE шкала 1–10 для одного подхода */
+function RpeSlider({ value, onChange }) {
+  const displayValue = value ?? 0;
+  const zoneColor = displayValue <= 3 ? 'var(--green)' : displayValue <= 6 ? 'var(--yellow)' : displayValue <= 8 ? 'var(--orange)' : 'var(--red)';
+  return React.createElement('div', {
+    className: 'set-rpe-slider',
+  },
+    React.createElement('span', {
+      className: 'set-rpe-label',
+      style: { color: zoneColor, fontWeight: 600 },
+    }, `RPE ${displayValue}`),
+    React.createElement('input', {
+      type: 'range',
+      min: 1,
+      max: 10,
+      step: 1,
+      value: displayValue,
+      onChange: e => onChange(parseInt(e.target.value, 10)),
+      className: 'set-rpe-input',
+      'aria-label': 'RPE slider',
+    })
+  );
 }
 
 /** Строка одного сета в таблице */
@@ -77,15 +102,18 @@ export default function ExerciseCard({ ex, recoveryScore = 100, onApreResult, on
   const { t } = useTranslation();
   const isApre = Boolean(ex?.isApre);
 
-  // ── Локальный state для AMRAP-повторений ────────────────────────────────
+  // ── Локальный state для AMRAP-повторений и RPE ───────────────────────────
   const [set3Reps, setSet3Reps] = useState(null);
   const [set4Reps, setSet4Reps] = useState(null);
   const [completedSets, setCompletedSets] = useState([]);
+  const [setRpeValues, setSetRpeValues] = useState({}); // { [setNum]: rpe }
 
   // Сбрасываем при смене упражнения
   useEffect(() => {
     setSet3Reps(null);
     setSet4Reps(null);
+    setCompletedSets([]);
+    setSetRpeValues({});
   }, [ex?.n]);
 
   // ── Уведомление родителя о результате set4 ──────────────────────────────
@@ -157,42 +185,54 @@ export default function ExerciseCard({ ex, recoveryScore = 100, onApreResult, on
     const weightNote = ex.w || ex.c || '';
     const setsArray = Array.from({ length: numSets }, (_, i) => i + 1);
 
-    return React.createElement('div', { className: 'exercise-row' },
-      React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' } },
+    return React.createElement('div', { className: 'exercise-row exercise-row--regular' },
+      React.createElement('div', { className: 'exercise-row-header' },
         React.createElement('span', { className: 'exercise-name' }, ex.n),
-        React.createElement('span', { style: { fontSize: '0.75rem', color: 'var(--text3)' } }, `${ex.s || '3'} × ${repsLabel}`)
+        React.createElement('span', { className: 'exercise-sets-meta' }, `${ex.s || '3'} × ${repsLabel}`)
       ),
       ...setsArray.map(setNum => {
         const isChecked = completedSets.includes(setNum);
-        return React.createElement('label', {
+        const rpe = setRpeValues[setNum];
+        return React.createElement('div', {
           key: setNum,
-          style: {
-            display: 'flex', alignItems: 'center', gap: '8px',
-            padding: '6px 8px', borderRadius: 'var(--radius-sm)',
-            background: isChecked ? 'rgba(74, 222, 128, 0.1)' : 'transparent',
-            border: `1px solid ${isChecked ? 'var(--green)' : 'var(--border)'}`,
-            marginBottom: '4px', cursor: 'pointer',
-            transition: 'all var(--transition-fast)',
-          },
+          className: `exercise-set-row${isChecked ? ' exercise-set-row--completed' : ''}`,
         },
-          React.createElement('input', {
-            type: 'checkbox',
-            checked: isChecked,
-            onChange: () => {
-              if (isChecked) {
-                setCompletedSets(prev => prev.filter(s => s !== setNum));
-              } else {
-                setCompletedSets(prev => [...prev, setNum]);
-                if (typeof onSetComplete === 'function') {
-                  onSetComplete(ex.n, setNum, parseInt(ex.r, 10) || 0);
+          React.createElement('label', {
+            className: 'exercise-set-label',
+          },
+            React.createElement('input', {
+              type: 'checkbox',
+              className: 'exercise-set-checkbox',
+              checked: isChecked,
+              onChange: () => {
+                if (isChecked) {
+                  setCompletedSets(prev => prev.filter(s => s !== setNum));
+                  setSetRpeValues(prev => {
+                    const next = { ...prev };
+                    delete next[setNum];
+                    return next;
+                  });
+                } else {
+                  setCompletedSets(prev => [...prev, setNum]);
+                  if (typeof onSetComplete === 'function') {
+                    onSetComplete(ex.n, setNum, parseInt(ex.r, 10) || 0, setRpeValues[setNum]);
+                  }
                 }
+              },
+            }),
+            React.createElement('span', { className: 'exercise-set-text' },
+              `Подход ${setNum}: ${repsLabel} повт.${weightNote ? ` • ${weightNote}` : ''}`
+            )
+          ),
+          isChecked && React.createElement(RpeSlider, {
+            value: rpe,
+            onChange: newRpe => {
+              setSetRpeValues(prev => ({ ...prev, [setNum]: newRpe }));
+              if (typeof onSetComplete === 'function') {
+                onSetComplete(ex.n, setNum, parseInt(ex.r, 10) || 0, newRpe);
               }
             },
-            style: { accentColor: 'var(--green)' },
-          }),
-          React.createElement('span', { style: { fontSize: '0.85rem', color: isChecked ? 'var(--green)' : 'var(--text2)' } },
-            `Подход ${setNum}: ${repsLabel} повт.${weightNote ? ` • ${weightNote}` : ''}`
-          )
+          })
         );
       })
     );
@@ -206,8 +246,15 @@ export default function ExerciseCard({ ex, recoveryScore = 100, onApreResult, on
   function weightLabel(w, readonlySet) {
     if (w === null || w === undefined) return '—';
     if (isCalisthenics) {
-      const lvl = Math.max(1, Math.min(5, Math.round(w)));
-      return readonlySet ? levelLabel(lvl) : levelLabel(lvl);
+      // w is added weight in kg (from calcApreSets)
+      // Map to level for backward compatibility with display
+      const addedWeight = Math.max(0, Math.round(w * 10) / 10);
+      if (addedWeight === 0) return 'Тело';
+      if (addedWeight === 2.5) return '+2.5 кг';
+      if (addedWeight === 5) return '+5 кг';
+      if (addedWeight === 7.5) return '+7.5 кг';
+      if (addedWeight === 10) return '+10 кг';
+      return `+${addedWeight} кг`;
     }
     const unitLabel = unit === 'lbs' ? t('units.lbs') : t('units.kg');
     return `${w} ${unitLabel}`;
@@ -288,8 +335,9 @@ export default function ExerciseCard({ ex, recoveryScore = 100, onApreResult, on
           reps: set4Reps
         });
         if (isCalisthenics) {
-          const lvl = Math.max(1, Math.min(5, Math.round(nextRM)));
-          return t('exercise.nextWeekProgress', { value: levelLabel(lvl), reason });
+          const addedWeight = Math.max(0, Math.round(nextRM * 10) / 10);
+          const displayWeight = addedWeight === 0 ? 'Тело' : `+${addedWeight} кг`;
+          return t('exercise.nextWeekProgress', { value: displayWeight, reason });
         }
         const unitLabel = unit === 'lbs' ? t('units.lbs') : t('units.kg');
         return t('exercise.nextWeekProgress', { value: `${nextRM} ${unitLabel}`, reason });

@@ -2,20 +2,7 @@ import { test, expect, Page } from '@playwright/test';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
-
-// ─── Inline helpers ───
-
-async function clearAllData(page: Page) {
-  await page.goto('/');
-  await page.evaluate(() => {
-    localStorage.clear();
-    sessionStorage.clear();
-    indexedDB.deleteDatabase('FitnessAppDB');
-    indexedDB.deleteDatabase('fitness-tracker-db');
-    indexedDB.deleteDatabase('SmartFitnessCoachDemo');
-    return new Promise<void>((resolve) => setTimeout(resolve, 200));
-  });
-}
+import { clearAllStorage } from '../utils/clearStorage.js';
 
 async function completeOnboardingIfShown(page: Page) {
   const wizard = page.locator('.onboarding-content');
@@ -86,7 +73,8 @@ test.describe('Data', () => {
     let downloadPath: string | null = null;
 
     await test.step('Clear data and seed some checkins', async () => {
-      await clearAllData(page);
+      await page.goto('/');
+      await clearAllStorage(page);
       await page.goto('/');
       await page.waitForFunction(() => !!document.querySelector('.bottom-nav'));
       await completeOnboardingIfShown(page);
@@ -126,7 +114,8 @@ test.describe('Data', () => {
     let exportFilePath: string | null = null;
 
     await test.step('Seed data and export to file', async () => {
-      await clearAllData(page);
+      await page.goto('/');
+      await clearAllStorage(page);
       await page.goto('/');
       await page.waitForFunction(() => !!document.querySelector('.bottom-nav'));
       await completeOnboardingIfShown(page);
@@ -148,7 +137,8 @@ test.describe('Data', () => {
     });
 
     await test.step('Clear all data', async () => {
-      await clearAllData(page);
+      await page.goto('/');
+      await clearAllStorage(page);
       await page.goto('/');
       await page.waitForFunction(() => !!document.querySelector('.bottom-nav'));
       await completeOnboardingIfShown(page);
@@ -199,7 +189,8 @@ test.describe('Data', () => {
     });
 
     await test.step('Clear data and complete onboarding', async () => {
-      await clearAllData(page);
+      await page.goto('/');
+      await clearAllStorage(page);
       await page.goto('/');
       await page.waitForFunction(() => !!document.querySelector('.bottom-nav'));
       await completeOnboardingIfShown(page);
@@ -239,7 +230,8 @@ test.describe('Data', () => {
 
   test('Data — reset all → clears IndexedDB and localStorage', async ({ page }) => {
     await test.step('Seed data', async () => {
-      await clearAllData(page);
+      await page.goto('/');
+      await clearAllStorage(page);
       await page.goto('/');
       await page.waitForFunction(() => !!document.querySelector('.bottom-nav'));
       await completeOnboardingIfShown(page);

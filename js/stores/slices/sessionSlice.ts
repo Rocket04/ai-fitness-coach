@@ -62,7 +62,12 @@ export function createSessionSlice(set: (partial: Record<string, unknown>) => vo
       );
       if (idx >= 0) {
         const updated = [...pendingSetResults];
-        updated[idx] = result;
+        // Preserve existing RPE if new result doesn't specify one
+        if (result.rpe === undefined && updated[idx].rpe !== undefined) {
+          updated[idx] = { ...updated[idx], completed: result.completed, repsDone: result.repsDone };
+        } else {
+          updated[idx] = result;
+        }
         set({ pendingSetResults: updated });
       } else {
         set({ pendingSetResults: [...pendingSetResults, result] });

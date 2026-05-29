@@ -1,24 +1,9 @@
 import { test, expect, Page } from '@playwright/test';
-
-// ─── Inline helpers ───
-
-async function clearAllData(page: Page) {
-  await page.goto('/');
-  await page.evaluate(() => {
-    localStorage.clear();
-    sessionStorage.clear();
-    const req = indexedDB.deleteDatabase('fitness-tracker-db');
-    return new Promise<void>((resolve, reject) => {
-      req.onsuccess = () => resolve();
-      req.onerror = () => reject(req.error);
-      req.onblocked = () => resolve();
-    });
-  });
-}
+import { clearAllStorage } from '../utils/clearStorage.js';
 
 async function ensureGuestMode(page: Page) {
   // Guest mode auto-activates when no data + onboarding incomplete
-  await clearAllData(page);
+  await clearAllStorage(page);
   await page.goto('/');
   await page.waitForFunction(() => !!document.querySelector('.bottom-nav'));
   // Wait a tick for store init

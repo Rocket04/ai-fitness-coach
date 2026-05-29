@@ -18,8 +18,9 @@ vi.mock('../../stores/useAppStore.js', () => ({
     tomorrowPlan: null, tomorrowType: null, morningDone: false, eveningDone: false,
     apreReasons: [], durationMinutes: 45, lastCheckin: null, streak: 0,
     trendData7: [], rpeTrend7: [], coachAdvice: [], checkinTier: mockCheckinTier,
-    checkins: [], planModifications: [],
-    demoMode: false, dataLoaded: true,
+checkins: [], planModifications: [],
+     demoMode: false, dataLoaded: true,
+     weeklyPlan: null,
     setRpe: vi.fn(), setSessionNote: vi.fn(), setDurationMinutes: vi.fn(),
     setTestPullUps: vi.fn(), setTestPushUps: vi.fn(), setTestPlank: vi.fn(),
     handleToggleTraining: vi.fn(), handleMarkMorning: vi.fn(), handleMarkEvening: vi.fn(),
@@ -65,6 +66,10 @@ vi.mock('../../ui/components/ExerciseConfigModal.jsx', () => ({
 }));
 
 vi.mock('../../ui/components/HelpIcon.jsx', () => ({
+  default: () => null,
+}));
+
+vi.mock('../../ui/components/WeeklyPlanCard.jsx', () => ({
   default: () => null,
 }));
 

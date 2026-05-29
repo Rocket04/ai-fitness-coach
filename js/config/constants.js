@@ -309,6 +309,75 @@ export const CALISTHENICS_PROGRESSIONS = {
 /* ───────────────────────────────────────────────────────────
  * СПОРТЫ — категории для выбора в онбординге
  * ─────────────────────────────────────────────────────────── */
+/* ───────────────────────────────────────────────────────────
+  * ГОТОВЫЕ ПЛАНЫ ТРЕНИРОВОК — предустановленные шаблоны
+  * ─────────────────────────────────────────────────────────── */
+export const TRAINING_PLANS = [
+  {
+    key: 'rehab',
+    name: 'Восстановление',
+    label: 'Реабилитация (30 дней)',
+    description: 'Фокус на мобильность, стабилизацию, реабилитацию. Без нагрузки на суставы.',
+    sport: 'stretching',
+    sports: ['calisthenics', 'stretching'],
+    template: {
+      days: ['calisthenics', 'stretching', null, 'calisthenics', 'stretching', null, 'stretching'],
+      sportOrder: ['calisthenics', 'stretching'],
+    },
+    level: 'beginner',
+    goals: ['rehabilitation'],
+    rehabIssues: ['hips', 'shoulder', 'back'],
+  },
+  {
+    key: 'running',
+    name: 'Бег 5К–10К',
+    label: 'Беговая программа (12 недель)',
+    description: 'Подготовка к 5K–10K с умеренными нагрузками и 2 тренировками в неделю.',
+    sport: 'running',
+    sports: ['running', 'stretching'],
+    template: {
+      days: ['running', null, 'running', null, null, 'stretching', null],
+      sportOrder: ['running', 'stretching'],
+    },
+    level: 'beginner',
+    goals: ['endurance'],
+    rehabIssues: [],
+  },
+  {
+    key: 'strength',
+    name: 'Сила с собой',
+    label: 'Сила телом (12 недель)',
+    description: 'Калистеника для силы и выносливости. План с 3 тренировками в неделю.',
+    sport: 'calisthenics',
+    sports: ['calisthenics', 'stretching'],
+    template: {
+      days: ['calisthenics', 'stretching', null, 'calisthenics', null, 'stretching', null],
+      sportOrder: ['calisthenics', 'stretching'],
+    },
+    level: 'beginner',
+    goals: ['strength'],
+    rehabIssues: [],
+  },
+  {
+    key: 'full',
+    name: 'Фулл-боди',
+    label: 'Полный комплекс (12 недель)',
+    description: 'Равномерное распределение нагрузки между силовыми, кардио и мобильностью.',
+    sport: 'strength_gym',
+    sports: ['strength_gym', 'running', 'stretching'],
+    template: {
+      days: ['strength_gym', 'running', 'stretching', 'strength_gym', 'running', 'stretching', null],
+      sportOrder: ['strength_gym', 'running', 'stretching'],
+    },
+    level: 'intermediate',
+    goals: ['hypertrophy'],
+    rehabIssues: [],
+  },
+];
+
+/* ───────────────────────────────────────────────────────────
+  * СПОРТЫ — категории для выбора в онбординге
+  * ─────────────────────────────────────────────────────────── */
 export const SPORT_CATEGORIES = [
   {
     key: 'cardio',

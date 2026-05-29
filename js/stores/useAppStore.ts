@@ -23,6 +23,7 @@ import type {
   PhaseType,
 } from '../core/types.js';
 import type { CheckinTier } from '../core/recoveryScore.js';
+import type { WeeklyPlan } from '../core/weeklyPlan.js';
 import {
   init,
   saveSession,
@@ -64,7 +65,8 @@ import {
   getOvertrainingWarning,
 } from '../core/analytics.js';
 import { getAllCorrelations } from '../core/correlations.js';
-import { parseLocalDate, formatISO, getAppDateSync, setVirtualTodayOffset as setVirtualTodayOffsetHelper } from '../core/helpers.js';
+import { parseLocalDate, formatISO, getAppDateSync, setVirtualTodayOffset as setVirtualTodayOffsetHelper, mondayOfWeek } from '../core/helpers.js';
+import { buildWeeklyPlanDays } from '../core/weeklyPlan.js';
 
 import { createCheckinSlice } from './slices/checkinSlice.js';
 import { createSessionSlice } from './slices/sessionSlice.js';
@@ -199,6 +201,16 @@ function computeDerived(
   const weeklyAverages = getWeeklyAverages(trendData30);
   const trendWarnings = detectNegativeTrends(trendData30);
   const overtrainingWarning = getOvertrainingWarning(trendData30, weeklyAverages, weeklySummary);
+
+  // Weekly plan for 7-day view
+  const weeklyPlan = buildWeeklyPlanDays(
+    formatISO(mondayOfWeek(parseLocalDate(todayISO) ?? new Date())),
+    selectedSports, startDate, template, virtualTodayOffset,
+    readiness, recoveryDebt, totalWeek, 1.0, null,
+    rehabIssues, rehabExercises,
+    profileLevel, profileGoals, profileEquipment
+  );
+
     return {
       // Dates
       todayDate,
@@ -217,6 +229,7 @@ function computeDerived(
       sessionPlan,
       tomorrowPlan,
       planModifications,
+      weeklyPlan,
       // Stats
       testHistory,
       monthStats,
@@ -320,7 +333,7 @@ interface AppStore {
   sessionPlan: SessionPlan | null;
   tomorrowPlan: SessionPlan | null;
   planModifications: string[];
-  // Stats
+  weeklyPlan: WeeklyPlan;
   testHistory: Array<{ date: string; testResults: NonNullable<Session['testResults']> }>;
   monthStats: MonthStats;
   morningDone: boolean;
@@ -424,7 +437,7 @@ const initialDerived = computeDerived([], [], null, [1, 2, 3, 4, 5, 6], 'unknown
 
 export const useAppStore = create<AppStore>((set, get) => {
   // Create slices — each returns its state + actions
-  const checkin = createCheckinSlice();
+  const checkin = createCheckinSlice(set, get as any);
   const session = createSessionSlice(set, get as any);
   const ui = createUiSlice(set, get as any);
   const data = createDataSlice();
@@ -790,14 +803,14 @@ export const useAppStore = create<AppStore>((set, get) => {
         s.showToast('Тренировка отменена');
       } else {
         const sessionLoad = calculateSessionLoad(s.rpe, s.durationMinutes);
-        // Group pendingSetResults by exerciseName to build ExerciseResult[]
-        const exerciseMap: Record<string, { completedSets: number; repsPerSet: number[] }> = {};
+        const exerciseMap: Record<string, { completedSets: number; repsPerSet: number[]; rpePerSet: number[] }> = {};
         for (const sr of s.pendingSetResults) {
           const name = sr.exerciseName || 'unknown';
-          if (!exerciseMap[name]) exerciseMap[name] = { completedSets: 0, repsPerSet: [] };
+          if (!exerciseMap[name]) exerciseMap[name] = { completedSets: 0, repsPerSet: [], rpePerSet: [] };
           if (sr.completed) {
             exerciseMap[name].completedSets += 1;
             exerciseMap[name].repsPerSet.push(sr.repsDone);
+            exerciseMap[name].rpePerSet.push(sr.rpe ?? 0);
           }
         }
         const exerciseResults = Object.entries(exerciseMap).map(([exerciseName, data]) => ({
@@ -805,6 +818,7 @@ export const useAppStore = create<AppStore>((set, get) => {
           plannedSets: 0,
           completedSets: data.completedSets,
           repsPerSet: data.repsPerSet,
+          rpePerSet: data.rpePerSet,
           completed: data.completedSets > 0,
         }));
         const session: Session = {

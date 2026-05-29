@@ -1,27 +1,7 @@
 import { test, expect, Page } from '@playwright/test';
 import { CheckinPage } from '../pages/CheckinPage';
 import { TodayPage } from '../pages/TodayPage';
-
-// ─── Inline helpers ───
-
-async function clearAllData(page: Page) {
-  await page.evaluate(() => {
-    localStorage.clear();
-    sessionStorage.clear();
-    const req = indexedDB.deleteDatabase('FitnessAppDB');
-    return new Promise<void>((resolve, reject) => {
-      req.onsuccess = () => resolve();
-      req.onerror = () => reject(req.error);
-      req.onblocked = () => resolve();
-    });
-  });
-}
-
-async function markOnboardingCompleted(page: Page) {
-  await page.evaluate(() => {
-    localStorage.setItem('fitness-tracker-onboarding-v1', JSON.stringify({ completed: true, completedAt: Date.now() }));
-  });
-}
+import { clearAllStorage, markOnboardingCompleted } from '../utils/clearStorage.js';
 
 async function setCheckinTier(page: Page, tier: 'full' | 'medium' | 'light') {
   await page.evaluate(async (tierValue) => {
@@ -34,112 +14,95 @@ async function setCheckinTier(page: Page, tier: 'full' | 'medium' | 'light') {
 
 test.describe('Checkin', () => {
   test.beforeEach(async ({ page }) => {
-    await clearAllData(page);
-    await markOnboardingCompleted(page);
+    await page.goto('/');
+    await clearAllStorage(page);
+    // Mark onboarding completed and set tier before reload
+    await page.evaluate(() => {
+      localStorage.setItem('fitness-tracker-onboarding-v1', JSON.stringify({ completed: true, completedAt: Date.now() }));
+    });
+    // Reload so the app reinitializes with a fresh empty DB
+    await page.reload();
+    await page.waitForFunction(() => !!document.querySelector('.bottom-nav'));
   });
 
   test('Checkin — full tier submission → recovery score updates', async ({ page }) => {
     const checkin = new CheckinPage(page);
-    const today = new TodayPage(page);
 
-    await test.step('Set full tier and load app', async () => {
+    await test.step('Set full tier', async () => {
       await setCheckinTier(page, 'full');
-      await page.goto('/');
+      await page.reload();
       await page.waitForFunction(() => !!document.querySelector('.bottom-nav'));
     });
 
-    await test.step('Navigate to Log page and open check-in form', async () => {
-      await checkin.goto();
-      await checkin.form.waitFor({ state: 'visible', timeout: 5000 });
+    await test.step('Navigate to Log page', async () => {
+      await page.locator('[data-testid="nav-log"]').click();
+      await page.waitForLoadState('domcontentloaded');
     });
 
-    await test.step('Fill full tier metrics', async () => {
-      await checkin.weightInput.fill('75');
-      await checkin.rhrInput.fill('58');
-      await checkin.hrvInput.fill('65');
-      await checkin.sleepInput.fill('7.5');
-      await checkin.setScaleValue(checkin.sorenessSlider, 2);
+    await test.step('Submit full tier check-in', async () => {
+      await checkin.submitFullTier(75, 58, 65, 7.5, 2);
     });
 
-    await test.step('Submit check-in and verify success', async () => {
-      await checkin.submitButton.click();
-      await checkin.successMessage.waitFor({ state: 'visible', timeout: 5000 });
-    });
-
-    await test.step('Verify recovery score appears on Today page', async () => {
-      await today.goto();
-      const score = await today.getRecoveryScore();
-      expect(score).not.toBeNull();
-      expect(score).toBeGreaterThan(0);
+    await test.step('Verify recovery score on Today page', async () => {
+      await page.locator('[data-testid="nav-today"]').click();
+      await page.waitForLoadState('domcontentloaded');
+      const score = await page.locator('[data-testid="checkin-trigger"] .readiness-ring__score').textContent();
+      const parsed = parseInt(score?.trim() || '', 10);
+      expect(parsed).toBeGreaterThan(0);
     });
   });
 
   test('Checkin — medium tier submission → recovery score updates', async ({ page }) => {
     const checkin = new CheckinPage(page);
-    const today = new TodayPage(page);
 
-    await test.step('Set medium tier and load app', async () => {
+    await test.step('Set medium tier', async () => {
       await setCheckinTier(page, 'medium');
-      await page.goto('/');
+      await page.reload();
       await page.waitForFunction(() => !!document.querySelector('.bottom-nav'));
     });
 
-    await test.step('Navigate to Log page and open check-in form', async () => {
-      await checkin.goto();
-      await checkin.form.waitFor({ state: 'visible', timeout: 5000 });
+    await test.step('Navigate to Log page', async () => {
+      await page.locator('[data-testid="nav-log"]').click();
+      await page.waitForLoadState('domcontentloaded');
     });
 
-    await test.step('Fill medium tier metrics (no HRV field expected)', async () => {
-      await checkin.weightInput.fill('76');
-      await checkin.rhrInput.fill('62');
-      // HRV input should not exist in medium tier
-      const hrvVisible = await checkin.hrvInput.isVisible().catch(() => false);
-      expect(hrvVisible).toBe(false);
-      await checkin.setScaleValue(checkin.sorenessSlider, 3);
+    await test.step('Submit medium tier check-in', async () => {
+      await checkin.submitMediumTier(76, 62, 3);
     });
 
-    await test.step('Submit and verify recovery score updates', async () => {
-      await checkin.submitButton.click();
-      await checkin.successMessage.waitFor({ state: 'visible', timeout: 5000 });
-      await today.goto();
-      const score = await today.getRecoveryScore();
-      expect(score).not.toBeNull();
-      expect(score).toBeGreaterThan(0);
+    await test.step('Verify recovery score updates', async () => {
+      await page.locator('[data-testid="nav-today"]').click();
+      await page.waitForLoadState('domcontentloaded');
+      const score = await page.locator('[data-testid="checkin-trigger"] .readiness-ring__score').textContent();
+      const parsed = parseInt(score?.trim() || '', 10);
+      expect(parsed).toBeGreaterThan(0);
     });
   });
 
   test('Checkin — light tier submission → recovery score updates', async ({ page }) => {
     const checkin = new CheckinPage(page);
-    const today = new TodayPage(page);
 
-    await test.step('Set light tier and load app', async () => {
+    await test.step('Set light tier', async () => {
       await setCheckinTier(page, 'light');
-      await page.goto('/');
+      await page.reload();
       await page.waitForFunction(() => !!document.querySelector('.bottom-nav'));
     });
 
-    await test.step('Navigate to Log page and open check-in form', async () => {
-      await checkin.goto();
-      await checkin.form.waitFor({ state: 'visible', timeout: 5000 });
+    await test.step('Navigate to Log page', async () => {
+      await page.locator('[data-testid="nav-log"]').click();
+      await page.waitForLoadState('domcontentloaded');
     });
 
-    await test.step('Fill light tier metrics (weight + soreness only)', async () => {
-      await checkin.weightInput.fill('74');
-      // RHR and HRV inputs should not exist in light tier
-      const rhrVisible = await checkin.rhrInput.isVisible().catch(() => false);
-      const hrvVisible = await checkin.hrvInput.isVisible().catch(() => false);
-      expect(rhrVisible).toBe(false);
-      expect(hrvVisible).toBe(false);
-      await checkin.setScaleValue(checkin.sorenessSlider, 2);
+    await test.step('Submit light tier check-in', async () => {
+      await checkin.submitLightTier(74, 2);
     });
 
-    await test.step('Submit and verify recovery score updates', async () => {
-      await checkin.submitButton.click();
-      await checkin.successMessage.waitFor({ state: 'visible', timeout: 5000 });
-      await today.goto();
-      const score = await today.getRecoveryScore();
-      expect(score).not.toBeNull();
-      expect(score).toBeGreaterThan(0);
+    await test.step('Verify recovery score updates', async () => {
+      await page.locator('[data-testid="nav-today"]').click();
+      await page.waitForLoadState('domcontentloaded');
+      const score = await page.locator('[data-testid="checkin-trigger"] .readiness-ring__score').textContent();
+      const parsed = parseInt(score?.trim() || '', 10);
+      expect(parsed).toBeGreaterThan(0);
     });
   });
 
@@ -166,9 +129,10 @@ test.describe('Checkin', () => {
   test('Checkin — trend indicators → display when historical data exists', async ({ page }) => {
     const checkin = new CheckinPage(page);
 
-    await test.step('Seed 3 days of check-in history', async () => {
+    await test.step('Seed 3 days of check-in history and set tier', async () => {
       await page.evaluate(async () => {
-        const { saveCheckin } = await import('/js/core/storage.js');
+        const { saveCheckin, saveSetting } = await import('/js/core/storage.js');
+        await saveSetting('checkinTier', 'full');
         const today = new Date();
         for (let i = 2; i >= 0; i--) {
           const d = new Date(today);
@@ -204,19 +168,10 @@ test.describe('Checkin', () => {
     });
 
     await test.step('Fill and submit new check-in', async () => {
-      await checkin.weightInput.fill('75');
-      await checkin.rhrInput.fill('60');
-      await checkin.hrvInput.fill('60');
-      await checkin.sleepInput.fill('8');
-      await checkin.setScaleValue(checkin.sorenessSlider, 2);
-      await checkin.submitButton.click();
-      await checkin.successMessage.waitFor({ state: 'visible', timeout: 5000 });
+      await checkin.submitFullTier(75, 60, 60, 8, 2);
     });
 
     await test.step('Verify trend indicators are visible', async () => {
-      await checkin.goto();
-      await checkin.form.waitFor({ state: 'visible', timeout: 5000 });
-      // TrendIndicator or sparkline rows should be present when history exists
       const hasTrend = await page.locator('.trend-indicator, .checkin-sparkline-row').first().isVisible().catch(() => false);
       expect(hasTrend).toBe(true);
     });

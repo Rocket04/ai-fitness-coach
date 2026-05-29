@@ -148,20 +148,39 @@ export function calcApreSets({ protocol, currentRM, unit = 'kg', isCalisthenics 
   }
 
   if (isCalisthenics) {
-    const lvl = Math.max(1, Math.min(5, currentRM));
-    const set4Level = set3Reps !== null
-      ? Math.max(1, Math.min(5, lvl + (set3Reps >= protocolDef[75].reps ? 1 : -1)))
+    // For calisthenics: currentRM = added weight in kg (not a level)
+    // Weight progression uses the same APRE tables: 2.5/5/7.5/10 kg steps
+    const set4Weight = set3Reps !== null
+      ? (() => {
+          const { set4Adjust } = applyApre(protocol, set3Reps, unit);
+          return Math.max(0, roundToNearestStep(currentRM + set4Adjust, unit));
+        })()
       : null;
+
+    // Compute target reps for set2 (75% of currentRM) for display
+    // We use currentRM as the "added weight" and map to level for UI
+    const currentLevel = Math.max(1, Math.min(5, Math.round(currentRM / 2.5)));
+    const set2Reps = protocolDef[75].reps;
+
     return {
-      set1: { weight: lvl, reps: protocolDef[50].reps, readonly: true },
-      set2: { weight: lvl, reps: protocolDef[75].reps, readonly: true },
-      set3: { weight: lvl, reps: 'AMRAP', readonly: false },
+      set1: { weight: currentLevel, reps: protocolDef[50].reps, readonly: true },
+      set2: { weight: currentLevel, reps: set2Reps, readonly: true },
+      set3: { weight: currentLevel, reps: 'AMRAP', readonly: false },
       set4: {
-        weight: set4Level,
+        weight: set4Weight !== null ? Math.max(1, Math.min(5, Math.round(set4Weight / 2.5))) : null,
         reps: 'AMRAP',
         disabled: set3Reps === null,
+        adjustmentReason: set4Weight !== null && set3Reps !== null
+          ? (() => {
+              const { set4Adjust } = applyApre(protocol, set3Reps, unit);
+              if (set4Adjust === 0) return '';
+              const sign = set4Adjust > 0 ? '+' : '';
+              const unitLabel = unit === 'lbs' ? 'lbs' : 'кг';
+              return `(${sign}${set4Adjust} ${unitLabel} за ${set3Reps} повт.)`;
+            })()
+          : '',
       },
-      effectiveRM: lvl,
+      effectiveRM: currentLevel,
       recoveryReduction: 0,
     };
   }
@@ -211,12 +230,11 @@ export function calcApreSets({ protocol, currentRM, unit = 'kg', isCalisthenics 
  * @returns {number} — новый RM (округлённый)
  */
 export function calcNextWeekRM(protocolKey, currentRM, set4Reps, unit = 'kg', isCalisthenics = false) {
-  if (isCalisthenics) {
-    const lvl = Math.max(1, Math.min(5, currentRM));
-    const { nextWeekAdjust } = applyApre(protocolKey, set4Reps, unit);
-    return Math.max(1, Math.min(5, lvl + (nextWeekAdjust > 0 ? 1 : nextWeekAdjust < 0 ? -1 : 0)));
-  }
   const { nextWeekAdjust } = applyApre(protocolKey, set4Reps, unit);
+  // For calisthenics: currentRM = added weight (kg), apply standard APRE adjustments
+  if (isCalisthenics) {
+    return Math.max(0, roundToNearestStep(currentRM + nextWeekAdjust, unit));
+  }
   return Math.max(0, roundToNearestStep(currentRM + nextWeekAdjust, unit));
 }
 
@@ -307,16 +325,16 @@ export function annotateExercisesWithApre(exercises, previousApreResults = []) {
     const prev = previousApreResults.find(r => r.exerciseName === ex.n);
 
     const protocol = inferApreProtocol(ex.n, ex.r);
-    const defaultLevel = 2; // Medium — стартовый уровень калистеники
+    const defaultAddedWeight = 0; // No added weight (bodyweight only)
 
     return {
       ...ex,
       isApre,
       protocol,
-      isCalisthenics: true, // в текущем плане — только калистеника
+      isCalisthenics: true,
       unit: 'kg',
-      currentRM: prev ? prev.nextRM : defaultLevel,
-      calisthenicLevel: prev ? (prev.calisthenicLevel ?? defaultLevel) : defaultLevel,
+      currentRM: prev ? prev.nextRM : defaultAddedWeight,
+      calisthenicLevel: prev ? (prev.calisthenicLevel ?? defaultAddedWeight) : defaultAddedWeight,
     };
   });
 }

@@ -1036,6 +1036,145 @@ input[type='range']::-moz-range-track {
   font-family: var(--font-mono);
 }
 
+/* 
+   ExerciseCard — Non-APRE (regular) sets
+   Mobile-friendly layout with RPE slider
+   ═══════════════════════════════════════════ */
+
+.exercise-row--regular {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0.625rem 0.75rem;
+  background: var(--surface2);
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  transition: border-color 0.2s ease;
+}
+
+.exercise-row-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.exercise-sets-meta {
+  font-size: 0.75rem;
+  color: var(--text3);
+}
+
+.exercise-set-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: transparent;
+  margin-bottom: 4px;
+  transition: all var(--transition-fast);
+}
+
+.exercise-set-row--completed {
+  background: rgba(74, 222, 128, 0.1);
+  border-color: var(--green);
+}
+
+.exercise-set-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  min-height: 32px;
+}
+
+.exercise-set-checkbox {
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  min-height: 22px;
+  accent-color: var(--green);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.exercise-set-text {
+  font-size: 0.9rem;
+  color: var(--text2);
+  line-height: 1.3;
+  word-break: break-word;
+}
+
+.exercise-set-row--completed .exercise-set-text {
+  color: var(--green);
+  font-weight: 500;
+}
+
+/* RPE Slider (inline, compact) */
+.set-rpe-slider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-left: 32px;
+  margin-top: 2px;
+}
+
+.set-rpe-label {
+  font-size: 0.75rem;
+  min-width: 3rem;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.set-rpe-input {
+  flex: 1;
+  height: 6px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--surface);
+  border-radius: 3px;
+  outline: none;
+  cursor: pointer;
+  min-width: 80px;
+}
+
+.set-rpe-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--surface);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  cursor: pointer;
+}
+
+.set-rpe-input::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--surface);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  cursor: pointer;
+}
+
+/* Mobile: stack label + slider vertically for very narrow screens */
+@media (max-width: 380px) {
+  .exercise-set-label {
+    flex-wrap: wrap;
+  }
+  .set-rpe-slider {
+    padding-left: 0;
+    width: 100%;
+  }
+  .set-rpe-input {
+    flex: 1;
+  }
+}
+
 /* Coach Badge */
 .coach-badge {
   display: inline-flex;
@@ -3631,4 +3770,30 @@ input[type='range']::-moz-range-track {
   margin: 0;
   font-size: var(--font-size-caption);
   color: var(--text2);
+}
+
+/* Training Plans cards in profile */
+.training-plan-cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.training-plan-card {
+  padding: var(--spacing-sm) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s ease;
+}
+
+.training-plan-card:hover {
+  background: var(--surface-2);
+}
+
+.training-plan-card--active {
+  border: 2px solid var(--accent-green);
+  background: var(--surface-2);
 }

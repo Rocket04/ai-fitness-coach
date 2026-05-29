@@ -32,7 +32,10 @@ export interface CheckinSlice {
   setStress: (v: number) => void;
 }
 
-export function createCheckinSlice(): CheckinSlice {
+export function createCheckinSlice(
+  set: (partial: Partial<CheckinSlice>) => void,
+  _get: () => CheckinSlice
+): CheckinSlice {
   return {
     weight: 0,
     restHR: 0,
@@ -48,18 +51,18 @@ export function createCheckinSlice(): CheckinSlice {
     sleepQuality: 0,
     stress: 0,
 
-    setWeight: (v: number) => ({ weight: v }),
-    setRestHR: (v: number) => ({ restHR: v }),
-    setHrv: (v: number) => ({ hrv: v }),
-    setSleepHours: (v: number) => ({ sleepHours: v }),
-    setHipPain: (v: number) => ({ hipPain: v }),
-    setShoulderPain: (v: number) => ({ shoulderPain: v }),
-    setBreathing: (v: BreathingStatus) => ({ breathing: v }),
-    setNotes: (v: string) => ({ notes: v }),
-    setMuscleSoreness: (v: number) => ({ muscleSoreness: v }),
-    setEnergy: (v: number) => ({ energy: v }),
-    setMood: (v: number) => ({ mood: v }),
-    setSleepQuality: (v: number) => ({ sleepQuality: v }),
-    setStress: (v: number) => ({ stress: v }),
+    setWeight: (v: number) => set({ weight: v }),
+    setRestHR: (v: number) => set({ restHR: v }),
+    setHrv: (v: number) => set({ hrv: v }),
+    setSleepHours: (v: number) => set({ sleepHours: v }),
+    setHipPain: (v: number) => set({ hipPain: v }),
+    setShoulderPain: (v: number) => set({ shoulderPain: v }),
+    setBreathing: (v: BreathingStatus) => set({ breathing: v }),
+    setNotes: (v: string) => set({ notes: v }),
+    setMuscleSoreness: (v: number) => set({ muscleSoreness: v }),
+    setEnergy: (v: number) => set({ energy: v }),
+    setMood: (v: number) => set({ mood: v }),
+    setSleepQuality: (v: number) => set({ sleepQuality: v }),
+    setStress: (v: number) => set({ stress: v }),
   };
 }

@@ -1,26 +1,12 @@
 import { test, expect, Page } from '@playwright/test';
 import { OnboardingPage } from '../pages/OnboardingPage';
 import { TodayPage } from '../pages/TodayPage';
-
-// ─── Inline helpers ───
-
-async function clearAllData(page: Page) {
-  await page.evaluate(() => {
-    localStorage.clear();
-    sessionStorage.clear();
-    const req = indexedDB.deleteDatabase('FitnessAppDB');
-    return new Promise<void>((resolve, reject) => {
-      req.onsuccess = () => resolve();
-      req.onerror = () => reject(req.error);
-      req.onblocked = () => resolve();
-    });
-  });
-}
+import { clearAllStorage } from '../utils/clearStorage.js';
 
 async function ensureOnboardingShows(page: Page) {
   // Onboarding shows when: hasExistingData === true AND onboardingCompleted === false
   // Guest mode is skipped when hasExistingData === true
-  await clearAllData(page);
+  await clearAllStorage(page);
 
   // Seed 1 checkin so app sees existing data → no guest mode
   await page.evaluate(async () => {

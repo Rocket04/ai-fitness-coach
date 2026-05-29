@@ -1,18 +1,5 @@
 import { test, expect, Page } from '@playwright/test';
-
-// ─── Inline helpers ───
-
-async function clearAllData(page: Page) {
-  await page.goto('/');
-  await page.evaluate(() => {
-    localStorage.clear();
-    sessionStorage.clear();
-    indexedDB.deleteDatabase('FitnessAppDB');
-    indexedDB.deleteDatabase('fitness-tracker-db');
-    indexedDB.deleteDatabase('SmartFitnessCoachDemo');
-    return new Promise<void>((resolve) => setTimeout(resolve, 200));
-  });
-}
+import { clearAllStorage } from '../utils/clearStorage.js';
 
 async function completeOnboardingIfShown(page: Page) {
   const wizard = page.locator('.onboarding-content');
@@ -63,7 +50,8 @@ async function openSettings(page: Page) {
 test.describe('Settings', () => {
   test('Settings — change training days → saves and persists', async ({ page }) => {
     await test.step('Clear data and complete onboarding', async () => {
-      await clearAllData(page);
+      await page.goto('/');
+      await clearAllStorage(page);
       await page.goto('/');
       await page.waitForFunction(() => !!document.querySelector('.bottom-nav'));
       await completeOnboardingIfShown(page);
@@ -109,7 +97,8 @@ test.describe('Settings', () => {
 
   test('Settings — change start date → saves and persists', async ({ page }) => {
     await test.step('Clear data and complete onboarding', async () => {
-      await clearAllData(page);
+      await page.goto('/');
+      await clearAllStorage(page);
       await page.goto('/');
       await page.waitForFunction(() => !!document.querySelector('.bottom-nav'));
       await completeOnboardingIfShown(page);
@@ -155,7 +144,8 @@ test.describe('Settings', () => {
 
   test('Settings — cancel → discards unsaved changes', async ({ page }) => {
     await test.step('Clear data and complete onboarding', async () => {
-      await clearAllData(page);
+      await page.goto('/');
+      await clearAllStorage(page);
       await page.goto('/');
       await page.waitForFunction(() => !!document.querySelector('.bottom-nav'));
       await completeOnboardingIfShown(page);
@@ -202,7 +192,8 @@ test.describe('Settings', () => {
 
   test('Settings — modal → opens and closes correctly', async ({ page }) => {
     await test.step('Clear data and complete onboarding', async () => {
-      await clearAllData(page);
+      await page.goto('/');
+      await clearAllStorage(page);
       await page.goto('/');
       await page.waitForFunction(() => !!document.querySelector('.bottom-nav'));
       await completeOnboardingIfShown(page);

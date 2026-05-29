@@ -211,9 +211,11 @@ describe('calcNextWeekRM', () => {
     expect(calcNextWeekRM('APRE_6', 5, 1)).toBeGreaterThanOrEqual(0);
   });
 
-  it('limits weight progression for bodyweight exercises', () => {
-    expect(calcNextWeekRM('APRE_6', 5, 15, 'kg', true)).toBe(5);
-    expect(calcNextWeekRM('APRE_6', 1, 2, 'kg', true)).toBe(1);
+  it('uses weight-based progression for calisthenics (added weight in kg)', () => {
+    // 5kg added + 15 reps in set4 -> +7.5kg adjustment = 12.5kg
+    expect(calcNextWeekRM('APRE_6', 5, 15, 'kg', true)).toBe(12.5);
+    // 1kg added + 2 reps in set4 -> -5kg adjustment = 0kg (can't go negative)
+    expect(calcNextWeekRM('APRE_6', 1, 2, 'kg', true)).toBe(0);
   });
 });
 
@@ -269,9 +271,9 @@ describe('annotateExercisesWithApre', () => {
     expect(result[2].isApre).toBe(true);
   });
 
-  it('uses default RM of 2 when no prior results exist', () => {
+  it('uses default RM of 0 (no added weight) when no prior results exist', () => {
     const result = annotateExercisesWithApre(exercises);
-    expect(result[0].currentRM).toBe(2);
+    expect(result[0].currentRM).toBe(0);
   });
 
   it('applies next RM from previous session results', () => {

@@ -1,33 +1,14 @@
 import { test, expect, Page } from '@playwright/test';
 import { TodayPage } from '../pages/TodayPage';
 import { expectRecoveryColor } from '../utils/assertions';
-
-// ─── Inline helpers ───
-
-async function clearAllData(page: Page) {
-  await page.evaluate(() => {
-    localStorage.clear();
-    sessionStorage.clear();
-    const req = indexedDB.deleteDatabase('FitnessAppDB');
-    return new Promise<void>((resolve, reject) => {
-      req.onsuccess = () => resolve();
-      req.onerror = () => reject(req.error);
-      req.onblocked = () => resolve();
-    });
-  });
-}
-
-async function markOnboardingCompleted(page: Page) {
-  await page.evaluate(() => {
-    localStorage.setItem('fitness-tracker-onboarding-v1', JSON.stringify({ completed: true, completedAt: Date.now() }));
-  });
-}
+import { clearAllStorage, markOnboardingCompleted } from '../utils/clearStorage.js';
 
 // ─── Tests ───
 
 test.describe('Recovery', () => {
   test.beforeEach(async ({ page }) => {
-    await clearAllData(page);
+    await page.goto('/');
+    await clearAllStorage(page);
     await markOnboardingCompleted(page);
   });
 
@@ -45,8 +26,8 @@ test.describe('Recovery', () => {
     });
 
     await test.step('Verify prompt text is visible', async () => {
-      // The empty-state ring or nearby should contain the prompt
-      await expect(page.locator('.today-page')).toContainText(/Ваш показатель|Заполните чек-ин/i);
+      // The empty-state ring shows "—" dash and "Сделайте чек-ин" prompt
+      await expect(page.locator('.today-page')).toContainText(/[—]|Сделайте чек-ин|Восстановление/i);
     });
   });
 

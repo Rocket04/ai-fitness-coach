@@ -1,18 +1,5 @@
 import { test, expect, Page } from '@playwright/test';
-
-// ─── Inline helpers ───
-
-async function clearAllData(page: Page) {
-  await page.goto('/');
-  await page.evaluate(() => {
-    localStorage.clear();
-    sessionStorage.clear();
-    indexedDB.deleteDatabase('FitnessAppDB');
-    indexedDB.deleteDatabase('fitness-tracker-db');
-    indexedDB.deleteDatabase('SmartFitnessCoachDemo');
-    return new Promise<void>((resolve) => setTimeout(resolve, 200));
-  });
-}
+import { clearAllStorage } from '../utils/clearStorage.js';
 
 async function completeOnboardingIfShown(page: Page) {
   const wizard = page.locator('.onboarding-content');
@@ -64,7 +51,8 @@ async function seedLowRecoveryCheckin(page: Page) {
 test.describe('Workout', () => {
   test('Workout — rest day → displays "День отдыха" card', async ({ page }) => {
     await test.step('Clear data and complete onboarding', async () => {
-      await clearAllData(page);
+      await page.goto('/');
+      await clearAllStorage(page);
       await page.goto('/');
       await page.waitForFunction(() => !!document.querySelector('.bottom-nav'));
       await completeOnboardingIfShown(page);
@@ -87,7 +75,8 @@ test.describe('Workout', () => {
 
   test('Workout — training day → displays session plan with sport type', async ({ page }) => {
     await test.step('Clear data and complete onboarding', async () => {
-      await clearAllData(page);
+      await page.goto('/');
+      await clearAllStorage(page);
       await page.goto('/');
       await page.waitForFunction(() => !!document.querySelector('.bottom-nav'));
       await completeOnboardingIfShown(page);
@@ -116,7 +105,8 @@ test.describe('Workout', () => {
 
   test('Workout — exercise cards → render with sets/reps/duration', async ({ page }) => {
     await test.step('Clear data and complete onboarding', async () => {
-      await clearAllData(page);
+      await page.goto('/');
+      await clearAllStorage(page);
       await page.goto('/');
       await page.waitForFunction(() => !!document.querySelector('.bottom-nav'));
       await completeOnboardingIfShown(page);
@@ -125,16 +115,23 @@ test.describe('Workout', () => {
     await test.step('Inject strength session with exercises', async () => {
       await page.evaluate(async () => {
         const { useAppStore } = await import('/js/stores/useAppStore.js');
+        const todayISO = new Date().toISOString().slice(0, 10);
         useAppStore.setState({
           sessionPlan: {
-            type: 'A',
-            sessionType: 'A',
+            sessionId: `${todayISO}_A`,
+            date: todayISO,
             sport: 'strength',
+            sessionType: 'strength',
             exercises: [
               { n: 'Подтягивания', s: '3', r: '6-8' },
               { n: 'Отжимания', s: '3', r: '10-12' },
             ],
             mode: 'full',
+            isDeload: false,
+            isRestDay: false,
+            name: 'Силовая',
+            description: '',
+            defaultParameters: {},
           },
         });
       });
@@ -159,7 +156,8 @@ test.describe('Workout', () => {
 
   test('Workout — APRE autoregulation → displays reasons when applicable', async ({ page }) => {
     await test.step('Clear data and complete onboarding', async () => {
-      await clearAllData(page);
+      await page.goto('/');
+      await clearAllStorage(page);
       await page.goto('/');
       await page.waitForFunction(() => !!document.querySelector('.bottom-nav'));
       await completeOnboardingIfShown(page);
@@ -172,17 +170,24 @@ test.describe('Workout', () => {
     await test.step('Inject strength session with APRE exercise', async () => {
       await page.evaluate(async () => {
         const { useAppStore } = await import('/js/stores/useAppStore.js');
+        const todayISO = new Date().toISOString().slice(0, 10);
         useAppStore.setState({
           recoveryScore: 30,
           readiness: 'red',
           sessionPlan: {
-            type: 'A',
-            sessionType: 'A',
+            sessionId: `${todayISO}_A`,
+            date: todayISO,
             sport: 'strength',
+            sessionType: 'strength',
             exercises: [
               { n: 'Подтягивания', s: '3', r: '6-8', isApre: true, protocol: 'APRE_6', currentRM: 60, unit: 'kg', isCalisthenics: false },
             ],
             mode: 'full',
+            isDeload: false,
+            isRestDay: false,
+            name: 'Силовая',
+            description: '',
+            defaultParameters: {},
           },
         });
       });

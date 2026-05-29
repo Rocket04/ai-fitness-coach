@@ -14,6 +14,7 @@ import { WalkingPlanModule } from '../plans/walking.js';
 import { applyMultiplierToExercises, adjustExercisesForMode } from './loadAdjustments.js';
 import { annotateExercisesWithApre } from './apre/engine.js';
 import { filterExercisesForRehab, filterStretchingForRehab } from './exerciseDatabase.js';
+import { getRehabPreWorkoutExercises } from './rehabProtocol.js';
 import { parseLocalDate, getAppDateSync } from './helpers.js';
 
 // Sport module registry
@@ -313,6 +314,12 @@ export function applyReadinessToSession(
     wasRehabAdapted = filtered.wasAdapted;
     if (wasRehabAdapted) {
       modifications.push('Боль в суставах → упражнения адаптированы для реабилитации');
+    }
+
+    const preWorkoutExercises = getRehabPreWorkoutExercises(rehabIssues);
+    if (preWorkoutExercises.length > 0 && !session.isRestDay) {
+      exercises = [...preWorkoutExercises, ...exercises];
+      modifications.push('Добавлены разогревающие реабилитационные упражнения перед тренировкой');
     }
   }
 

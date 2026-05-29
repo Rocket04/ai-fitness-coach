@@ -1,20 +1,5 @@
 import { test, expect, Page } from '@playwright/test';
-
-// ─── Inline helpers ───
-
-async function clearAllData(page: Page) {
-  await page.goto('/');
-  await page.evaluate(() => {
-    localStorage.clear();
-    sessionStorage.clear();
-    const req = indexedDB.deleteDatabase('fitness-tracker-db');
-    return new Promise<void>((resolve, reject) => {
-      req.onsuccess = () => resolve();
-      req.onerror = () => reject(req.error);
-      req.onblocked = () => resolve();
-    });
-  });
-}
+import { clearAllStorage } from '../utils/clearStorage.js';
 
 async function visitProfile(page: Page) {
   await page.goto('/');
@@ -58,7 +43,8 @@ async function completeOnboardingIfShown(page: Page) {
 test.describe('Profile', () => {
   test('Profile — tier selector → change persists', async ({ page }) => {
     await test.step('Clear data and complete onboarding', async () => {
-      await clearAllData(page);
+      await page.goto('/');
+      await clearAllStorage(page);
       await page.goto('/');
       await page.waitForFunction(() => !!document.querySelector('.bottom-nav'));
       await completeOnboardingIfShown(page);
@@ -101,7 +87,8 @@ test.describe('Profile', () => {
 
   test('Profile — achievements → display unlocked badges', async ({ page }) => {
     await test.step('Seed achievement-unlocking data', async () => {
-      await clearAllData(page);
+      await page.goto('/');
+      await clearAllStorage(page);
       await page.evaluate(async () => {
         const { getActiveDatabase } = await import('/js/core/storage.js');
         const db = getActiveDatabase();
@@ -161,7 +148,8 @@ test.describe('Profile', () => {
 
   test('Profile — exercise config → modal opens and saves', async ({ page }) => {
     await test.step('Clear data and complete onboarding', async () => {
-      await clearAllData(page);
+      await page.goto('/');
+      await clearAllStorage(page);
       await page.goto('/');
       await page.waitForFunction(() => !!document.querySelector('.bottom-nav'));
       await completeOnboardingIfShown(page);
@@ -213,7 +201,8 @@ test.describe('Profile', () => {
 
   test('Profile — language switcher → changes UI language', async ({ page }) => {
     await test.step('Clear data and complete onboarding', async () => {
-      await clearAllData(page);
+      await page.goto('/');
+      await clearAllStorage(page);
       await page.goto('/');
       await page.waitForFunction(() => !!document.querySelector('.bottom-nav'));
       await completeOnboardingIfShown(page);

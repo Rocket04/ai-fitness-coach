@@ -121,6 +121,8 @@ export interface SetResult {
   repsDone: number;
   /** Exercise name this set belongs to */
   exerciseName?: string;
+  /** RPE (Rate of Perceived Exertion) for this set, 1–10 scale */
+  rpe?: number;
 }
 
 /** Результат выполнения упражнения (для не-APRE упражнений) */
@@ -129,6 +131,8 @@ export interface ExerciseResult {
   plannedSets: number;
   completedSets: number;
   repsPerSet: number[];
+  /** Per-set RPE values (1–10), aligned with repsPerSet by index */
+  rpePerSet: number[];
   completed: boolean;
 }
 

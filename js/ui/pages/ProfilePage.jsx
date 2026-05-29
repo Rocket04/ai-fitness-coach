@@ -5,9 +5,12 @@ import { Target, User, BarChart, Circle, Sun, Moon, Star, AlertTriangle, Dumbbel
 import { useAppStore } from '../../stores/useAppStore.js';
 import { useTourStore } from '../../stores/useTourStore.js';
 import { changeLanguage, getCurrentLanguage } from '../../i18n/index.js';
-import { ZONES, HRV_GUIDE, NUTRITION, MORNING_ROUTINE, EVENING_ROUTINE, DAYS, DAYS_TO_DOW } from '../../config/constants.js';
+import { ZONES, HRV_GUIDE, NUTRITION, MORNING_ROUTINE, EVENING_ROUTINE, DAYS, DAYS_TO_DOW, TRAINING_PLANS } from '../../config/constants.js';
 import { useFitnessData, isExerciseConfigured, DEFAULT_EXERCISES } from '../../hooks/useFitnessData.js';
 import Modal from '../components/Modal.jsx';
+import { parseLocalDate, formatISO, mondayOfWeek } from '../../core/helpers.js';
+import { exerciseLibrary } from '../../core/exerciseDatabase.js';
+import { getProtocolsForIssues } from '../../core/rehabProtocol.js';
 import ExerciseConfigModal from '../components/ExerciseConfigModal.jsx';
 import { getUnlockedAchievements } from '../../core/achievements.js';
 import { saveCheckin, getAllCheckins, saveSetting } from '../../core/storage.js';
@@ -72,6 +75,7 @@ export default function ProfilePage() {
     streak,
     rehabIssues,
     rehabExercises,
+    selectedSports,
   } = useAppStore();
 
   // Exercise configuration
@@ -206,6 +210,64 @@ export default function ProfilePage() {
         className: 'btn btn-accent',
         onClick: () => setShowSettings(true),
       }, t('profile.settings.open'))
+    ),
+
+    // ── Training Plans section ──
+    React.createElement(ProfileSection, { title: '📋 Готовые планы' },
+      React.createElement('p', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text2)', marginBottom: 'var(--spacing-sm)' } },
+        'Выберите готовый план или настройте вручную'
+      ),
+      React.createElement('div', { className: 'training-plan-cards', style: { display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)' } },
+        TRAINING_PLANS.map(plan => {
+          const isActive = selectedSports.join(',') === plan.sports.join(',');
+          return React.createElement('button', {
+            key: plan.key,
+            className: `training-plan-card ${isActive ? 'training-plan-card--active' : ''}`,
+            style: {
+              padding: 'var(--spacing-sm)',
+              borderRadius: 'var(--radius-sm)',
+              border: isActive ? '2px solid var(--accent-green)' : '1px solid var(--border)',
+              backgroundColor: isActive ? 'var(--surface-2)' : 'var(--surface)',
+              cursor: 'pointer',
+              textAlign: 'left',
+            },
+onClick: async () => {
+               const s = useAppStore.getState();
+               await s.setSelectedSports(plan.sports);
+               if (plan.rehabIssues) {
+                 await s.setRehabIssues(plan.rehabIssues);
+               }
+               if (plan.goals) {
+                 await s.setProfileGoals(plan.goals);
+               }
+               if (plan.level) {
+                 await s.setProfileLevel(plan.level);
+               }
+if (plan.template) {
+                  const trainDays = plan.template.days
+                    .map((d, i) => d ? DAYS_TO_DOW[i] : null)
+                    .filter(d => d !== null);
+                  await s.setEditTrainDays(trainDays);
+                  await s.handleSaveSettings();
+                }
+               const { initApp } = useAppStore.getState();
+               await initApp();
+               s.showToast(`План "${plan.name}" активирован`);
+             },
+          },
+            React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } },
+              React.createElement('span', { style: { fontWeight: 600, fontSize: 'var(--font-size-sm)' } }, plan.name),
+              isActive && React.createElement('span', { style: { fontSize: '0.75rem', color: 'var(--green)' } }, '✓')
+            ),
+            React.createElement('div', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text3)' } }, plan.label)
+          );
+        })
+      ),
+      React.createElement('button', {
+        className: 'btn btn-outline',
+        style: { marginTop: 'var(--spacing-sm)' },
+        onClick: () => setShowSettings(true),
+      }, 'Настроить вручную')
     ),
 
     // ── Language section ──
@@ -561,25 +623,46 @@ export default function ProfilePage() {
           )
         ),
 
-        // Rehab exercises text field
+        // Rehab exercises list from protocol
         React.createElement('div', null,
-          React.createElement('h4', { className: 'rehab-section-title' }, t('profile.rehab.exercisesTitle')),
-          React.createElement('p', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text3)' } }, t('profile.rehab.exercisesHint')),
-          React.createElement('input', {
-            type: 'text',
-            value: (rehabExercises || []).join(', '),
-            onChange: (e) => {
-              const val = e.target.value;
-              const ids = val.split(',').map(s => s.trim()).filter(Boolean);
-              setRehabExercises(ids);
-            },
-            onBlur: () => {
-              const ids = (rehabExercises || []).filter(Boolean);
-              saveSetting('rehabExercises', ids);
-            },
-            placeholder: 'squat, deadlift, ...',
-            className: 'rehab-input'
-          })
+          React.createElement('h4', { className: 'rehab-section-title' }, 'Ежедневные реабилитационные упражнения'),
+          rehabIssues && rehabIssues.length > 0
+            ? React.createElement('div', { className: 'rehab-exercise-list', style: { display: 'flex', flexDirection: 'column', gap: '4px' } },
+                (() => {
+                  const protocols = getProtocolsForIssues(rehabIssues || []);
+                  const seen = new Set();
+                  const rows = [];
+                  for (const p of protocols) {
+                    for (const pe of p.exercises) {
+                      if (pe.frequency === 'pre-workout') continue;
+                      if (seen.has(pe.exerciseId)) continue;
+                      seen.add(pe.exerciseId);
+                      rows.push(
+                        React.createElement('div', {
+                          key: pe.exerciseId,
+                          style: {
+                            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                            padding: '6px 8px', borderRadius: 'var(--radius-sm)',
+                            backgroundColor: 'var(--surface-2)', fontSize: '0.8rem'
+                          }
+                        },
+                          React.createElement('span', { style: { flex: 1 } },
+                            (exerciseLibrary[pe.exerciseId]?.name || pe.exerciseId) + (pe.perSide ? ' (на каждую сторону)' : '')
+                          ),
+                          React.createElement('span', { style: { color: 'var(--text2)', fontSize: '0.75rem' } },
+                            `${pe.sets}×${pe.reps}`
+                          ),
+                          React.createElement('span', { style: { color: 'var(--text3)', fontSize: '0.7rem', marginLeft: '8px' } },
+                            pe.frequency
+                          )
+                        )
+                      );
+                    }
+                  }
+                  return rows.length > 0 ? rows : React.createElement('p', { style: { fontSize: '0.8rem', color: 'var(--text3)' } }, 'Выберите проблемные зоны выше');
+                })()
+              )
+            : React.createElement('p', { style: { fontSize: '0.8rem', color: 'var(--text3)' } }, 'Выберите проблемные зоны выше')
         ),
 
         // Current adaptation status
@@ -734,7 +817,7 @@ export default function ProfilePage() {
         React.createElement('h4', { style: { margin: '1rem 0 0.5rem' } }, React.createElement(Play, { size: 20 }), ' Калистеника'),
         exercises.filter(e => e.isCalisthenics).map(ex => {
           const configured = isExerciseConfigured(ex);
-          const levelNames = { 1: 'Easy', 2: 'Medium', 3: 'Hard', 4: 'Elite', 5: 'Master' };
+const levelNames = { 1: 'Лёгкий', 2: 'Средний', 3: 'Сложный', 4: 'Элита', 5: 'Мастер' };
           return React.createElement('div', {
             key: ex.id,
             className: `exercise-config-item ${configured ? 'exercise-config-item--configured' : 'exercise-config-item--unconfigured'}`

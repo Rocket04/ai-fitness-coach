@@ -13,6 +13,7 @@ import Collapsible from '../components/Collapsible.jsx';
 import ExerciseCard from '../components/ExerciseCard.jsx';
 import ExerciseConfigModal from '../components/ExerciseConfigModal.jsx';
 import HelpIcon from '../components/HelpIcon.jsx';
+import WeeklyPlanCard from '../components/WeeklyPlanCard.jsx';
 
 // i18n usage example (after installing dependencies):
 // const { t } = useTranslation();
@@ -296,7 +297,7 @@ export default function TodayPage() {
     handleToggleTraining, handleMarkMorning, handleMarkEvening,
      coachAdvice, updateApreResult, checkinTier, checkins, planModifications,
      demoMode, dataLoaded, setActiveTab, updateSetResult, postSessionFatigue,
-     postSessionPain, setPostSessionFatigue, setPostSessionPain,
+     postSessionPain, setPostSessionFatigue, setPostSessionPain, weeklyPlan,
    } = useAppStore();
 
   // Inject demo data for guided tour
@@ -500,6 +501,10 @@ export default function TodayPage() {
       )
     ),
 
+    // ═══════════════════════════════════════════════════════════════════
+    // LAYER 0.6: Weekly Plan Card (expandable, shows exact plan per day)
+    React.createElement(WeeklyPlanCard, { plan: weeklyPlan, t }),
+
     // Explanation card
     explanation.length > 0 && React.createElement('div', { className: 'card explanation-card card-appear', style: { animationDelay: '0.05s' } },
       React.createElement('h4', { className: 'explanation-title', style: { marginBottom: 'var(--spacing-sm)', fontSize: 'var(--font-size-body)', fontWeight: 600 } }, t('today.why')),
@@ -626,8 +631,8 @@ export default function TodayPage() {
                   onApreResult: updateApreResult,
                   isConfigured,
                   onConfigure: () => handleConfigureExercise(idx),
-                  onSetComplete: (exName, setNum, reps) => {
-                    updateSetResult({ exerciseName: exName, setNumber: setNum, completed: reps > 0, repsDone: reps });
+                  onSetComplete: (exName, setNum, reps, rpe) => {
+                    updateSetResult({ exerciseName: exName, setNumber: setNum, completed: reps > 0, repsDone: reps, rpe });
                   },
                 });
               })
