@@ -20,6 +20,8 @@ vi.mock('../../core/storage.js', () => ({
   saveSetting: vi.fn().mockResolvedValue(undefined),
   getManualStatus: vi.fn().mockResolvedValue(null),
   saveManualStatus: vi.fn().mockResolvedValue(undefined),
+  activateDemoData: vi.fn().mockResolvedValue(undefined),
+  deactivateDemoData: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock('../../core/advice.js', () => ({
@@ -290,5 +292,176 @@ describe('user manages training sessions', () => {
     expect(state.testPullUps).toBe(15);
     expect(state.testPushUps).toBe(30);
     expect(state.testPlank).toBe(60);
+  });
+});
+
+describe('user manages settings', () => {
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    await resetStore();
+  });
+
+  it('updates startDate and trainDays via handleSaveSettings', async () => {
+    const { useAppStore } = await import('../../stores/useAppStore.js');
+    const { saveSettings } = await import('../../core/storage.js');
+
+    useAppStore.getState().setEditStartDate('2026-06-01');
+    useAppStore.getState().setEditTrainDays([2, 4, 6]);
+    await useAppStore.getState().handleSaveSettings();
+
+    const state = useAppStore.getState();
+    expect(state.startDate).toBe('2026-06-01');
+    expect(state.trainDays).toEqual([2, 4, 6]);
+    expect(vi.mocked(saveSettings)).toHaveBeenCalledOnce();
+  });
+
+  it('updates profile fields via setState', async () => {
+    const { useAppStore } = await import('../../stores/useAppStore.js');
+
+    useAppStore.setState({ profileLevel: 'advanced', profileGoals: ['hypertrophy'], profileEquipment: { dumbbells: true } });
+
+    const state = useAppStore.getState();
+    expect(state.profileLevel).toBe('advanced');
+    expect(state.profileGoals).toEqual(['hypertrophy']);
+  });
+
+  it('sets checkin tier via setState', async () => {
+    const { useAppStore } = await import('../../stores/useAppStore.js');
+
+    useAppStore.setState({ checkinTier: 'full' });
+    expect(useAppStore.getState().checkinTier).toBe('full');
+  });
+});
+
+describe('user toggles UI state', () => {
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    await resetStore();
+  });
+
+  it('opens and closes settings modal', async () => {
+    const { useAppStore } = await import('../../stores/useAppStore.js');
+
+    useAppStore.setState({ showSettings: true });
+    expect(useAppStore.getState().showSettings).toBe(true);
+
+    useAppStore.setState({ showSettings: false });
+    expect(useAppStore.getState().showSettings).toBe(false);
+  });
+
+  it('opens and closes reset confirmation dialog', async () => {
+    const { useAppStore } = await import('../../stores/useAppStore.js');
+
+    useAppStore.setState({ showResetConfirm: true });
+    expect(useAppStore.getState().showResetConfirm).toBe(true);
+
+    useAppStore.setState({ showResetConfirm: false });
+    expect(useAppStore.getState().showResetConfirm).toBe(false);
+  });
+
+  it('switches active tab', async () => {
+    const { useAppStore } = await import('../../stores/useAppStore.js');
+
+    useAppStore.setState({ activeTab: 2 });
+    expect(useAppStore.getState().activeTab).toBe(2);
+  });
+
+  it('toggles readiness visibility', async () => {
+    const { useAppStore } = await import('../../stores/useAppStore.js');
+
+    useAppStore.setState({ showReadiness: true });
+    expect(useAppStore.getState().showReadiness).toBe(true);
+  });
+});
+
+describe('user shifts virtual date', () => {
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    await resetStore();
+  });
+
+  it('applies positive offset to virtualTodayOffset', async () => {
+    const { useAppStore } = await import('../../stores/useAppStore.js');
+
+    useAppStore.setState({ virtualTodayOffset: 3 });
+    expect(useAppStore.getState().virtualTodayOffset).toBe(3);
+  });
+
+  it('applies negative offset to virtualTodayOffset', async () => {
+    const { useAppStore } = await import('../../stores/useAppStore.js');
+
+    useAppStore.setState({ virtualTodayOffset: -2 });
+    expect(useAppStore.getState().virtualTodayOffset).toBe(-2);
+  });
+
+  it('resets offset to zero', async () => {
+    const { useAppStore } = await import('../../stores/useAppStore.js');
+
+    useAppStore.setState({ virtualTodayOffset: 5 });
+    useAppStore.setState({ virtualTodayOffset: 0 });
+    expect(useAppStore.getState().virtualTodayOffset).toBe(0);
+  });
+});
+
+describe('demo mode management', () => {
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    await resetStore();
+  });
+
+  it('sets demo mode flag', async () => {
+    const { useAppStore } = await import('../../stores/useAppStore.js');
+
+    useAppStore.setState({ demoMode: true });
+    expect(useAppStore.getState().demoMode).toBe(true);
+  });
+});
+
+describe('guest mode management', () => {
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    await resetStore();
+  });
+
+  it('sets guest mode flag via setState', async () => {
+    const { useAppStore } = await import('../../stores/useAppStore.js');
+
+    useAppStore.setState({ guestMode: true, showGuestModal: false });
+    expect(useAppStore.getState().guestMode).toBe(true);
+  });
+
+  it('shows guest modal via setState', async () => {
+    const { useAppStore } = await import('../../stores/useAppStore.js');
+
+    useAppStore.setState({ showGuestModal: true });
+    expect(useAppStore.getState().showGuestModal).toBe(true);
+  });
+});
+
+describe('toast notifications', () => {
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    await resetStore();
+  });
+
+  it('shows success toast via setState', async () => {
+    const { useAppStore } = await import('../../stores/useAppStore.js');
+
+    useAppStore.setState({
+      toast: { message: 'Saved!', type: 'success', visible: true },
+    });
+    const toast = useAppStore.getState().toast;
+    expect(toast.message).toBe('Saved!');
+    expect(toast.type).toBe('success');
+    expect(toast.visible).toBe(true);
+  });
+
+  it('hides toast via setState', async () => {
+    const { useAppStore } = await import('../../stores/useAppStore.js');
+
+    useAppStore.setState({
+      toast: { message: 'Test', type: 'error', visible: false },
+    });
+    expect(useAppStore.getState().toast.visible).toBe(false);
   });
 });
