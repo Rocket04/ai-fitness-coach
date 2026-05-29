@@ -71,10 +71,35 @@
 - ✅ **CSV biometrics import** — Health Sync CSV parser
 - ✅ **Rehab-aware stretching** — auto-filters contraindicated exercises
 - ✅ **Modular Zustand store** — 5 slices + orchestrator pattern
+- ✅ **Type-safe core** — all `any` types removed from `js/core/`
 
 ---
 
-## ⚠️ Честные ограничения
+## 📊 What's New (2026-05-29)
+
+### Code Quality Improvements
+- **Removed all `any` types** from `js/core/` (types.ts, storage.ts, planning.ts, loadAdjustments.ts, stats.ts)
+- **Cleaned up 50+ stale files**: removed stale scripts, generated docs, coverage artifacts, old session/plan files
+- **Enhanced test coverage**: +51 new unit tests (storage.ts: 25 tests, useAppStore.ts: 26 tests)
+- **Current test coverage**: 60.67% (target ≥80% — see Coverage Gaps below)
+
+### Security & Config
+- **Resolved exposed GitHub PAT** in training plans commit (amended before push)
+- **Updated `.gitignore`** to exclude `.kilo/kilo.json` and `.windsurf/`
+
+---
+
+## 🎯 Coverage Gaps (Help Wanted)
+
+| File | Current | Target | Priority |
+|------|---------|--------|----------|
+| `js/core/importSchemas.ts` | 22% | 80% | high |
+| `js/stores/useAppStore.ts` | 24% | 80% | high |
+| `js/core/planning.ts` | 54% | 80% | medium |
+| `js/core/analytics.ts` | 0% | 80% | medium |
+| `js/core/advice.ts` | 0% | 80% | medium |
+
+Run `npm test -- --coverage` to see current coverage.
 
 - Данные вводятся вручную; автоматический сбор через Apple Health / Google Fit — в планах
 - Алгоритм Recovery Score не прошёл клиническую валидацию, основан на научной гипотезе, тестируется
