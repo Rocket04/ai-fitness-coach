@@ -4,7 +4,7 @@
 import React, { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Check, Circle, Sun, Moon, Play, Dumbbell, BarChart } from 'lucide-react';
-import { useAppStore } from '../../stores/useAppStore.js';
+import { useAppStore } from '../../store/index.js';
 import EmptyState from '../components/EmptyState.jsx';
 import { Collapsible as CollapsiblePrimitive } from '@base-ui/react/collapsible';
 
@@ -23,7 +23,7 @@ function SessionRow({ session }) {
   const dateStr = session.date ? session.date.slice(5) : '??';
   const typeLabel = session.type === 'morning' ? React.createElement(Sun, { size: 20 }) :
     session.type === 'evening' ? React.createElement(Moon, { size: 20 }) :
-    session.type ? React.createElement(Play, { size: 20 }) + ` ${session.type}` : React.createElement(Play, { size: 20 });
+    session.type ? React.createElement(React.Fragment, null, React.createElement(Play, { size: 20 }), ` ${session.type}`) : React.createElement(Play, { size: 20 });
 
   return React.createElement(
     'div',

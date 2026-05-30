@@ -3,8 +3,9 @@
 
 import React, { useState } from 'react';
 import { Check, Circle, Moon } from 'lucide-react';
-import { calculateRecoveryScore } from '../../core/recoveryScore.js';
+import { calculateRecoveryScore } from '../../domains/recovery/recoveryScore.js';
 import Collapsible from './Collapsible.jsx';
+import styles from './CheckinHistory.module.css';
 
 const STATUS_ICON = { green: React.createElement(Check, { size: 20 }), yellow: React.createElement(Circle, { size: 20 }), red: React.createElement(Circle, { size: 20, fill: 'currentColor' }) };
 
@@ -17,7 +18,7 @@ function CheckinRow({ checkin, allCheckins }) {
   return React.createElement(
     'div',
     { className: 'checkin-row' },
-    React.createElement('span', { className: 'checkin-row__date font-mono font-caption' }, dateStr),
+    React.createElement('span', { className: `${styles['checkin-row__date']} font-mono font-caption` }, dateStr),
     React.createElement('span', { className: 'checkin-row__status' }, STATUS_ICON[status] || React.createElement(Circle, { size: 20 })),
     React.createElement(
       'span',
@@ -26,7 +27,7 @@ function CheckinRow({ checkin, allCheckins }) {
     ),
     React.createElement(
       'span',
-      { className: 'checkin-row__meta font-caption text-secondary' },
+      { className: `${styles['checkin-row__meta']} font-caption text-secondary` },
       checkin.sleepHours > 0 ? React.createElement(React.Fragment, null, React.createElement(Moon, { size: 20 }), ` ${checkin.sleepHours}ч`) : '',
       checkin.hrv > 0 ? ` HRV ${checkin.hrv}` : ''
     )
@@ -54,14 +55,14 @@ export default function CheckinHistory({ checkins, defaultLimit = 5 }) {
     },
     React.createElement(
       'div',
-      { className: 'checkin-history' },
+      { className: styles['checkin-history'] },
       visible.map(c =>
         React.createElement(CheckinRow, { key: c.date, checkin: c, allCheckins: checkins })
       ),
       hasMore && React.createElement(
         'button',
         {
-          className: 'checkin-history__more',
+          className: styles['checkin-history__more'],
           onClick: () => setShowAll(v => !v),
         },
         showAll ? 'Скрыть' : `Показать ещё (${sorted.length - defaultLimit})`

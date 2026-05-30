@@ -1,0 +1,32 @@
+@keyframes skeleton-shimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+.skeleton-line {
+  display: block;
+  position: relative;
+  background: var(--surface2);
+  overflow: hidden;
+  border-radius: 4px;
+}
+.skeleton-line::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--surface3, color-mix(in srgb, var(--surface2) 60%, var(--text1))) 50%,
+    transparent 100%
+  );
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+  will-change: transform;
+}
+.skeleton-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}

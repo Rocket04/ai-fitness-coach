@@ -1,0 +1,85 @@
+- generic [ref=e2]:
+  - main [ref=e16]:
+    - generic [ref=e19]:
+      - heading "Профиль" [level=2] [ref=e20]:
+        - img [ref=e21]
+        - text: Профиль
+      - generic [ref=e24]:
+        - heading "📊 Ваши показатели" [level=3] [ref=e25]:
+          - img [ref=e26]
+          - text: 📊 Ваши показатели
+        - generic [ref=e27]:
+          - generic [ref=e28]:
+            - generic [ref=e29]: 55 ms
+            - generic [ref=e30]: HRV
+            - generic [ref=e31]: Жёлтый
+          - generic [ref=e32]:
+            - generic [ref=e33]: "62"
+            - generic [ref=e34]: ЧСС покоя
+          - generic [ref=e35]:
+            - generic [ref=e36]: 58%
+            - generic [ref=e37]: Recovery
+          - generic [ref=e38]:
+            - img [ref=e40]
+            - generic [ref=e42]: Готовность
+      - button "🩹 Реабилитация ▼" [ref=e44] [cursor=pointer]:
+        - generic [ref=e45]: 🩹 Реабилитация
+        - generic [ref=e46]: ▼
+      - button "📖 Справка ▼" [ref=e48] [cursor=pointer]:
+        - generic [ref=e49]: 📖 Справка
+        - generic [ref=e50]: ▼
+      - button "📚 Методология ▼" [ref=e52] [cursor=pointer]:
+        - generic [ref=e53]: 📚 Методология
+        - generic [ref=e54]: ▼
+      - button "🍽️ Питание ▼" [ref=e56] [cursor=pointer]:
+        - generic [ref=e57]: 🍽️ Питание
+        - generic [ref=e58]: ▼
+      - button "⚙️ Настройки ▼" [ref=e60] [cursor=pointer]:
+        - generic [ref=e61]: ⚙️ Настройки
+        - generic [ref=e62]: ▼
+      - button "📋 Готовые планы ▼" [ref=e64] [cursor=pointer]:
+        - generic [ref=e65]: 📋 Готовые планы
+        - generic [ref=e66]: ▼
+      - button "🌐 Язык ▼" [ref=e68] [cursor=pointer]:
+        - generic [ref=e69]: 🌐 Язык
+        - generic [ref=e70]: ▼
+      - button "🎯 Уровень чек-ина ▼" [ref=e72] [cursor=pointer]:
+        - generic [ref=e73]: 🎯 Уровень чек-ина
+        - generic [ref=e74]: ▼
+      - button "🛠 Тестирование ▼" [ref=e76] [cursor=pointer]:
+        - generic [ref=e77]: 🛠 Тестирование
+        - generic [ref=e78]: ▼
+      - button "🏆 Достижения ▼" [ref=e80] [cursor=pointer]:
+        - generic [ref=e81]: 🏆 Достижения
+        - generic [ref=e82]: ▼
+      - button "🔗 Интеграции ▼" [ref=e84] [cursor=pointer]:
+        - generic [ref=e85]: 🔗 Интеграции
+        - generic [ref=e86]: ▼
+      - button "🎯 Тур ▼" [ref=e88] [cursor=pointer]:
+        - generic [ref=e89]: 🎯 Тур
+        - generic [ref=e90]: ▼
+      - button "🏋️ Упражнения ▼" [ref=e92] [cursor=pointer]:
+        - generic [ref=e93]: 🏋️ Упражнения
+        - generic [ref=e94]: ▼
+      - button "💾 Данные ▼" [ref=e96] [cursor=pointer]:
+        - generic [ref=e97]: 💾 Данные
+        - generic [ref=e98]: ▼
+  - generic [ref=e99]: 👤 ГОСТЕВОЙ РЕЖИМ
+  - generic [ref=e100]:
+    - button "Начать трекинг" [ref=e101] [cursor=pointer]
+    - status [ref=e102]:
+      - img [ref=e103]
+      - text: Онлайн
+  - navigation "Главное меню" [ref=e107]:
+    - button "Сегодня" [ref=e108] [cursor=pointer]:
+      - img [ref=e110]
+      - generic [ref=e113]: Сегодня
+    - button "Дневник" [ref=e114] [cursor=pointer]:
+      - img [ref=e116]
+      - generic [ref=e118]: Дневник
+    - button "Аналитика" [ref=e119] [cursor=pointer]:
+      - img [ref=e121]
+      - generic [ref=e124]: Аналитика
+    - button "Профиль" [active] [ref=e125] [cursor=pointer]:
+      - img [ref=e127]
+      - generic [ref=e130]: Профиль

@@ -10,7 +10,7 @@ let mockDetectResult: 'full' | 'medium' | 'light' | null = null;
 let mockRecoveryScore = 0;
 let mockSessionPlan: any = null;
 
-vi.mock('../../stores/useAppStore.js', () => ({
+vi.mock('../../store/index.js', () => ({
   useAppStore: () => ({
     sessionPlan: mockSessionPlan, trainType: null, readiness: 'green', recoveryScore: mockRecoveryScore,
     recoveryDebt: 0, rpe: 0, sessionNote: '', testPullUps: 0, testPushUps: 0, testPlank: 0,
@@ -18,25 +18,29 @@ vi.mock('../../stores/useAppStore.js', () => ({
     tomorrowPlan: null, tomorrowType: null, morningDone: false, eveningDone: false,
     apreReasons: [], durationMinutes: 45, lastCheckin: null, streak: 0,
     trendData7: [], rpeTrend7: [], coachAdvice: [], checkinTier: mockCheckinTier,
-checkins: [], planModifications: [],
+    checkins: [], planModifications: [],
      demoMode: false, dataLoaded: true,
      weeklyPlan: null,
+     pendingSetResults: [],
+     postSessionFatigue: 0, postSessionPain: 0,
+     setPostSessionFatigue: vi.fn(), setPostSessionPain: vi.fn(),
     setRpe: vi.fn(), setSessionNote: vi.fn(), setDurationMinutes: vi.fn(),
     setTestPullUps: vi.fn(), setTestPushUps: vi.fn(), setTestPlank: vi.fn(),
-    handleToggleTraining: vi.fn(), handleMarkMorning: vi.fn(), handleMarkEvening: vi.fn(),
-    updateApreResult: vi.fn(), setActiveTab: vi.fn(),
+    handleToggleTraining: vi.fn(),
+    updateApreResult: vi.fn(), updateSetResult: vi.fn(), setActiveTab: vi.fn(),
     setVirtualTodayOffset: vi.fn(), setCheckinTier: vi.fn(),
   }),
 }));
 
-vi.mock('../../core/recoveryScore.js', () => ({
+vi.mock('../../domains/recovery/recoveryScore.js', () => ({
   calculateRecoveryScore: () => 0,
   getWeightsForTier: () => ({ hrv: 0, sleep: 0, rhr: 0, subjective: 0 }),
   detectOptimalTier: () => mockDetectResult,
 }));
 
-vi.mock('../../core/advice.js', () => ({
+vi.mock('../../domains/recovery/advice.js', () => ({
   getExplanation: () => [],
+  getCoachAdvice: () => [],
 }));
 
 vi.mock('react-i18next', () => ({
@@ -47,6 +51,7 @@ vi.mock('react-i18next', () => ({
       'today.status.ready': 'Готов',
       'today.restDay': 'День отдыха',
       'today.tapForMetrics': 'Нажмите для метрик',
+      'today.startWorkout': 'Начать тренировку',
       'recovery.description': 'Recovery Score описание',
     };
     return translations[key] || key;
@@ -114,7 +119,7 @@ describe('TodayPage — user sees training readiness', () => {
     expect(screen.getByText('День отдыха')).toBeInTheDocument();
   });
 
-  it('shows training plan when session exists', () => {
+  it('shows start workout button when session exists', () => {
     mockSessionPlan = {
       sessionType: 'A',
       sport: 'Бег',
@@ -122,7 +127,7 @@ describe('TodayPage — user sees training readiness', () => {
     };
     render(React.createElement(TodayPage));
 
-    expect(screen.getByText('Бег')).toBeInTheDocument();
+    expect(screen.getByText('Начать тренировку')).toBeInTheDocument();
   });
 });
 

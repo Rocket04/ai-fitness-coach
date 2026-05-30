@@ -1,911 +1,551 @@
-// js/ui/pages/ProfilePage.js
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Target, User, BarChart, Circle, Sun, Moon, Star, AlertTriangle, Dumbbell, Play, Trophy, Flame } from 'lucide-react';
-import { useAppStore } from '../../stores/useAppStore.js';
-import { useTourStore } from '../../stores/useTourStore.js';
-import { changeLanguage, getCurrentLanguage } from '../../i18n/index.js';
-import { ZONES, HRV_GUIDE, NUTRITION, MORNING_ROUTINE, EVENING_ROUTINE, DAYS, DAYS_TO_DOW, TRAINING_PLANS } from '../../config/constants.js';
-import { useFitnessData, isExerciseConfigured, DEFAULT_EXERCISES } from '../../hooks/useFitnessData.js';
+import {
+  User, Flame, Trophy, ChevronRight, Upload, Download, RotateCcw,
+  Trash2, Globe, Bell, Info, FileJson, Database, Shield,
+  Calendar, Clock, Grip, Activity, Smartphone, Link2,
+  Dumbbell, AlertTriangle, HelpCircle, RefreshCw, ChevronDown
+} from 'lucide-react';
+import { useAppStore } from '../../store/index.js';
+import { useTourStore } from '../../domains/onboarding/useTourStore.js';
+import { changeLanguage, getCurrentLanguage } from '../../shared/i18n/index.js';
+import { DAYS, DAYS_TO_DOW } from '../../shared/config/constants.js';
 import Modal from '../components/Modal.jsx';
-import { parseLocalDate, formatISO, mondayOfWeek } from '../../core/helpers.js';
-import { exerciseLibrary } from '../../core/exerciseDatabase.js';
-import { getProtocolsForIssues } from '../../core/rehabProtocol.js';
-import ExerciseConfigModal from '../components/ExerciseConfigModal.jsx';
-import { getUnlockedAchievements } from '../../core/achievements.js';
-import { saveCheckin, getAllCheckins, saveSetting } from '../../core/storage.js';
-import { parseHealthSyncCSV, mergeImportedBiometrics } from '../../core/import/csvParser.js';
+import { getStoredNotifyTime, saveNotifyTime, saveNotifyEnabled } from '../../domains/notifications/notifications.js';
+import { saveSetting } from '../../data/storage.js';
 
-function findHrvRange(hrv, guide) {
-  if (!hrv || hrv <= 0) return null;
-  for (const item of guide) {
-    const r = item.range;
-    if (r.startsWith('<')) {
-      const max = parseInt(r.match(/\d+/)?.[0] || '0', 10);
-      if (hrv < max) return item;
-    } else if (r.startsWith('>')) {
-      const min = parseInt(r.match(/\d+/)?.[0] || '999', 10);
-      if (hrv > min) return item;
-    } else {
-      const nums = r.match(/\d+/g);
-      if (nums && nums.length >= 2) {
-        const lo = parseInt(nums[0], 10);
-        const hi = parseInt(nums[1], 10);
-        if (hrv >= lo && hrv <= hi) return item;
-      }
-    }
-  }
-  return guide[2] || null;
+function SectionGroup({ icon, title, children, defaultOpen = true }) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="profile-group">
+      <button className="profile-group__header" onClick={() => setOpen(o => !o)}>
+        <span className="profile-group__header-left">
+          {icon}
+          <span className="profile-group__title">{title}</span>
+        </span>
+        <span className={`profile-group__chevron ${open ? 'is-open' : ''}`}>
+          <ChevronDown size={16} />
+        </span>
+      </button>
+      {open && <div className="profile-group__body">{children}</div>}
+    </div>
+  );
 }
 
-function ProfileSection({ title, children, defaultOpen = false }) {
-  const [open, setOpen] = useState(defaultOpen);
-  return React.createElement(
-    'div',
-    { className: 'profile-section' },
-    React.createElement('button', {
-      className: 'profile-section__header',
-      onClick: () => setOpen(o => !o),
-    },
-      React.createElement('span', null, title),
-      React.createElement('span', { className: 'profile-section__chevron' },
-        open ? '\u25B2' : '\u25BC'
-      )
-    ),
-    open && React.createElement('div', { className: 'profile-section__body' }, children)
+function ProfileRow({ icon, label, value, onClick, destructive, prominent, testId }) {
+  return (
+    <button
+      className={`profile-row ${destructive ? 'profile-row--destructive' : ''} ${prominent ? 'profile-row--prominent' : ''}`}
+      onClick={onClick}
+      data-testid={testId}
+    >
+      {icon && <span className="profile-row__icon">{icon}</span>}
+      <span className="profile-row__label">{label}</span>
+      {value && <span className="profile-row__value">{value}</span>}
+      {onClick && !destructive && <ChevronRight size={16} className="profile-row__chevron" />}
+    </button>
+  );
+}
+
+function RehabIssuesEditor({ rehabIssues, setRehabIssues, t }) {
+  const issues = [
+    { key: 'hips', label: t('profile.rehab.hips') },
+    { key: 'shoulder', label: t('profile.rehab.shoulder') },
+    { key: 'back', label: t('profile.rehab.back') },
+    { key: 'knees', label: t('profile.rehab.knees') },
+    { key: 'neck', label: t('profile.rehab.neck') },
+    { key: 'elbow', label: t('profile.rehab.elbow') },
+    { key: 'wrist', label: t('profile.rehab.wrist') },
+  ];
+
+  const toggleIssue = (key) => {
+    const current = rehabIssues || [];
+    const updated = current.includes(key)
+      ? current.filter(i => i !== key)
+      : [...current, key];
+    setRehabIssues(updated);
+    saveSetting('rehabIssues', updated);
+  };
+
+  return (
+    <div className="profile-rehab-grid">
+      {issues.map(({ key, label }) => (
+        <button
+          key={key}
+          className={`chip ${(rehabIssues || []).includes(key) ? 'active' : ''}`}
+          onClick={() => toggleIssue(key)}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
   );
 }
 
 export default function ProfilePage() {
   const { t } = useTranslation();
+  const s = useAppStore();
   const {
-    showSettings, showResetConfirm, editStartDate, editTrainDays,
     lastCheckin, recoveryScore, readiness,
-    setShowSettings, setShowResetConfirm, setEditStartDate, setEditTrainDays,
-    toggleDay, handleSaveSettings, setActiveTab,
-    handleExportData, handleImportData, handleResetAll, confirmResetData,
+    setActiveTab,
+    handleExportData, handleImportData, handleImportHealthSyncCSV,
+    confirmResetData,
     showToast,
     checkinTier, setCheckinTier,
+    sessions, checkins,
+    trainDays, startDate,
+    streak, demoMode,
+    rehabIssues, setRehabIssues,
+    editStartDate, setEditStartDate,
+    editTrainDays, setEditTrainDays,
+    toggleDay, handleSaveSettings,
+    backupList, refreshBackupList,
+    handleRestoreBackup,
     virtualTodayOffset,
-    demoMode,
-    sessions,
-    checkins,
-    trainDays,
-    startDate,
-    streak,
-    rehabIssues,
-    rehabExercises,
-    selectedSports,
-  } = useAppStore();
+  } = s;
 
-  // Exercise configuration
-  const { exercises, updateExerciseById, resetAllConfigs, loaded } = useFitnessData();
-  const [configModalOpen, setConfigModalOpen] = useState(false);
-  const [selectedExercise, setSelectedExercise] = useState(null);
+  const notifyEnabledKey = 'fitness-tracker-notify-enabled';
+  const [notifyEnabled, setNotifyEnabledRaw] = useState(() => {
+    try { return localStorage.getItem(notifyEnabledKey) === 'true'; } catch { return false; }
+  });
+  const [notifyTime, setNotifyTimeRaw] = useState(() => getStoredNotifyTime());
+  const setNotifyEnabled = (v) => { setNotifyEnabledRaw(v); saveNotifyEnabled(v); };
+  const setNotifyTime = (v) => { setNotifyTimeRaw(v); saveNotifyTime(v); };
 
-  const [showRehab, setShowRehab] = useState(false);
-  const [showInfo, setShowInfo] = useState(false);
-  const [showNutrition, setShowNutrition] = useState(false);
-  const [showExerciseConfigurator, setShowExerciseConfigurator] = useState(false);
-  const [showExerciseResetConfirm, setShowExerciseResetConfirm] = useState(false);
+  const [showBackupList, setShowBackupList] = useState(false);
+  const [backupToRestore, setBackupToRestore] = useState(null);
+  const [importingHealthSync, setImportingHealthSync] = useState(false);
   const [integrationModal, setIntegrationModal] = useState(null);
   const [integrationEmail, setIntegrationEmail] = useState('');
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [showDevTools, setShowDevTools] = useState(false);
+  const [devTapCount, setDevTapCount] = useState(0);
+  const devTimerRef = useRef(null);
 
-  const handleOpenConfig = (ex) => {
-    setSelectedExercise(ex);
-    setConfigModalOpen(true);
-  };
+  const [showRehabEditor, setShowRehabEditor] = useState(false);
 
-  const handleSaveConfig = ({ id, protocol, currentRM, currentLevel }) => {
-    updateExerciseById(id, { protocol, currentRM, currentLevel });
-  };
+  useEffect(() => { refreshBackupList(); }, []);
 
-  const hrv = lastCheckin?.hrv ? Number(lastCheckin.hrv) : 0;
-  const restHr = lastCheckin?.restHR ? Number(lastCheckin.restHR) : 0;
-  const activeHrvRange = findHrvRange(hrv, HRV_GUIDE);
-
-  // ── Achievements state ──
-  const [unlockedAchievements, setUnlockedAchievements] = useState([]);
-  const [achievementsLoading, setAchievementsLoading] = useState(true);
-  useEffect(() => {
-    let cancelled = false;
-    getUnlockedAchievements().then(list => {
-      if (!cancelled) {
-        setUnlockedAchievements(list);
-        setAchievementsLoading(false);
+  const handleVersionTap = useCallback(() => {
+    setDevTapCount(prev => {
+      const next = prev + 1;
+      if (next >= 7) {
+        setShowDevTools(true);
+        setDevTapCount(0);
+        showToast(t('profile.devTools.unlocked'));
+        return 0;
       }
-    }).catch(() => {
-      if (!cancelled) setAchievementsLoading(false);
+      if (devTimerRef.current) clearTimeout(devTimerRef.current);
+      devTimerRef.current = setTimeout(() => setDevTapCount(0), 3000);
+      return next;
     });
-    return () => { cancelled = true; };
-  }, [sessions, checkins, trainDays, startDate]);
+  }, [showToast, t]);
 
-  return React.createElement(
-    'div',
-    { className: 'profile-page' },
-    React.createElement('h2', { className: 'profile-page__title' }, React.createElement(User, { size: 24 }), ' ', t('profile.title')),
+  const handleImportCSV = async () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    input.accept = isTouch ? '*/*' : '.csv,.txt,text/csv,application/csv,application/octet-stream';
+    input.onchange = async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      setImportingHealthSync(true);
+      try {
+        const text = await file.text();
+        await handleImportHealthSyncCSV(text);
+      } catch (err) {
+        console.error('CSV import failed:', err);
+        showToast(t('profile.importError', { error: err instanceof Error ? err.message : t('profile.importErrorDefault') }), 'error');
+      } finally {
+        setImportingHealthSync(false);
+      }
+    };
+    input.click();
+  };
 
-    // ── Personal stats card ──
-    lastCheckin && React.createElement(
-      'div',
-      { className: 'card card--stats' },
-      React.createElement('h3', { className: 'card__title' }, React.createElement(BarChart, { size: 20 }), ' ', t('profile.stats.title')),
-      React.createElement(
-        'div',
-        { className: 'stat-grid' },
-        hrv > 0 && React.createElement(
-          'div',
-          { className: 'stat-box' },
-          React.createElement('div', { className: 'stat-value' }, `${hrv} ms`),
-          React.createElement('div', { className: 'stat-label' }, t('profile.stats.hrv')),
-          activeHrvRange && React.createElement('span', {
-            className: 'pill',
-            style: { backgroundColor: activeHrvRange.color, color: '#000', fontSize: 'var(--font-size-caption)', marginTop: 'var(--spacing-xs)' }
-          }, activeHrvRange.label)
-        ),
-        restHr > 0 && React.createElement(
-          'div',
-          { className: 'stat-box' },
-          React.createElement('div', { className: 'stat-value' }, `${restHr}`),
-          React.createElement('div', { className: 'stat-label' }, t('profile.stats.restHR'))
-        ),
-        typeof recoveryScore === 'number' && recoveryScore > 0 && React.createElement(
-          'div',
-          { className: 'stat-box' },
-          React.createElement('div', { className: 'stat-value' }, `${recoveryScore}%`),
-          React.createElement('div', { className: 'stat-label' }, t('profile.stats.recovery'))
-        ),
-        React.createElement(
-          'div',
-          { className: 'stat-box' },
-          React.createElement('div', { className: 'stat-value' }, readiness === 'green' ? React.createElement(Circle, { size: 20, fill: 'currentColor' }) : readiness === 'yellow' ? React.createElement(Circle, { size: 20, fill: 'currentColor' }) : React.createElement(Circle, { size: 20, fill: 'currentColor' })),
-          React.createElement('div', { className: 'stat-label' }, t('profile.stats.readiness'))
-        )
-      )
-    ),
+  const handleImportJSON = async () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      try {
+        await handleImportData(file);
+      } catch (err) {
+        console.error('Import failed:', err);
+        showToast(t('profile.importError', { error: err instanceof Error ? err.message : t('profile.importErrorDefault') }), 'error');
+      }
+    };
+    input.click();
+  };
 
-    // ── Rehab section ──
-    React.createElement(ProfileSection, { title: '🩹 ' + t('profile.rehab.title') },
-      React.createElement('p', null, t('profile.rehab.description')),
-      React.createElement('p', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text3)', marginTop: 'var(--spacing-xs)' } }, t('profile.rehab.subtitle')),
-      React.createElement('button', {
-        className: 'btn',
-        onClick: () => setShowRehab(true),
-      }, t('profile.rehab.open'))
-    ),
+  const username = (() => {
+    try { return localStorage.getItem('fitness-tracker-username'); } catch { return null; }
+  })() || t('profile.defaultUsername');
 
-    // ── Info section ──
-    React.createElement(ProfileSection, { title: t('profile.info.title') },
-      React.createElement('p', null, t('profile.info.description')),
-      activeHrvRange && React.createElement('p', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text3)', marginTop: 'var(--spacing-xs)' } }, `${t('profile.stats.hrv')}: ${activeHrvRange.label} — ${activeHrvRange.action}`),
-      React.createElement('button', {
-        className: 'btn',
-        onClick: () => setShowInfo(true),
-      }, t('profile.info.open'))
-    ),
+  return (
+    <div className="profile-page">
+      {/* ── Profile Header ── */}
+      <div className="profile-header">
+        <div className="profile-header__avatar">
+          <User size={28} />
+        </div>
+        <div className="profile-header__info">
+          <h2 className="profile-header__name">{username}</h2>
+          <div className="profile-header__stats">
+            <span className="profile-header__streak">
+              <Flame size={14} />
+              {streak || 0} {t('profile.days')}
+            </span>
+          </div>
+        </div>
+      </div>
 
-    // ── Methodology section ──
-    React.createElement(ProfileSection, { title: '📚 ' + t('profile.methodology.title') },
-      React.createElement('p', null, t('profile.methodology.description')),
-      React.createElement('p', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text3)', marginTop: 'var(--spacing-xs)' } }, t('profile.methodology.subtitle')),
-      React.createElement('button', {
-        className: 'btn',
-        onClick: () => { window.location.hash = ''; setActiveTab(4); },
-      }, t('profile.methodology.open'))
-    ),
+      {/* ── Group 1: TRAINING ── */}
+      <SectionGroup icon={<Dumbbell size={18} />} title={t('profile.group.training')}>
+        {/* Schedule */}
+        <div className="profile-group__field">
+          <span className="profile-group__field-label">{t('profile.schedule')}</span>
+          <div className="profile-chips">
+            {DAYS.map((day, i) => (
+              <button
+                key={i}
+                className={`chip ${editTrainDays.includes(DAYS_TO_DOW[i]) ? 'active' : ''}`}
+                onClick={() => toggleDay(DAYS_TO_DOW[i])}
+              >
+                {day}
+              </button>
+            ))}
+          </div>
+        </div>
 
-    // ── Nutrition section ──
-    React.createElement(ProfileSection, { title: t('profile.nutrition.title') },
-      React.createElement('p', null, t('profile.nutrition.description')),
-      React.createElement('p', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text3)', marginTop: 'var(--spacing-xs)' } }, t('profile.nutrition.subtitle')),
-      React.createElement('button', {
-        className: 'btn',
-        onClick: () => setShowNutrition(true),
-      }, t('profile.nutrition.open'))
-    ),
+        {/* Check-in tier */}
+        <div className="profile-group__field">
+          <span className="profile-group__field-label">{t('profile.checkinTier')}</span>
+          <div className="profile-tier-selector">
+            {(['light', 'medium', 'full']).map(tier => (
+              <button
+                key={tier}
+                className={`btn btn-sm ${checkinTier === tier ? 'btn-accent' : 'btn-outline'}`}
+                onClick={() => setCheckinTier(tier)}
+              >
+                {t(`profile.tier.${tier}`)}
+              </button>
+            ))}
+          </div>
+        </div>
 
-    // ── Settings section ──
-    React.createElement(ProfileSection, { title: t('profile.settings.title') },
-      React.createElement('button', {
-        className: 'btn btn-accent',
-        onClick: () => setShowSettings(true),
-      }, t('profile.settings.open'))
-    ),
+        {/* Start date */}
+        <div className="profile-group__field">
+          <span className="profile-group__field-label">{t('profile.settings.startDate')}</span>
+          <input
+            type="date"
+            className="profile-date-input"
+            value={editStartDate}
+            onChange={e => setEditStartDate(e.target.value)}
+          />
+        </div>
+      </SectionGroup>
 
-    // ── Training Plans section ──
-    React.createElement(ProfileSection, { title: '📋 Готовые планы' },
-      React.createElement('p', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text2)', marginBottom: 'var(--spacing-sm)' } },
-        'Выберите готовый план или настройте вручную'
-      ),
-      React.createElement('div', { className: 'training-plan-cards', style: { display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)' } },
-        TRAINING_PLANS.map(plan => {
-          const isActive = selectedSports.join(',') === plan.sports.join(',');
-          return React.createElement('button', {
-            key: plan.key,
-            className: `training-plan-card ${isActive ? 'training-plan-card--active' : ''}`,
-            style: {
-              padding: 'var(--spacing-sm)',
-              borderRadius: 'var(--radius-sm)',
-              border: isActive ? '2px solid var(--accent-green)' : '1px solid var(--border)',
-              backgroundColor: isActive ? 'var(--surface-2)' : 'var(--surface)',
-              cursor: 'pointer',
-              textAlign: 'left',
-            },
-onClick: async () => {
-               const s = useAppStore.getState();
-               await s.setSelectedSports(plan.sports);
-               if (plan.rehabIssues) {
-                 await s.setRehabIssues(plan.rehabIssues);
-               }
-               if (plan.goals) {
-                 await s.setProfileGoals(plan.goals);
-               }
-               if (plan.level) {
-                 await s.setProfileLevel(plan.level);
-               }
-if (plan.template) {
-                  const trainDays = plan.template.days
-                    .map((d, i) => d ? DAYS_TO_DOW[i] : null)
-                    .filter(d => d !== null);
-                  await s.setEditTrainDays(trainDays);
-                  await s.handleSaveSettings();
-                }
-               const { initApp } = useAppStore.getState();
-               await initApp();
-               s.showToast(`План "${plan.name}" активирован`);
-             },
-          },
-            React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } },
-              React.createElement('span', { style: { fontWeight: 600, fontSize: 'var(--font-size-sm)' } }, plan.name),
-              isActive && React.createElement('span', { style: { fontSize: '0.75rem', color: 'var(--green)' } }, '✓')
-            ),
-            React.createElement('div', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text3)' } }, plan.label)
-          );
-        })
-      ),
-      React.createElement('button', {
-        className: 'btn btn-outline',
-        style: { marginTop: 'var(--spacing-sm)' },
-        onClick: () => setShowSettings(true),
-      }, 'Настроить вручную')
-    ),
+      {/* ── Group 2: HEALTH ── */}
+      <SectionGroup icon={<Activity size={18} />} title={t('profile.group.health')}>
+        <div className="profile-group__field">
+          <span className="profile-group__field-label">{t('profile.rehab.title')}</span>
+          <div className="profile-rehab-summary">
+            {(rehabIssues || []).length === 0 ? (
+              <span className="profile-group__field-note">{t('profile.rehab.none')}</span>
+            ) : (
+              <div className="profile-chips">
+                {(rehabIssues || []).map(issue => (
+                  <span key={issue} className="chip active" style={{ cursor: 'default' }}>
+                    {t('profile.rehab.' + issue)}
+                  </span>
+                ))}
+              </div>
+            )}
+            <button className="btn btn-sm btn-outline" onClick={() => setShowRehabEditor(true)}>
+              {t('profile.edit')}
+            </button>
+          </div>
+        </div>
+      </SectionGroup>
 
-    // ── Language section ──
-    React.createElement(ProfileSection, { title: t('profile.language.title') },
-      React.createElement('div', { className: 'flex gap-sm flex-wrap' },
-        React.createElement('button', {
-          className: `btn ${getCurrentLanguage() === 'ru' ? 'btn-accent' : ''}`,
-          onClick: async () => {
-            await changeLanguage('ru');
-          },
-        }, t('profile.language.ru')),
-        React.createElement('button', {
-          className: `btn ${getCurrentLanguage() === 'en' ? 'btn-accent' : ''}`,
-          onClick: async () => {
-            await changeLanguage('en');
-          },
-        }, t('profile.language.en'))
-      )
-    ),
+      {/* ── Group 3: INTEGRATIONS ── */}
+      <SectionGroup icon={<Link2 size={18} />} title={t('profile.group.integrations')}>
+        {[
+          { name: 'Garmin Connect', icon: '⌚' },
+          { name: 'Apple Health', icon: '🍎' },
+          { name: 'Google Fit', icon: '🔵' },
+        ].map(({ name, icon }) => (
+          <div key={name} className="profile-integration-row">
+            <span className="profile-integration-row__icon">{icon}</span>
+            <span className="profile-integration-row__name">{name}</span>
+            <span className="profile-integration-row__status">{t('profile.integration.notConnected')}</span>
+            <button className="btn btn-sm btn-outline" onClick={() => setIntegrationModal(name)}>
+              {t('profile.connect')}
+            </button>
+          </div>
+        ))}
+      </SectionGroup>
 
-    // ── Check-in Tier section ──
-    React.createElement(ProfileSection, { title: '🎯 Уровень чек-ина' },
-      React.createElement('p', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text2)', marginBottom: 'var(--spacing-sm)' } },
-        'Определяет, какие данные собираются для Recovery Score'
-      ),
-      React.createElement('div', { className: 'flex gap-sm flex-wrap', 'data-testid': 'profile-tier-selector' },
-        React.createElement('button', {
-          className: `btn ${checkinTier === 'light' ? 'btn-accent' : ''}`,
-          onClick: () => setCheckinTier('light'),
-          style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', padding: '8px 14px' },
-        },
-          React.createElement('span', { style: { fontWeight: 600 } }, 'Лёгкий'),
-          React.createElement('span', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text3)' } }, 'Субъективные')
-        ),
-        React.createElement('button', {
-          className: `btn ${checkinTier === 'medium' ? 'btn-accent' : ''}`,
-          onClick: () => setCheckinTier('medium'),
-          style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', padding: '8px 14px' },
-        },
-          React.createElement('span', { style: { fontWeight: 600 } }, 'Средний'),
-          React.createElement('span', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text3)' } }, 'ЧСС + сон')
-        ),
-        React.createElement('button', {
-          className: `btn ${checkinTier === 'full' ? 'btn-accent' : ''}`,
-          onClick: () => setCheckinTier('full'),
-          style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', padding: '8px 14px' },
-        },
-          React.createElement('span', { style: { fontWeight: 600 } }, 'Полный'),
-          React.createElement('span', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text3)' } }, 'HRV + ЧСС + сон')
-        )
-      )
-    ),
+      {/* ── Group 4: DATA ── */}
+      <SectionGroup icon={<Database size={18} />} title={t('profile.group.data')}>
+        {/* CSV Import — prominent */}
+        <button
+          className="profile-csv-button"
+          disabled={importingHealthSync}
+          onClick={handleImportCSV}
+        >
+          <Upload size={20} />
+          <span className="profile-csv-button__text">
+            {importingHealthSync ? t('profile.loading') : t('profile.data.importCSV')}
+          </span>
+        </button>
 
-    // ── Developer Testing ──
-    React.createElement(ProfileSection, { title: '🛠 Тестирование', defaultOpen: false },
-      React.createElement('p', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text2)', marginBottom: 'var(--spacing-sm)' } },
-        'Виртуальная дата и демо-режим для тестирования'
-      ),
-      React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', marginBottom: 'var(--spacing-sm)' } },
-        React.createElement('button', { className: 'btn', style: { minWidth: '40px' },
-          onClick: () => { useAppStore.getState().setVirtualTodayOffset((virtualTodayOffset || 0) - 7); },
-        }, '−7'),
-        React.createElement('button', { className: 'btn', style: { minWidth: '40px' },
-          onClick: () => { useAppStore.getState().setVirtualTodayOffset((virtualTodayOffset || 0) - 1); },
-        }, '−1'),
-        React.createElement('button', { className: 'btn', style: { minWidth: '60px' },
-          onClick: () => { useAppStore.getState().setVirtualTodayOffset(0); },
-        }, 'Сегодня'),
-        React.createElement('button', { className: 'btn', style: { minWidth: '40px' },
-          onClick: () => { useAppStore.getState().setVirtualTodayOffset((virtualTodayOffset || 0) + 1); },
-        }, '+1'),
-        React.createElement('button', { className: 'btn', style: { minWidth: '40px' },
-          onClick: () => { useAppStore.getState().setVirtualTodayOffset((virtualTodayOffset || 0) + 7); },
-        }, '+7'),
-      ),
-      React.createElement('p', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text3)', marginBottom: 'var(--spacing-sm)' } },
-        'Сдвиг: ' + (virtualTodayOffset || 0) + ' дн.'
-      ),
-      React.createElement('div', { style: { display: 'flex', gap: 'var(--spacing-sm)', marginBottom: 'var(--spacing-sm)' } },
-        React.createElement('button', {
-          className: 'btn' + (demoMode ? ' btn-red' : ' btn-accent'),
-          onClick: async () => {
-            const s = useAppStore.getState();
-            if (s.demoMode) {
-              await s.deactivateDemoMode();
-            } else {
-              await s.activateDemoMode();
-            }
-          },
-        }, demoMode ? '✕ Выйти из демо' : '▶ Демо-режим'),
-        demoMode && React.createElement('button', {
-          className: 'btn btn-blue',
-          onClick: () => {
-            let currentOffset = useAppStore.getState().virtualTodayOffset || -15;
-            const interval = setInterval(() => {
-              currentOffset += 1;
-              useAppStore.getState().setVirtualTodayOffset(currentOffset);
-              if (currentOffset >= 15) {
-                clearInterval(interval);
-              }
-            }, 500);
-          },
-        }, 'Симуляция')
-      ),
+        {/* JSON Export / Import */}
+        <div className="profile-data-actions">
+          <button className="btn btn-outline profile-data-btn" onClick={handleExportData}>
+            <Download size={16} />
+            {t('profile.data.export')}
+          </button>
+          <button className="btn btn-outline profile-data-btn" onClick={handleImportJSON}>
+            <FileJson size={16} />
+            {t('profile.data.import')}
+          </button>
+        </div>
 
-      // ── Demo Profiles ──
-      !demoMode && React.createElement('div', { style: { marginTop: 'var(--spacing-sm)' } },
-        React.createElement('p', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text3)', marginBottom: 'var(--spacing-xs)' } },
-          'Профиль демо-данных:'
-        ),
-        React.createElement('div', { style: { display: 'flex', flexWrap: 'wrap', gap: 'var(--spacing-xs)' } },
-          ['marathoner', 'yogi', 'crossfitter', 'rehab'].map(profile => {
-            const icons = { marathoner: '🏃', yogi: '🧘', crossfitter: '🏋️', rehab: '🩹' };
-            const names = { marathoner: 'Марафонец', yogi: 'Йог', crossfitter: 'КФ', rehab: 'Рехаб' };
-            return React.createElement('button', {
-              key: profile,
-              className: 'btn btn-sm',
-              style: { fontSize: 'var(--font-size-caption)' },
-              onClick: async () => {
-                const s = useAppStore.getState();
-                await s.activateDemoModeWithProfile(profile);
-              },
-            }, `${icons[profile]} ${names[profile]}`);
-          })
-        )
-      )
-    ),
+        {/* Restore backup */}
+        <button
+          className="profile-link-btn"
+          onClick={() => { refreshBackupList(); setShowBackupList(true); }}
+        >
+          <RotateCcw size={14} />
+          {t('profile.data.restoreBackup')}
+        </button>
 
-    // ── Achievements ──
-    React.createElement(ProfileSection, { title: '🏆 Достижения', defaultOpen: false, testId: 'achievement-list' },
-      React.createElement('div', { style: { marginBottom: 'var(--spacing-sm)' } },
-        React.createElement('span', { style: { fontSize: 'var(--font-size-sm)', color: 'var(--text2)' } },
-          achievementsLoading ? 'Загрузка...' : `${unlockedAchievements.length} разблокировано`
-        )
-      ),
-      !achievementsLoading && unlockedAchievements.length > 0 && React.createElement('div', { style: { display: 'flex', flexWrap: 'wrap', gap: 'var(--spacing-xs)' } },
-        unlockedAchievements.map(a =>
-          React.createElement('span', {
-            key: a.achievementKey,
-            style: {
-              display: 'inline-flex', alignItems: 'center', gap: '4px',
-              padding: '2px 8px', borderRadius: '9999px',
-              background: 'var(--surface2)', fontSize: 'var(--font-size-sm)',
-            },
-            title: a.achievementKey,
-          }, '🏅 ', a.achievementKey)
-        )
-      ),
-      !achievementsLoading && unlockedAchievements.length === 0 && React.createElement('p', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text3)' } },
-        'Выполняйте чек-ины и тренировки для получения достижений'
-      ),
-      React.createElement('div', { style: { marginTop: 'var(--spacing-sm)', display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)' } },
-        React.createElement(Flame, { size: 16, color: 'var(--warning)' }),
-        React.createElement('span', { style: { fontSize: 'var(--font-size-sm)', color: 'var(--text2)' } },
-          `Текущая серия: ${streak || 0} дн.`
-        )
-      )
-    ),
+        {/* Reset all data */}
+        <button
+          className="profile-reset-btn"
+          onClick={() => setShowResetConfirm(true)}
+        >
+          <Trash2 size={16} />
+          {t('profile.data.reset')}
+        </button>
+      </SectionGroup>
 
-    // ── Integrations ──
-    React.createElement(ProfileSection, { title: '🔗 Интеграции', defaultOpen: false },
-      React.createElement('div', { className: 'integration-cards' },
-        React.createElement('div', { className: 'integration-card' },
-          React.createElement('span', { className: 'integration-icon' }, '⌚'),
-          React.createElement('span', { className: 'integration-name' }, 'Garmin'),
-          React.createElement('button', { className: 'btn btn-sm', onClick: () => setIntegrationModal('Garmin') } , 'Подключить →')
-        ),
-        React.createElement('div', { className: 'integration-card' },
-          React.createElement('span', { className: 'integration-icon' }, '🍎'),
-          React.createElement('span', { className: 'integration-name' }, 'Apple Health'),
-          React.createElement('button', { className: 'btn btn-sm', onClick: () => setIntegrationModal('Apple Health') }, 'Подключить →')
-        ),
-        React.createElement('div', { className: 'integration-card' },
-          React.createElement('span', { className: 'integration-icon' }, '🔵'),
-          React.createElement('span', { className: 'integration-name' }, 'Google Fit'),
-          React.createElement('button', { className: 'btn btn-sm', onClick: () => setIntegrationModal('Google Fit') }, 'Подключить →')
-        ),
-        React.createElement('div', { className: 'integration-card' },
-          React.createElement('span', { className: 'integration-icon' }, '🔴'),
-          React.createElement('span', { className: 'integration-name' }, 'Huawei Health'),
-          React.createElement('button', { className: 'btn btn-sm', onClick: () => setIntegrationModal('Huawei Health') }, 'Подключить →')
-        ),
-      )
-    ),
+      {/* ── Group 5: APP ── */}
+      <SectionGroup icon={<Smartphone size={18} />} title={t('profile.group.app')}>
+        {/* Language */}
+        <div className="profile-group__field">
+          <span className="profile-group__field-label">{t('profile.language.title')}</span>
+          <div className="profile-tier-selector">
+            <button
+              className={`btn btn-sm ${getCurrentLanguage() === 'ru' ? 'btn-accent' : 'btn-outline'}`}
+              onClick={() => changeLanguage('ru')}
+            >{t('profile.language.ru')}</button>
+            <button
+              className={`btn btn-sm ${getCurrentLanguage() === 'en' ? 'btn-accent' : 'btn-outline'}`}
+              onClick={() => changeLanguage('en')}
+            >{t('profile.language.en')}</button>
+          </div>
+        </div>
 
-    // ── Tour section ──
-    React.createElement(ProfileSection, { title: t('profile.tour.title') },
-      React.createElement('p', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text2)', marginBottom: 'var(--spacing-sm)' } },
-        t('profile.tour.description')
-      ),
-      React.createElement('button', {
-        className: 'tour-start-btn',
-        onClick: () => {
-          setActiveTab(0);
-          useTourStore.getState().startTour();
-        },
-      },
-        React.createElement('span', { className: 'tour-start-btn__icon' }, React.createElement(Target, { size: 20 })),
-        t('profile.tour.start')
-      )
-    ),
+        {/* Notifications */}
+        <div className="profile-group__field">
+          <label className="profile-toggle-row">
+            <span className="profile-toggle-row__label">
+              <Bell size={14} />
+              {t('profile.notifications.morningReminder')}
+            </span>
+            <input
+              type="checkbox"
+              className="profile-toggle"
+              checked={notifyEnabled}
+              onChange={(e) => setNotifyEnabled(e.target.checked)}
+            />
+          </label>
+          {notifyEnabled && (
+            <div className="profile-notify-time">
+              <span className="profile-group__field-label">{t('profile.notifications.morningTime')}</span>
+              <input
+                type="time"
+                className="profile-time-input"
+                value={notifyTime}
+                onChange={(e) => setNotifyTime(e.target.value)}
+              />
+            </div>
+          )}
+        </div>
 
-    // ── Exercise Configurator section ──
-    React.createElement(ProfileSection, { title: t('profile.exercises.title') },
-      React.createElement('p', null, t('profile.exercises.description')),
-      React.createElement('p', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text3)', marginTop: 'var(--spacing-xs)' } },
-        t('profile.exercises.configured', { count: exercises.filter(e => isExerciseConfigured(e)).length, total: exercises.length })
-      ),
-      React.createElement('button', {
-        className: 'btn btn-accent',
-        onClick: () => setShowExerciseConfigurator(true),
-      }, t('profile.exercises.open'))
-    ),
+        {/* Version */}
+        <div className="profile-group__field">
+          <button className="profile-version-btn" onClick={handleVersionTap} title={t('profile.versionTapHint')}>
+            <Info size={14} />
+            {t('profile.version')} 1.0.0
+            {devTapCount > 0 && <span className="profile-version__tap-count">{devTapCount}/7</span>}
+          </button>
+        </div>
+      </SectionGroup>
 
-    // ── Data section ──
-    React.createElement(ProfileSection, { title: t('profile.data.title') },
-      React.createElement('div', { className: 'flex gap-sm flex-wrap' },
-        React.createElement('button', {
-          className: 'btn',
-          onClick: async () => {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = '.csv';
-            input.onchange = async (e) => {
-              const file = e.target.files?.[0];
-              if (!file) return;
-              try {
-                const text = await file.text();
-                const records = parseHealthSyncCSV(text);
-                if (records.length === 0) {
-                  alert('CSV файл пуст или имеет неверный формат');
-                  return;
-                }
-                const allCheckins = await getAllCheckins();
-                const result = mergeImportedBiometrics(records, allCheckins);
-                for (const c of result.checkins) {
-                  const orig = allCheckins.find(oc => oc.date === c.date);
-                  if (!orig) continue;
-                  const wasModified = c.sleepHours !== orig.sleepHours || c.restHR !== orig.restHR || c.hrv !== orig.hrv;
-                  if (wasModified) await saveCheckin(c);
-                }
-                showToast(t('profile.data.importCSVSuccess', { merged: result.merged, skipped: result.skipped }), 'success');
-                await useAppStore.getState().initApp();
-              } catch (err) {
-                console.error('CSV import failed:', err);
-                alert(t('profile.importError', { error: err instanceof Error ? err.message : 'Неверный формат' }));
-              }
-            };
-            input.click();
-          },
-        }, t('profile.data.importCSV')),
-        React.createElement('button', {
-          className: 'btn',
-          onClick: handleExportData,
-        }, t('profile.data.export')),
-        React.createElement('button', {
-          className: 'btn',
-          onClick: async () => {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = '.json';
-            input.onchange = async (e) => {
-              const file = e.target.files?.[0];
-              if (!file) return;
-              try {
-                await handleImportData(file);
-              } catch (err) {
-                console.error('Import failed:', err);
-                alert(t('profile.importError', { error: err instanceof Error ? err.message : 'Invalid file format' }));
-              }
-            };
-            input.click();
-          },
-        }, t('profile.data.import')),
-        React.createElement('button', {
-          className: 'btn btn-red',
-          onClick: handleResetAll,
-        }, t('profile.data.reset'))
-      )
-    ),
+      {/* ── Dev Tools (hidden, shown after 7 taps) ── */}
+      {showDevTools && (
+        <div className="profile-group profile-group--dev">
+          <div className="profile-group__header">
+            <span className="profile-group__header-left">
+              <Shield size={18} />
+              <span className="profile-group__title">{t('profile.devTools.title')}</span>
+            </span>
+          </div>
+          <div className="profile-group__body">
+            <div className="profile-dev-date-nav">
+              <button className="btn btn-sm" onClick={() => useAppStore.getState().setVirtualTodayOffset((virtualTodayOffset || 0) - 7)}>−7</button>
+              <button className="btn btn-sm" onClick={() => useAppStore.getState().setVirtualTodayOffset((virtualTodayOffset || 0) - 1)}>−1</button>
+              <button className="btn btn-sm btn-accent" onClick={() => useAppStore.getState().setVirtualTodayOffset(0)}>{t('profile.devTools.today')}</button>
+              <button className="btn btn-sm" onClick={() => useAppStore.getState().setVirtualTodayOffset((virtualTodayOffset || 0) + 1)}>+1</button>
+              <button className="btn btn-sm" onClick={() => useAppStore.getState().setVirtualTodayOffset((virtualTodayOffset || 0) + 7)}>+7</button>
+            </div>
+            <span className="profile-dev-offset">{t('profile.devTools.offset')} {(virtualTodayOffset || 0)} {t('profile.devTools.days')}</span>
 
-    // ── Settings modal ──
-    showSettings && React.createElement(Modal, {
-      isOpen: true,
-      onClose: () => setShowSettings(false),
-      title: t('profile.settings.title'),
-    },
-      React.createElement('div', { className: 'flex flex-column gap-md' },
-        React.createElement('label', { className: 'flex flex-column gap-xs font-body font-weight-500' },
-          React.createElement('span', null, t('profile.settings.startDate')),
-          React.createElement('input', {
-            type: 'date',
-            value: editStartDate,
-            onChange: e => setEditStartDate(e.target.value),
-          })
-        ),
-        React.createElement('div', null,
-          React.createElement('span', { className: 'block mb-sm font-body font-weight-500' }, t('profile.settings.trainingDays')),
-          React.createElement('div', { className: 'flex gap-xs flex-wrap' },
-            DAYS.map((day, i) =>
-              React.createElement('button', {
-                key: i,
-                className: `chip ${editTrainDays.includes(DAYS_TO_DOW[i]) ? 'active' : ''}`,
-                onClick: () => toggleDay(DAYS_TO_DOW[i]),
-              }, day)
-            )
-          )
-        ),
-        React.createElement('div', { className: 'flex gap-sm justify-end mt-sm' },
-          React.createElement('button', {
-            className: 'btn',
-            onClick: () => setShowSettings(false),
-          }, t('profile.settings.cancel')),
-          React.createElement('button', {
-            className: 'btn btn-accent',
-            onClick: handleSaveSettings,
-          }, t('profile.settings.save'))
-        )
-      )
-    ),
-
-    // ── Rehab modal ──
-    showRehab && React.createElement(Modal, {
-      isOpen: true,
-      onClose: () => setShowRehab(false),
-      title: '🩹 ' + t('profile.rehab.title'),
-    },
-      React.createElement('div', { className: 'flex flex-column gap-md' },
-        React.createElement('p', null, t('profile.rehab.description')),
-        React.createElement('p', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text3)' } }, t('profile.rehab.subtitle')),
-
-        // Rehab issues multi-select
-        React.createElement('div', null,
-          React.createElement('h4', { className: 'rehab-section-title' }, t('profile.rehab.issuesTitle')),
-          React.createElement('div', { className: 'grid-2 gap-sm' },
-            ['hips', 'shoulder', 'back', 'knees', 'neck', 'elbow', 'wrist'].map(issue =>
-              React.createElement('label', { key: issue, className: 'rehab-checkbox' },
-                React.createElement('input', {
-                  type: 'checkbox',
-                  checked: (rehabIssues || []).includes(issue),
-                  onChange: (e) => {
-                    const current = rehabIssues || [];
-                    const updated = e.target.checked
-                      ? [...current, issue]
-                      : current.filter(i => i !== issue);
-                    setRehabIssues(updated);
-                    saveSetting('rehabIssues', updated);
+            <div className="profile-dev-actions">
+              <button
+                className={`btn btn-sm ${demoMode ? 'btn-red' : 'btn-accent'}`}
+                onClick={async () => {
+                  const store = useAppStore.getState();
+                  if (store.demoMode) {
+                    await store.deactivateDemoMode();
+                  } else {
+                    await store.activateDemoMode();
                   }
-                }),
-                React.createElement('span', null, t('profile.rehab.' + issue))
-              )
-            )
-          )
-        ),
+                }}
+              >
+                {demoMode ? t('profile.devTools.exitDemo') : t('profile.devTools.activateDemo')}
+              </button>
+            </div>
 
-        // Rehab exercises list from protocol
-        React.createElement('div', null,
-          React.createElement('h4', { className: 'rehab-section-title' }, 'Ежедневные реабилитационные упражнения'),
-          rehabIssues && rehabIssues.length > 0
-            ? React.createElement('div', { className: 'rehab-exercise-list', style: { display: 'flex', flexDirection: 'column', gap: '4px' } },
-                (() => {
-                  const protocols = getProtocolsForIssues(rehabIssues || []);
-                  const seen = new Set();
-                  const rows = [];
-                  for (const p of protocols) {
-                    for (const pe of p.exercises) {
-                      if (pe.frequency === 'pre-workout') continue;
-                      if (seen.has(pe.exerciseId)) continue;
-                      seen.add(pe.exerciseId);
-                      rows.push(
-                        React.createElement('div', {
-                          key: pe.exerciseId,
-                          style: {
-                            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                            padding: '6px 8px', borderRadius: 'var(--radius-sm)',
-                            backgroundColor: 'var(--surface-2)', fontSize: '0.8rem'
-                          }
-                        },
-                          React.createElement('span', { style: { flex: 1 } },
-                            (exerciseLibrary[pe.exerciseId]?.name || pe.exerciseId) + (pe.perSide ? ' (на каждую сторону)' : '')
-                          ),
-                          React.createElement('span', { style: { color: 'var(--text2)', fontSize: '0.75rem' } },
-                            `${pe.sets}×${pe.reps}`
-                          ),
-                          React.createElement('span', { style: { color: 'var(--text3)', fontSize: '0.7rem', marginLeft: '8px' } },
-                            pe.frequency
-                          )
-                        )
-                      );
-                    }
-                  }
-                  return rows.length > 0 ? rows : React.createElement('p', { style: { fontSize: '0.8rem', color: 'var(--text3)' } }, 'Выберите проблемные зоны выше');
-                })()
-              )
-            : React.createElement('p', { style: { fontSize: '0.8rem', color: 'var(--text3)' } }, 'Выберите проблемные зоны выше')
-        ),
+            {!demoMode && (
+              <div className="profile-dev-profiles">
+                <span className="profile-dev-profiles__label">{t('profile.devTools.profileLabel')}</span>
+                <div className="profile-dev-profiles__grid">
+                  {[
+                    { key: 'marathoner', icon: '🏃', name: t('profile.devTools.marathoner') },
+                    { key: 'yogi', icon: '🧘', name: t('profile.devTools.yogi') },
+                    { key: 'crossfitter', icon: '🏋️', name: t('profile.devTools.crossfitter') },
+                    { key: 'rehab', icon: '🩹', name: t('profile.devTools.rehab') },
+                  ].map(({ key, icon, name }) => (
+                    <button
+                      key={key}
+                      className="btn btn-sm"
+                      onClick={async () => {
+                        const store = useAppStore.getState();
+                        await store.activateDemoModeWithProfile(key);
+                      }}
+                    >
+                      {icon} {name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
-        // Current adaptation status
-        rehabIssues && rehabIssues.length > 0 && React.createElement('div', {
-          className: 'rehab-status'
-        },
-          React.createElement('p', { style: { margin: 0, fontSize: 'var(--font-size-caption)' } },
-            '✅ ' + t('profile.rehab.active') + ': ' + rehabIssues.map(i => t('profile.rehab.' + i)).join(', ')
-          )
-        ),
+            <button className="profile-link-btn profile-link-btn--close" onClick={() => setShowDevTools(false)}>
+              {t('profile.devTools.close')}
+            </button>
+          </div>
+        </div>
+      )}
 
-        // Close button
-        React.createElement('div', { className: 'flex justify-end' },
-          React.createElement('button', {
-            className: 'btn',
-            onClick: () => setShowRehab(false),
-          }, t('profile.close'))
-        )
-      )
-    ),
+      {/* ── Rehab Editor Modal ── */}
+      {showRehabEditor && (
+        <Modal isOpen onClose={() => setShowRehabEditor(false)} title={t('profile.rehab.title')}>
+          <p style={{ marginBottom: 'var(--spacing-md)', color: 'var(--text2)', fontSize: 'var(--font-size-body)' }}>
+            {t('profile.rehab.description')}
+          </p>
+          <RehabIssuesEditor rehabIssues={rehabIssues} setRehabIssues={setRehabIssues} t={t} />
+          <div style={{ marginTop: 'var(--spacing-lg)', display: 'flex', justifyContent: 'flex-end' }}>
+            <button className="btn" onClick={() => setShowRehabEditor(false)}>
+              {t('profile.close')}
+            </button>
+          </div>
+        </Modal>
+      )}
 
-    // ── Info modal ──
-    showInfo && React.createElement(Modal, {
-      isOpen: true,
-      onClose: () => setShowInfo(false),
-      title: t('profile.info.title'),
-    },
-      React.createElement('div', null,
-        React.createElement('h4', null, 'Пульсовые зоны'),
-        ZONES.map((zone, i) =>
-          React.createElement('div', {
-            key: i,
-            className: 'mb-sm',
-            style: { borderLeft: `3px solid ${zone.color}`, paddingLeft: '0.75rem' }
-          },
-            React.createElement('strong', null, `${zone.zone} — ${zone.name}`),
-            React.createElement('div', { className: 'font-caption text-secondary' }, zone.bpm),
-            React.createElement('div', { className: 'font-body' }, zone.desc)
-          )
-        ),
-        React.createElement('h4', null, 'HRV-гайд'),
-        HRV_GUIDE.map((item, i) =>
-          React.createElement('div', {
-            key: i,
-            className: 'mb-sm',
-            style: {
-              borderLeft: `3px solid ${item.color}`,
-              paddingLeft: '0.75rem',
-              backgroundColor: activeHrvRange === item ? 'var(--surface2)' : undefined,
-            }
-          },
-            React.createElement('strong', null, item.range),
-            ` \u2014 ${item.label}`,
-            React.createElement('div', { className: 'font-body' }, item.action),
-            activeHrvRange === item && React.createElement('div', { className: 'font-weight-600', style: { color: item.color } }, React.createElement(Star, { size: 16 }), ' Ваш текущий показатель')
-          )
-        ),
-        React.createElement('h4', null, '\u0420\u0430\u0441\u0448\u0438\u0444\u0440\u043e\u0432\u043a\u0430 \u0433\u043e\u0442\u043e\u0432\u043d\u043e\u0441\u0442\u0438'),
-        React.createElement('div', { className: 'font-body' },
-          React.createElement('p', null, React.createElement('span', { className: 'pill green' }, '\u0417\u0435\u043b\u0451\u043d\u044b\u0439'), ' \u2014 \u0432\u0441\u0435 \u043f\u043e\u043a\u0430\u0437\u0430\u0442\u0435\u043b\u0438 \u0432 \u043d\u043e\u0440\u043c\u0435'),
-          React.createElement('p', null, React.createElement('span', { className: 'pill yellow' }, '\u0416\u0451\u043b\u0442\u044b\u0439'), ' \u2014 \u043e\u0434\u0438\u043d \u0438\u0437 \u043f\u043e\u043a\u0430\u0437\u0430\u0442\u0435\u043b\u0435\u0439 \u043d\u0438\u0436\u0435 \u043d\u043e\u0440\u043c\u044b'),
-          React.createElement('p', null, React.createElement('span', { className: 'pill red' }, '\u041a\u0440\u0430\u0441\u043d\u044b\u0439'), ' \u2014 \u043a\u0440\u0438\u0442\u0438\u0447\u0435\u0441\u043a\u0438\u0435 \u043f\u043e\u043a\u0430\u0437\u0430\u0442\u0435\u043b\u0438')
-        )
-      )
-    ),
+      {/* ── Integration Modal ── */}
+      {integrationModal && (
+        <Modal isOpen onClose={() => setIntegrationModal(null)} title={integrationModal}>
+          <p>{t('profile.integration.comingSoon', { name: integrationModal })}</p>
+          <p style={{ fontSize: 'var(--font-size-caption)', color: 'var(--text2)', marginTop: 'var(--spacing-sm)' }}>
+            {t('profile.integration.emailHint')}
+          </p>
+          <input
+            type="email"
+            placeholder="your@email.com"
+            className="profile-email-input"
+            value={integrationEmail}
+            onChange={(e) => setIntegrationEmail(e.target.value)}
+          />
+          <div style={{ display: 'flex', gap: 'var(--spacing-sm)', justifyContent: 'flex-end', marginTop: 'var(--spacing-md)' }}>
+            <button className="btn" onClick={() => setIntegrationModal(null)}>{t('profile.close')}</button>
+            <button className="btn btn-accent" onClick={async () => {
+              if (integrationEmail) {
+                const { saveWaitlistEntry } = await import('../../data/storage.js');
+                await saveWaitlistEntry(integrationEmail, integrationModal);
+                setIntegrationModal(null);
+                setIntegrationEmail('');
+              }
+            }}>{t('profile.save')}</button>
+          </div>
+        </Modal>
+      )}
 
-    // ── Nutrition modal ──
-    showNutrition && React.createElement(Modal, {
-      isOpen: true,
-      onClose: () => setShowNutrition(false),
-      title: t('profile.nutrition.title'),
-    },
-      React.createElement('div', null,
-        React.createElement('p', { className: 'text-secondary' }, t('profile.recommendations')),
-        React.createElement(
-          'div',
-          { style: { overflowX: 'auto' } },
-        React.createElement(
-          'table',
-          { className: 'w-full mt-sm', style: { borderCollapse: 'collapse', minWidth: '400px' } },
-          React.createElement('thead', null,
-            React.createElement('tr', { className: 'border-bottom' },
-              React.createElement('th', { className: 'text-left p-sm font-caption text-secondary' }, t('profile.table.parameter')),
-              React.createElement('th', { className: 'text-left p-sm font-caption text-secondary' }, t('profile.table.value')),
-              React.createElement('th', { className: 'text-left p-sm font-caption text-secondary' }, t('profile.table.note'))
-            )
-          ),
-          React.createElement('tbody', null,
-            NUTRITION.map((item, i) =>
-              React.createElement('tr', { key: i, className: 'border-bottom' },
-                React.createElement('td', { className: 'p-sm font-weight-500' }, item.label),
-                React.createElement('td', { className: 'p-sm' }, item.val),
-                React.createElement('td', { className: 'p-sm text-secondary font-body' }, item.note)
-              )
-            )
-          )
-        )
-        ),
-        React.createElement('p', { className: 'font-body text-secondary mt-sm' },
-          React.createElement(AlertTriangle, { size: 16 }), ' При астме важно получать достаточно белка и магния. Дефицит магния усугубляет бронхоспазм.'
-        )
-      )
-    ),
+      {/* ── Reset Confirmation Modal ── */}
+      {showResetConfirm && (
+        <Modal isOpen onClose={() => setShowResetConfirm(false)} title={t('profile.confirmDelete')}>
+          <p>{t('profile.confirmDeleteDesc')}</p>
+          <div style={{ display: 'flex', gap: 'var(--spacing-sm)', justifyContent: 'flex-end', marginTop: 'var(--spacing-lg)' }}>
+            <button className="btn" onClick={() => setShowResetConfirm(false)}>{t('profile.settings.cancel')}</button>
+            <button className="btn btn-red" onClick={async () => { await confirmResetData(); setShowResetConfirm(false); }}>{t('profile.data.delete')}</button>
+          </div>
+        </Modal>
+      )}
 
-    // ── Reset confirmation modal ──
-    showResetConfirm && React.createElement(Modal, {
-      isOpen: true,
-      onClose: () => setShowResetConfirm(false),
-      title: t('profile.confirmDelete'),
-    },
-      React.createElement('div', { className: 'flex flex-column gap-md' },
-        React.createElement('p', null, t('profile.confirmDeleteDesc')),
-        React.createElement('div', { className: 'flex gap-sm justify-end' },
-          React.createElement('button', {
-            className: 'btn',
-            onClick: () => setShowResetConfirm(false),
-          }, t('profile.settings.cancel')),
-          React.createElement('button', {
-            className: 'btn btn-red',
-            onClick: confirmResetData,
-          }, t('profile.data.delete'))
-        )
-      )
-    ),
-
-    // ── Exercise Configurator modal ──
-    showExerciseConfigurator && React.createElement(Modal, {
-      isOpen: true,
-      onClose: () => setShowExerciseConfigurator(false),
-      title: t('profile.exercises.title'),
-    },
-      React.createElement('div', { className: 'exercise-configurator' },
-        // Strength exercises
-        React.createElement('h4', { style: { margin: '0 0 0.5rem' } }, React.createElement(Dumbbell, { size: 20 }), ' Силовые'),
-        exercises.filter(e => !e.isCalisthenics).map(ex => {
-          const configured = isExerciseConfigured(ex);
-          return React.createElement('div', {
-            key: ex.id,
-            className: `exercise-config-item ${configured ? 'exercise-config-item--configured' : 'exercise-config-item--unconfigured'}`
-          },
-            React.createElement('span', { className: 'exercise-config-name' }, ex.name),
-            configured && React.createElement('span', { className: 'exercise-config-value' },
-              `${ex.protocol} | ${ex.currentRM}${ex.unit}`
-            ),
-            React.createElement('button', {
-              className: 'exercise-config-btn',
-              onClick: () => handleOpenConfig(ex),
-            }, configured ? t('profile.edit') : t('profile.configure'))
-          );
-        }),
-        // Calisthenics
-        React.createElement('h4', { style: { margin: '1rem 0 0.5rem' } }, React.createElement(Play, { size: 20 }), ' Калистеника'),
-        exercises.filter(e => e.isCalisthenics).map(ex => {
-          const configured = isExerciseConfigured(ex);
-const levelNames = { 1: 'Лёгкий', 2: 'Средний', 3: 'Сложный', 4: 'Элита', 5: 'Мастер' };
-          return React.createElement('div', {
-            key: ex.id,
-            className: `exercise-config-item ${configured ? 'exercise-config-item--configured' : 'exercise-config-item--unconfigured'}`
-          },
-            React.createElement('span', { className: 'exercise-config-name' }, ex.name),
-            configured && React.createElement('span', { className: 'exercise-config-value' },
-              `${ex.protocol} | ${levelNames[ex.currentLevel] || ex.currentLevel}`
-            ),
-            React.createElement('button', {
-              className: 'exercise-config-btn',
-              onClick: () => handleOpenConfig(ex),
-            }, configured ? t('profile.edit') : t('profile.configure'))
-          );
-        }),
-        // Actions
-        React.createElement('div', { className: 'configurator-actions' },
-          React.createElement('button', {
-            className: 'btn',
-            onClick: () => setShowExerciseConfigurator(false),
-          }, t('profile.close')),
-          React.createElement('button', {
-            className: 'btn btn-red',
-            onClick: () => setShowExerciseResetConfirm(true),
-          }, t('profile.resetAll'))
-        )
-      )
-    ),
-
-    // ── Integration Modal ──
-    integrationModal && React.createElement(Modal, {
-      isOpen: true,
-      onClose: () => setIntegrationModal(null),
-      title: integrationModal + ' — Интеграция',
-    },
-      React.createElement('p', null, 'Интеграция с ' + integrationModal + ' в разработке.'),
-      React.createElement('p', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text2)', marginTop: 'var(--spacing-sm)' } },
-        'Оставьте email, чтобы узнать о готовности:'
-      ),
-      React.createElement('input', {
-        type: 'email', placeholder: 'your@email.com',
-        style: { width: '100%', padding: '0.5rem', marginTop: 'var(--spacing-sm)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' },
-        onChange: (e) => setIntegrationEmail(e.target.value),
-      }),
-      React.createElement('div', { style: { display: 'flex', gap: 'var(--spacing-sm)', justifyContent: 'flex-end', marginTop: 'var(--spacing-md)' } },
-        React.createElement('button', { className: 'btn', onClick: () => setIntegrationModal(null) }, 'Закрыть'),
-        React.createElement('button', { className: 'btn btn-accent', onClick: async () => {
-          if (integrationEmail) {
-            const { saveWaitlistEntry } = await import('../../core/storage.js');
-            await saveWaitlistEntry(integrationEmail, integrationModal);
-            setIntegrationModal(null);
-            setIntegrationEmail('');
+      {/* ── Backup List Modal ── */}
+      {showBackupList && (
+        <Modal isOpen onClose={() => setShowBackupList(false)} title={t('profile.data.backups')}>
+          {backupList.length === 0
+            ? <p>{t('profile.data.noBackups')}</p>
+            : <div className="profile-backup-list">
+                {backupList.map(b => (
+                  <div key={b.id} className="profile-backup-item">
+                    <span>{b.label}</span>
+                    <button className="btn btn-sm" onClick={() => { setBackupToRestore(b.id); setShowBackupList(false); }}>
+                      {t('profile.data.restore')}
+                    </button>
+                  </div>
+                ))}
+              </div>
           }
-        }}, 'Сохранить')
-      )
-    ),
+          <div style={{ display: 'flex', gap: 'var(--spacing-sm)', justifyContent: 'flex-end', marginTop: 'var(--spacing-lg)' }}>
+            <button className="btn" onClick={() => setShowBackupList(false)}>{t('profile.close')}</button>
+          </div>
+        </Modal>
+      )}
 
-    // ── Exercise Config Modal (shared) ──
-    React.createElement(ExerciseConfigModal, {
-      isOpen: configModalOpen,
-      onClose: () => setConfigModalOpen(false),
-      exercise: selectedExercise,
-      onSave: handleSaveConfig,
-    }),
-
-    // ── Exercise Reset Confirmation Modal ──
-    showExerciseResetConfirm && React.createElement(Modal, {
-      isOpen: true,
-      onClose: () => setShowExerciseResetConfirm(false),
-      title: t('profile.confirmReset'),
-    },
-      React.createElement('div', { className: 'flex flex-column gap-md' },
-        React.createElement('p', null, t('profile.confirmResetDesc')),
-        React.createElement('div', { className: 'flex gap-sm justify-end' },
-          React.createElement('button', {
-            className: 'btn',
-            onClick: () => setShowExerciseResetConfirm(false),
-          }, t('profile.settings.cancel')),
-          React.createElement('button', {
-            className: 'btn btn-red',
-            onClick: () => {
-              resetAllConfigs();
-              setShowExerciseResetConfirm(false);
-            },
-          }, t('profile.reset'))
-        )
-      )
-    )
+      {/* ── Backup Restore Confirmation Modal ── */}
+      {backupToRestore !== null && (
+        <Modal isOpen onClose={() => setBackupToRestore(null)} title={t('profile.data.restoreConfirm')}>
+          <p>{t('profile.data.restoreWarning')}</p>
+          <div style={{ display: 'flex', gap: 'var(--spacing-sm)', justifyContent: 'flex-end', marginTop: 'var(--spacing-lg)' }}>
+            <button className="btn" onClick={() => setBackupToRestore(null)}>{t('profile.settings.cancel')}</button>
+            <button className="btn btn-accent" onClick={async () => {
+              const bid = backupToRestore;
+              if (bid === null) return;
+              setBackupToRestore(null);
+              await handleRestoreBackup(bid);
+            }}>{t('profile.data.restore')}</button>
+          </div>
+        </Modal>
+      )}
+    </div>
   );
 }
-
-

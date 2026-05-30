@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { buildWeeklyPlanDays } from '../../core/weeklyPlan.js';
+import { formatISO } from '../../core/helpers.js';
 import type { WeeklyTemplate } from '../../core/types.js';
 
 const makeTemplate = (sports: string[]): WeeklyTemplate => ({
@@ -32,7 +33,7 @@ describe('buildWeeklyPlanDays', () => {
   });
 
   it('marks today correctly', () => {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = formatISO(new Date());
     const result = buildWeeklyPlanDays(
       today, ['calisthenics'], today, makeTemplate(['calisthenics'])
     );

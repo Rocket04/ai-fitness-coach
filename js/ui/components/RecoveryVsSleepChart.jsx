@@ -3,13 +3,14 @@
 
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import styles from './RecoveryVsSleepChart.module.css';
 
 export default function RecoveryVsSleepChart({ data }) {
   const { t } = useTranslation();
   if (!data || data.length < 2) {
     return React.createElement(
       'div',
-      { className: 'recovery-chart-container' },
+      { className: styles['recovery-chart-container'] },
       React.createElement('p', { className: 'text-muted text-center text-sm' }, t('log.insufficientDataChart'))
     );
   }
@@ -54,16 +55,16 @@ export default function RecoveryVsSleepChart({ data }) {
 
   return React.createElement(
     'div',
-    { className: 'recovery-chart-container' },
+    { className: styles['recovery-chart-container'] },
     React.createElement(
       'div',
-      { className: 'recovery-chart-container__header' },
-      React.createElement('span', { className: 'recovery-chart-container__title' }, 'Recovery Score vs Сон'),
-      React.createElement('span', { className: 'recovery-chart-container__subtitle' }, `${data.length} дней`)
+      { className: styles['recovery-chart-container__header'] },
+      React.createElement('span', { className: styles['recovery-chart-container__title'] }, 'Recovery Score vs Сон'),
+      React.createElement('span', { className: styles['recovery-chart-container__subtitle'] }, `${data.length} дней`)
     ),
     React.createElement(
       'svg',
-      { width: '100%', viewBox: `0 0 ${width} ${height}`, className: 'recovery-chart' },
+      { width: '100%', viewBox: `0 0 ${width} ${height}`, className: styles['recovery-chart'] },
       // Grid
       ...xTicks.map(t =>
         React.createElement('line', {

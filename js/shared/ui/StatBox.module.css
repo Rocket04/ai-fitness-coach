@@ -1,0 +1,15 @@
+.stat-box {
+  background-color: var(--surface2);
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-md);
+  text-align: center;
+}
+.stat-value {
+  font-size: var(--font-size-h1);
+  font-weight: 600;
+  margin-bottom: var(--spacing-xs);
+}
+.stat-label {
+  font-size: var(--font-size-body);
+  color: var(--text2);
+}

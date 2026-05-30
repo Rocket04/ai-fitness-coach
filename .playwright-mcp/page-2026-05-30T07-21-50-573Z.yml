@@ -1,0 +1,72 @@
+- generic [ref=e2]:
+  - main [ref=e16]:
+    - generic [ref=e19]:
+      - generic [ref=e20]:
+        - button "Пн 25 A" [ref=e21] [cursor=pointer]:
+          - generic [ref=e22]: Пн
+          - generic [ref=e23]: "25"
+          - generic [ref=e24]: A
+        - button "Вт 26 Отдых" [ref=e25] [cursor=pointer]:
+          - generic [ref=e26]: Вт
+          - generic [ref=e27]: "26"
+          - generic [ref=e28]: Отдых
+        - button "Ср 27 B" [ref=e29] [cursor=pointer]:
+          - generic [ref=e30]: Ср
+          - generic [ref=e31]: "27"
+          - generic [ref=e32]: B
+        - button "Чт 28 Отдых" [ref=e33] [cursor=pointer]:
+          - generic [ref=e34]: Чт
+          - generic [ref=e35]: "28"
+          - generic [ref=e36]: Отдых
+        - button "Пт 29 A" [ref=e37] [cursor=pointer]:
+          - generic [ref=e38]: Пт
+          - generic [ref=e39]: "29"
+          - generic [ref=e40]: A
+        - button "Сб 30 Отдых" [ref=e41] [cursor=pointer]:
+          - generic [ref=e42]: Сб
+          - generic [ref=e43]: "30"
+          - generic [ref=e44]: Отдых
+        - button "Вс 31 Отдых" [ref=e45] [cursor=pointer]:
+          - generic [ref=e46]: Вс
+          - generic [ref=e47]: "31"
+          - generic [ref=e48]: Отдых
+      - button "План на неделю Неделя 1" [ref=e50] [cursor=pointer]:
+        - img [ref=e51]
+        - generic [ref=e53]: План на неделю
+        - generic [ref=e54]: Неделя 1
+        - img [ref=e56]
+      - 'generic "Recovery Score: 86%" [ref=e58]':
+        - 'button "Recovery Score: 86%. Нажмите для метрик." [ref=e59]':
+          - img [ref=e60]:
+            - generic [ref=e63]: "86"
+            - generic [ref=e64]: Восстановление
+        - generic [ref=e65]: Готов
+        - paragraph [ref=e66]: Строим baseline — нужно ещё чек-инов
+        - paragraph [ref=e67]:
+          - text: Нажмите на кольцо для метрик за 7 дней
+          - button "Подробнее о термине \"Recovery Score\"" [ref=e69] [cursor=pointer]: ？
+      - button "Начать тренировку" [ref=e71] [cursor=pointer]:
+        - img [ref=e72]
+        - generic [ref=e74]: Начать тренировку
+      - generic [ref=e75]:
+        - generic [ref=e76]: Завтра
+        - generic [ref=e77]:
+          - img [ref=e78]
+          - text: 🛌 Отдых
+      - generic [ref=e80]: суббота, 30 мая
+  - status [ref=e82]:
+    - img [ref=e83]
+    - text: Онлайн
+  - navigation "Главное меню" [ref=e87]:
+    - button "Сегодня" [ref=e88] [cursor=pointer]:
+      - img [ref=e90]
+      - generic [ref=e93]: Сегодня
+    - button "Дневник" [ref=e94] [cursor=pointer]:
+      - img [ref=e96]
+      - generic [ref=e98]: Дневник
+    - button "Аналитика" [ref=e99] [cursor=pointer]:
+      - img [ref=e101]
+      - generic [ref=e104]: Аналитика
+    - button "Профиль" [ref=e105] [cursor=pointer]:
+      - img [ref=e107]
+      - generic [ref=e110]: Профиль

@@ -1,0 +1,96 @@
+.achievement-toast {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: var(--surface);
+  border: 2px solid var(--gold);
+  border-radius: 0.75rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  transform: translateX(120%);
+  transition: transform 0.3s ease-out;
+  z-index: 1000;
+  max-width: 320px;
+}
+
+.achievement-toast--visible {
+  transform: translateX(0);
+  animation: achievementPulse 0.4s ease-out;
+}
+
+.achievement-toast__icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.achievement-toast__emoji {
+  font-size: 1.5rem;
+}
+
+.achievement-toast__tier-icon {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 18px;
+  height: 18px;
+  color: var(--gold);
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.3));
+}
+
+.achievement-toast__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.achievement-toast__label {
+  font-size: 0.75rem;
+  color: var(--gold);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.achievement-toast__name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-top: 0.125rem;
+}
+
+.achievement-toast__tier {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.achievement-toast__close {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.achievement-toast__close:hover {
+  color: var(--text);
+}
+
+@keyframes achievementPulse {
+  0% { transform: translateX(120%) scale(0.9); }
+  50% { transform: translateX(0) scale(1.02); }
+  100% { transform: translateX(0) scale(1); }
+}

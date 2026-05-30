@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getWorkoutType, getLastSessionByType, getMonthAndDayIndex } from '../../core/planning.js';
+import { getWorkoutType, getLastSessionByType, getMonthAndDayIndex, buildSessionFromMonth, maybeAddTestExercises, getVolumeMultiplierFromAdherence } from '../../core/planning.js';
 import type { Session } from '../../core/types.js';
 
 function makeSession(overrides: Partial<Session> = {}): Session {
@@ -44,6 +44,17 @@ describe('getWorkoutType', () => {
     const thursday = new Date('2025-01-09'); // Thursday=4
     expect(getWorkoutType(thursday, days4)).toBe('A'); // 4th → idx 3 → 3 % 3 === 0 → A
   });
+
+  it('handles empty trainDays array', () => {
+    const monday = new Date('2025-01-06');
+    expect(getWorkoutType(monday, [])).toBeNull();
+  });
+
+  it('handles single training day', () => {
+    const days = [1];
+    const monday = new Date('2025-01-06');
+    expect(getWorkoutType(monday, days)).toBe('A');
+  });
 });
 
 describe('getLastSessionByType', () => {
@@ -68,6 +79,10 @@ describe('getLastSessionByType', () => {
     expect(getLastSessionByType([a, b], 'B')).not.toBeNull();
     expect(getLastSessionByType([b], 'A')).toBeNull();
   });
+
+  it('returns null for null type', () => {
+    expect(getLastSessionByType([makeSession()], null as any)).toBeNull();
+  });
 });
 
 describe('getMonthAndDayIndex', () => {
@@ -85,4 +100,50 @@ describe('getMonthAndDayIndex', () => {
 
   // Note: getMonthAndDayIndex is deprecated and returns null for backward compatibility.
   // Tests for specific dayIndex/month values removed — use getSessionForDate instead.
+});
+
+describe('buildSessionFromMonth (deprecated)', () => {
+  it('returns null (deprecated function)', () => {
+    const result = buildSessionFromMonth(null, 0, 'green', false, 1.0, null, 1);
+    expect(result).toBeNull();
+  });
+
+  it('returns null with various inputs', () => {
+    expect(buildSessionFromMonth({}, 1, 'red', true, 0.8, { key: 'test' } as any, 2)).toBeNull();
+  });
+});
+
+describe('maybeAddTestExercises', () => {
+  it('returns the plan unchanged (deprecated function)', () => {
+    const plan = { date: '2025-01-01', type: 'A', exercises: [], warmup: [], cooldown: [] } as any;
+    const result = maybeAddTestExercises(plan);
+    expect(result).toEqual(plan);
+  });
+
+  it('returns null if plan is null', () => {
+    const result = maybeAddTestExercises(null);
+    expect(result).toBeNull();
+  });
+});
+
+describe('getVolumeMultiplierFromAdherence', () => {
+  it('returns 1.2 for completionRate 0.85', () => {
+    expect(getVolumeMultiplierFromAdherence(0.85)).toBe(1.2);
+  });
+
+  it('returns 1.2 at boundary 0.8', () => {
+    expect(getVolumeMultiplierFromAdherence(0.8)).toBe(1.2);
+  });
+
+  it('returns 1.0 at boundary 0.6', () => {
+    expect(getVolumeMultiplierFromAdherence(0.6)).toBe(1.0);
+  });
+
+  it('returns 0.8 for completionRate 0.4', () => {
+    expect(getVolumeMultiplierFromAdherence(0.4)).toBe(0.8);
+  });
+
+  it('returns 0.8 for completionRate 0', () => {
+    expect(getVolumeMultiplierFromAdherence(0)).toBe(0.8);
+  });
 });

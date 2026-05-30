@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Calendar, ChevronDown, ChevronUp } from 'lucide-react';
+import collapsibleStyles from '../../shared/ui/Collapsible.module.css';
 
 export default function WeeklyPlanCard({ plan, t }) {
   const [open, setOpen] = useState(false);
@@ -10,7 +11,7 @@ export default function WeeklyPlanCard({ plan, t }) {
   return React.createElement('div', { className: 'card weekly-plan-card', style: { padding: 0, overflow: 'hidden' } },
     // Header
     React.createElement('button', {
-      className: 'collapsible__header',
+      className: collapsibleStyles['collapsible__header'],
       onClick: () => setOpen(!open),
       style: { borderBottom: open ? '1px solid var(--border)' : 'none' },
     },
@@ -20,7 +21,7 @@ export default function WeeklyPlanCard({ plan, t }) {
       React.createElement('span', { style: { marginLeft: '8px', fontSize: '0.8rem', color: 'var(--text3)' } }, open ? React.createElement(ChevronUp, { size: 16 }) : React.createElement(ChevronDown, { size: 16 }))
     ),
     open && React.createElement('div', {
-      className: 'collapsible__body',
+      className: collapsibleStyles['collapsible__body'],
       'data-open': '',
       style: { padding: 'var(--spacing-xs) var(--spacing-md) var(--spacing-md)' }
     },
@@ -52,7 +53,7 @@ day.rehabExercises.length > 0 && React.createElement('span', {
                    style: { fontSize: '0.7rem', padding: '1px 6px', borderRadius: '100px', backgroundColor: 'rgba(96,165,250,0.15)', color: 'var(--blue)' }
                  }, 'РЕХАБ'),
                 day.session && !day.session.isRestDay
-                  ? React.createElement('span', { style: { fontSize: '0.75rem', padding: '1px 6px', borderRadius: '100px', backgroundColor: 'rgba(74,222,128,0.12)', color: 'var(--green)' } }, day.session.sport)
+                  ? React.createElement('span', { style: { fontSize: '0.75rem', padding: '1px 6px', borderRadius: '100px', backgroundColor: 'rgba(74,222,128,0.12)', color: 'var(--green)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100px' } }, day.session.sport)
                   : React.createElement('span', { style: { fontSize: '0.75rem', color: 'var(--text3)' } }, t ? t('today.rest') : 'Отдых')
               )
             ),
@@ -89,7 +90,7 @@ day.rehabExercises.length > 0 && React.createElement('div', { style: { marginBot
               // Mode badge
               day.session.mode && day.session.mode !== 'full' && React.createElement('div', {
                 style: { marginTop: '4px', fontSize: '0.7rem', color: 'var(--yellow)' }
-              }, day.session.isDeload ? 'Разгрузка' : `Rezhim: ${day.session.mode}`),
+              }, day.session.isDeload ? 'Разгрузка' : `Режим: ${day.session.mode}`),
 
               // Modifications
               day.modifications.length > 0 && React.createElement('div', { style: { marginTop: '2px' } },

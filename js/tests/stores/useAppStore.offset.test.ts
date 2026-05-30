@@ -3,7 +3,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-vi.mock('../../core/storage.js', () => ({
+vi.mock('../../data/storage.js', () => ({
   init: vi.fn().mockResolvedValue(undefined),
   saveSession: vi.fn().mockResolvedValue(undefined),
   deleteSession: vi.fn().mockResolvedValue(undefined),
@@ -26,7 +26,7 @@ vi.mock('../../core/storage.js', () => ({
   saveManualStatus: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock('../../core/advice.js', () => ({
+vi.mock('../../domains/recovery/advice.js', () => ({
   getCoachAdvice: vi.fn().mockReturnValue([]),
   getApreExplanation: vi.fn().mockReturnValue([]),
 }));
@@ -37,7 +37,7 @@ vi.mock('../../core/achievements.js', () => ({
 
 /** Reset store to a clean state before each test */
 async function resetStore() {
-  const { useAppStore } = await import('../../stores/useAppStore.js');
+  const { useAppStore } = await import('../../store/index.js');
   useAppStore.setState({
     sessions: [],
     checkins: [],
@@ -100,7 +100,7 @@ describe('user shifts displayed date', () => {
   });
 
   it('positive offset moves today forward in app state', async () => {
-    const { useAppStore } = await import('../../stores/useAppStore.js');
+    const { useAppStore } = await import('../../store/index.js');
 
     await useAppStore.getState().setVirtualTodayOffset(3);
 
@@ -109,7 +109,7 @@ describe('user shifts displayed date', () => {
   });
 
   it('negative offset moves today backward in app state', async () => {
-    const { useAppStore } = await import('../../stores/useAppStore.js');
+    const { useAppStore } = await import('../../store/index.js');
 
     await useAppStore.getState().setVirtualTodayOffset(-5);
 
@@ -118,8 +118,8 @@ describe('user shifts displayed date', () => {
   });
 
   it('offset is persisted to storage when changed', async () => {
-    const { useAppStore } = await import('../../stores/useAppStore.js');
-    const { saveSetting } = await import('../../core/storage.js');
+    const { useAppStore } = await import('../../store/index.js');
+    const { saveSetting } = await import('../../data/storage.js');
 
     await useAppStore.getState().setVirtualTodayOffset(7);
 
@@ -127,7 +127,7 @@ describe('user shifts displayed date', () => {
   });
 
   it('resetting offset restores today to current date', async () => {
-    const { useAppStore } = await import('../../stores/useAppStore.js');
+    const { useAppStore } = await import('../../store/index.js');
 
     await useAppStore.getState().setVirtualTodayOffset(5);
     await useAppStore.getState().setVirtualTodayOffset(0);

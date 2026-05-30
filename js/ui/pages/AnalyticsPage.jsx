@@ -4,7 +4,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TrendingUp, BarChart } from 'lucide-react';
-import { useAppStore } from '../../stores/useAppStore.js';
+import { useAppStore } from '../../store/index.js';
 import TrendChart from './TrendChart.tsx';
 import WarningsList from './WarningsList.jsx';
 import WeeklySummary from './WeeklySummary.jsx';

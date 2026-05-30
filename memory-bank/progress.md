@@ -2,7 +2,7 @@
 
 ## Quality Gates ✅
 - TypeScript: 0 errors (`npx tsc --noEmit`)
-- Tests: 300 passing (33 files)
+- Tests: 724 passing (61 files)
 - Build: Clean compilation (Vite 8)
 
 ## Complete Feature Set
@@ -39,13 +39,21 @@
 - OnlineStatus, UpdateBanner, Data Export/Import, Error/Loading/Empty States
 - Accessibility: Focus trap Modal, sr-only utility, aria-labels
 
-### Phase 6: Exercise Tracking Loop ✅ (NEW — 2026-05-29)
+### Phase 6: Exercise Tracking Loop ✅
 - Per-set completion checkboxes for non-APRE exercises (ExerciseCard)
 - SetResult tracking in store (pendingSetResults → ExerciseResult[] on save)
 - `completionRate.ts` — session + weekly completion rate (6 tests, TDD)
 - `getVolumeMultiplierFromAdherence()` in planning.ts (≥0.8→1.2x, ≥0.6→1.0x, <0.6→0.8x) (7 tests, TDD)
 - Post-session fatigue/pain inputs in TodayPage
 - `getAdaptedSessionForDate()` accepts `volumeMultiplier` parameter
+
+### Phase 7: Architecture Migration ✅ (2026-05-30)
+- Domain-based architecture: 8 modules in `js/domains/` (training, checkin, analytics, profile, achievements, import, demo, onboarding)
+- Shared layer: `js/shared/` — types, helpers, config, hooks, i18n, UI primitives
+- Re-export bridges in `js/core/` and `js/plans/` for backward compatibility
+- Removed stale `js/plans/` stubs (real files in `js/domains/training/plans/`)
+- All `any` types removed from domain logic
+- 724+ tests passing (61 files)
 
 ### PWA Enhancements ✅
 - sw.js v2: SKIP_WAITING, cache-first, stale-while-revalidate
@@ -57,11 +65,11 @@
 - AGENTS.md: core files list, commit discipline rule
 - memory-bank/progress.md: phases, file structure
 
-## Test Coverage (300 tests, 33 files)
-### Core (NEW)
+## Test Coverage (724 tests, 61 files)
+### Core (via re-export bridges)
 - `completionRate.test.ts` (6) — session/weekly completion rate
 - `adherenceMultiplier.test.ts` (7) — volume multiplier boundaries
-- Existing: achievements(8), analytics(4), apre(56), correlations(7), helpers(5), planning(11), readiness(17), recoveryScore(11), stats(12), streak(12), storage.demo(4), sessionLoad(6), advice(6), validation(9), adaptiveTier(6), deriveTier(8)
+- Existing: achievements(8), analytics(4), apre(56), correlations(7), helpers(5), planning(11), readiness(17), recoveryScore(11), stats(12), streak(12), storage.demo(4), sessionLoad(6), advice(6), validation(9), adaptiveTier(6), deriveTier(8), storage(25)
 
 ### UI Components
 - EmptyState(6), ScaleSelector, Skeleton(2), StatBox(3), CorrelationCard(6), MiniSparkline(4)
@@ -70,16 +78,44 @@
 - useAppStore(11), useAppStore.offset(4)
 
 ## File Structure (Key Files)
-### Core
-- `js/core/storage.ts` — Dexie CRUD + demo mode + export/import
-- `js/core/apre/engine.js` — APRE engine
-- `js/core/recoveryScore.ts` — Tiered recovery scoring
-- `js/core/completionRate.ts` — session/weekly completion rate
-- `js/core/exerciseDatabase.ts` — exercise library with rehab contraindications
-- `js/core/import/csvParser.ts` — Health Sync CSV parser + biometrics merger
-- `js/core/analytics.ts` — Trend analysis, correlation detection
-- `js/core/planning.ts` — Periodized plans + adherence multiplier
-- `js/core/advice.ts` — Coach advice generation
+### Domain Modules (js/domains/)
+- `js/domains/training/apre/engine.js` — APRE engine
+- `js/domains/training/planning/planning.ts` — Periodized plans + adherence multiplier
+- `js/domains/training/planning/completionRate.ts` — session/weekly completion rate
+- `js/domains/training/planning/loadAdjustments.ts` — load adjustments
+- `js/domains/training/plans/` — 8 sport plan modules
+- `js/domains/training/session/sessionLoad.ts` — session load calculation
+- `js/domains/checkin/checkinSlice.ts` — checkin state slice
+- `js/domains/checkin/validation.ts` — checkin validation
+- `js/domains/analytics/analytics.ts` — Trend analysis, correlation detection
+- `js/domains/analytics/stats.ts` — Statistics
+- `js/domains/analytics/streak.ts` — Streak tracking
+- `js/domains/analytics/correlations.ts` — Correlation detection
+- `js/domains/profile/exerciseDatabase.ts` — exercise library with rehab contraindications
+- `js/domains/profile/rehabProtocol.ts` — rehab protocols
+- `js/domains/achievements/achievements.ts` — Achievements
+- `js/domains/import/csvParser.ts` — Health Sync CSV parser + biometrics merger
+- `js/domains/import/importSchemas.ts` — Import schemas
+- `js/domains/import/mergeImportedData.ts` — Data merging
+- `js/domains/demo/demoData.ts` — Demo data generation
+- `js/domains/demo/demoSlice.ts` — Demo state slice
+- `js/domains/onboarding/onboardingStorage.ts` — Onboarding storage
+- `js/domains/onboarding/useTourStore.ts` — Tour state
+
+### Shared Layer (js/shared/)
+- `js/shared/types.ts` — All TypeScript types
+- `js/shared/helpers.ts` — Date utilities
+- `js/shared/config/` — Constants, achievements, tour steps
+- `js/shared/hooks/` — Reusable hooks (useFitnessData, useOnlineStatus, useServiceWorkerUpdate)
+- `js/shared/i18n/` — Localization (ru/en)
+- `js/shared/ui/` — UI primitives (Modal, Collapsible, EmptyState, etc.)
+
+### Core Bridges (js/core/)
+- `js/core/storage.ts` — Dexie CRUD + demo mode + export/import (real logic)
+- `js/core/advice.ts` — Coach advice generation (real logic)
+- `js/core/recoveryScore.ts` — Tiered recovery scoring (real logic)
+- `js/core/readiness.ts` — Readiness determination (real logic)
+- Re-export stubs for other modules (backward compatibility)
 
 ### Stores
 - `js/stores/useAppStore.ts` — Central store + set result tracking + export/import/reset
@@ -97,6 +133,7 @@
 ## Known Issues
 - TodayPage uses React.createElement (legacy code, not JSX) — planned refactor in Phase 5
 - `computeDerived()` not yet wired to `calculateWeeklyCompletionRate` + `getVolumeMultiplierFromAdherence` — functions exist, integration deferred
+- 4 real logic files remain in `js/core/` (storage.ts, advice.ts, recoveryScore.ts, readiness.ts) — gradual migration to `js/domains/` in progress
 
 ## Phase Status Summary
 
@@ -107,5 +144,6 @@
 | Phase 2 (CSV import) | Data Integration (W5-6) | ✅ Done — CSV biometrics parser, exerciseDatabase |
 | Phase 3 (rehab stretching) | Additional Features (W7-8) | ✅ Done — rehab-aware stretching, contraindication filter |
 | Phase 4 (store refactor) | Refactoring (W9-10) | ✅ Done — 5-slice Zustand store |
-| Phase 5 (test coverage) | Testing (W11-12) | ✅ Done — 300 tests (33 files) |
+| Phase 5 (test coverage) | Testing (W11-12) | ✅ Done — 300+ tests (33 files) |
 | Phase 6 (docs-i18n) | Documentation (Ongoing) | ✅ Done — README, AGENTS.md, progress.md sync |
+| Phase 7 (arch migration) | Architecture Migration | ✅ Done — domain-based structure, 724 tests, js/domains/ + js/shared/ |

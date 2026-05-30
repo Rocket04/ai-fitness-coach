@@ -8,7 +8,6 @@ import {
   saveCheckin,
   getCheckin,
   getAllCheckins,
-  getCheckinsForLastDays,
   saveSetting,
   getSetting,
   saveSettings,
@@ -22,7 +21,8 @@ import {
   deactivateDemoData,
   isDemoMode,
   loadDemoModeState,
-} from '../../core/storage.js';
+  getBackups,
+} from '../../data/storage.js';
 import type { Session, Checkin } from '../../core/types.js';
 
 // ── Mock Dexie at module level ──
@@ -30,7 +30,9 @@ const mockSessionsTable: Record<string, any> = {};
 const mockCheckinsTable: Record<string, any> = {};
 const mockSettingsTable: Record<string, any> = {};
 const mockAchievementsTable: any[] = [];
+const mockBackupsTable: any[] = [];
 let nextAchievementId = 1;
+let nextBackupId = 1;
 
 function makeMockSessions() {
   return {
@@ -78,6 +80,20 @@ function makeMockAchievements() {
   };
 }
 
+function makeMockBackups() {
+  return {
+    put: vi.fn(async (item: any) => { const id = nextBackupId++; mockBackupsTable.push({ ...item, id }); return id; }),
+    get: vi.fn(async (id: number) => mockBackupsTable.find(b => b.id === id) ?? null),
+    delete: vi.fn(async (id: number) => { const idx = mockBackupsTable.findIndex(b => b.id === id); if (idx >= 0) mockBackupsTable.splice(idx, 1); }),
+    toArray: vi.fn(async () => [...mockBackupsTable]),
+    orderBy: vi.fn(() => ({
+      reverse: () => ({ toArray: async () => [...mockBackupsTable].reverse() }),
+      toArray: async () => [...mockBackupsTable].sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0)),
+    })),
+    bulkDelete: vi.fn(async (ids: number[]) => { ids.forEach(id => { const idx = mockBackupsTable.findIndex(b => b.id === id); if (idx >= 0) mockBackupsTable.splice(idx, 1); }); }),
+  };
+}
+
 vi.mock('dexie', () => {
   return {
     default: class MockDexie {
@@ -85,6 +101,7 @@ vi.mock('dexie', () => {
       checkins = makeMockCheckins();
       settings = makeMockSettings();
       achievements = makeMockAchievements();
+      backups = makeMockBackups();
       transaction = vi.fn(async (_mode: string, ...args: any[]) => {
         const callback = args[args.length - 1];
         if (typeof callback === 'function') await callback();
@@ -111,7 +128,9 @@ describe('storage', () => {
     Object.keys(mockCheckinsTable).forEach(k => delete mockCheckinsTable[k]);
     Object.keys(mockSettingsTable).forEach(k => delete mockSettingsTable[k]);
     mockAchievementsTable.length = 0;
+    mockBackupsTable.length = 0;
     nextAchievementId = 1;
+    nextBackupId = 1;
     localStorageMock.getItem.mockReset();
     localStorageMock.setItem.mockReset();
     localStorageMock.removeItem.mockReset();
@@ -310,6 +329,27 @@ describe('storage', () => {
       const checkins = await getAllCheckins();
       expect(sessions.length).toBe(0);
       expect(checkins.length).toBe(0);
+    });
+
+    it('creates auto-backup before clearing data', async () => {
+      await saveSession({
+        key: '2026-05-30_A',
+        date: '2026-05-30',
+        type: 'A',
+        completed: true,
+        readiness: 'green',
+        rpe: 7,
+        notes: '',
+        updatedAt: Date.now(),
+      });
+
+      await clearAllData();
+      const backups = await getBackups();
+      expect(backups.length).toBeGreaterThanOrEqual(1);
+      expect(backups[0].label).toContain('auto-backup-');
+      const parsed = JSON.parse(backups[0].data);
+      expect(parsed.sessions).toBeDefined();
+      expect(parsed.version).toBe(2);
     });
   });
 

@@ -15,6 +15,41 @@ self.addEventListener('message', (event) => {
   }
 });
 
+// ── Notification click: open app ───────────────────────────────
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+      const existing = clients.find((c) => c.url.includes(self.location.origin) && 'focus' in c);
+      if (existing) {
+        return existing.focus();
+      }
+      if (self.clients.openWindow) {
+        return self.clients.openWindow('/');
+      }
+    })
+  );
+});
+
+// ── Periodic background sync (Chromium progressive enhancement) ─
+self.addEventListener('periodicsync', (event) => {
+  if (event.tag === 'daily-checkin-reminder') {
+    event.waitUntil(
+      self.clients.matchAll({ type: 'window' }).then((clients) => {
+        if (clients.length > 0) return;
+        return self.registration.showNotification(
+          'Утренний check-in',
+          {
+            body: 'Открой приложение и заполни чек-ин — 30 секунд',
+            icon: '/icon-192.png',
+            tag: 'daily-checkin',
+          }
+        );
+      })
+    );
+  }
+});
+
 // ── Install: skip waiting to activate immediately ───────────────
 self.addEventListener('install', (event) => {
   self.skipWaiting();

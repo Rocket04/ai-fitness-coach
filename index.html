@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Умный тренер тренировок с авторегуляцией APRE и Recovery Score. Полностью бесплатно, все данные на устройстве.">
   <meta name="theme-color" content="#4f7c44">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; base-uri 'self'; form-action 'self';">
+  <meta http-equiv="Content-Security-Policy" content="__CSP__">
   <title>Smart Fitness Coach</title>
   <link rel="manifest" href="manifest.json">
   <!-- Critical CSS inline to eliminate render blocking -->
@@ -210,43 +210,6 @@
 <body>
   <div id="root"></div>
   <script type="module" src="js/app.tsx"></script>
-
-  <script>
-    window.addEventListener('error', function(event) {
-      console.error('[Global Error]', event.error || event.message);
-    });
-    window.addEventListener('unhandledrejection', function(event) {
-      console.error('[Unhandled Promise Rejection]', event.reason);
-    });
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').then(reg => {
-        console.log('Service Worker зарегистрирован:', reg.scope);
-
-        // Check for updates periodically
-        setInterval(() => {
-          reg.update().catch(() => {});
-        }, 60000); // Check every 60s
-
-        // Listen for new service workers waiting to activate
-        reg.addEventListener('updatefound', () => {
-          const newWorker = reg.installing;
-          if (!newWorker) return;
-          newWorker.addEventListener('statechange', () => {
-            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              // New version available — the app's useServiceWorkerUpdate hook will detect this
-              console.log('[SW] Новая версия доступна');
-            }
-          });
-        });
-      }).catch(err => {
-        console.error('Ошибка регистрации Service Worker:', err);
-      });
-
-      // Handle controller change (new SW activated)
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        console.log('[SW] Новый Service Worker активирован');
-      });
-    }
-  </script>
+  <script src="/sw-register.js"></script>
 </body>
 </html>

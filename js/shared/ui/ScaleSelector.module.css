@@ -1,0 +1,15 @@
+.scale-selector {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+.scale-selector__buttons {
+  display: flex;
+  gap: var(--spacing-xs);
+}
+.scale-selector__label {
+  font-size: var(--font-size-caption);
+  color: var(--text3);
+  min-height: 1em;
+  padding-left: var(--spacing-xs);
+}

@@ -2,7 +2,7 @@
 // TDD: Tiered Recovery Score calculation — Full, Medium, Light
 
 import { describe, it, expect } from 'vitest';
-import { calculateRecoveryScore, getWeightsForTier } from '../../core/recoveryScore.js';
+import { calculateRecoveryScore, getWeightsForTier } from '../../domains/recovery/recoveryScore.js';
 import type { Checkin } from '../../core/types.js';
 
 function makeCheckin(overrides: Partial<Checkin> = {}): Checkin {

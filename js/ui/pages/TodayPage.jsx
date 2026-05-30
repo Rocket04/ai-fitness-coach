@@ -4,16 +4,19 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next'; 
-import { Check, Sun, Moon, Flame, PersonStanding, Lightbulb } from 'lucide-react';
-import { useAppStore } from '../../stores/useAppStore.js';
-import { useFitnessData, isExerciseConfigured } from '../../hooks/useFitnessData.js';
-import { detectOptimalTier } from '../../core/recoveryScore.js';
-import { getExplanation } from '../../core/advice.js';
+import { Flame, Moon, PersonStanding, Lightbulb, Play, CheckCircle, Trash2, Eye } from 'lucide-react';
+import { useAppStore } from '../../store/index.js';
+import { useFitnessData, isExerciseConfigured } from '../../shared/hooks/useFitnessData.js';
+import { detectOptimalTier } from '../../domains/recovery/recoveryScore.js';
 import Collapsible from '../components/Collapsible.jsx';
 import ExerciseCard from '../components/ExerciseCard.jsx';
 import ExerciseConfigModal from '../components/ExerciseConfigModal.jsx';
 import HelpIcon from '../components/HelpIcon.jsx';
 import WeeklyPlanCard from '../components/WeeklyPlanCard.jsx';
+import WeeklyReviewCard from '../components/WeeklyReviewCard.jsx';
+import WorkoutMode from './WorkoutMode.jsx';
+import { getBestLiftDelta, getPreviousWeekAvgScore } from '../../domains/analytics/weekReview.js';
+import { mondayOfWeek, formatISO } from '../../shared/helpers.js';
 
 // i18n usage example (after installing dependencies):
 // const { t } = useTranslation();
@@ -170,24 +173,6 @@ function CoachTipsPanel({ tips, t }) {
   );
 }
 
-/* ---------- Quick Action Toggle ---------- */
-function QuickActionToggle({ icon, label, statusLabel, active, onClick, t }) {
-  const statusText = active ? (t ? t('today.done') : 'Выполнено') : statusLabel;
-
-  return React.createElement('button', {
-    className: `quick-action-toggle${active ? ' active' : ''}`,
-    onClick,
-    'aria-label': `${label} ${statusText}`,
-  },
-    React.createElement('span', { className: 'quick-action-toggle__icon', 'aria-hidden': 'true' }, active ? React.createElement(Check, { size: 20 }) : icon),
-    React.createElement('span', { className: 'quick-action-toggle__text' },
-      React.createElement('span', { className: 'quick-action-toggle__label' }, label),
-      ' ',
-      React.createElement('span', { className: 'quick-action-toggle__status' }, statusText)
-    )
-  );
-}
-
 /* ---------- Tomorrow Mini Preview ---------- */
 function TomorrowMini({ tomorrowType, tomorrowPlan, t }) {
   const isRest = !tomorrowType;
@@ -291,14 +276,67 @@ export default function TodayPage() {
   const {
     sessionPlan, readiness, recoveryScore, recoveryDebt, rpe, sessionNote,
     testPullUps, testPushUps, testPlank, trainingDone, weekLabel, totalWeek, phase,
-    tomorrowPlan, morningDone, eveningDone,
+    tomorrowPlan,
     durationMinutes, lastCheckin, streak, trendData7, rpeTrend7,
     setRpe, setSessionNote, setDurationMinutes, setTestPullUps, setTestPushUps, setTestPlank,
-    handleToggleTraining, handleMarkMorning, handleMarkEvening,
-     coachAdvice, updateApreResult, checkinTier, checkins, planModifications,
-     demoMode, dataLoaded, setActiveTab, updateSetResult, postSessionFatigue,
-     postSessionPain, setPostSessionFatigue, setPostSessionPain, weeklyPlan,
-   } = useAppStore();
+    handleToggleTraining,
+      coachAdvice, updateApreResult, updateSetResult, checkinTier, checkins, planModifications,
+      demoMode, dataLoaded, setActiveTab, postSessionFatigue,
+      postSessionPain, setPostSessionFatigue, setPostSessionPain, weeklyPlan,
+      pendingSetResults, weeklyAdherenceMultiplier, scoreLast30DayAvg,
+      sessions, trendData30, todayISO,
+    } = useAppStore();
+
+  // Compute set completion progress
+  const setProgress = useMemo(() => {
+    if (!sessionPlan?.exercises) return { total: 0, completed: 0 };
+    let total = 0;
+    for (const ex of sessionPlan.exercises) {
+      const match = ex.s ? ex.s.match(/(\d+)/) : null;
+      total += match ? parseInt(match[1], 10) : 3;
+    }
+    const completed = pendingSetResults.filter(s => s.completed).length;
+    return { total, completed };
+  }, [sessionPlan?.exercises, pendingSetResults]);
+
+  // Check if today's training is already completed
+  const hasCompletedSession = useMemo(() => {
+    if (!todayISO || !sessions) return false;
+    return sessions.some(s => s.date === todayISO && s.completed && s.type !== 'morning' && s.type !== 'evening');
+  }, [todayISO, sessions]);
+
+  // Find the completed session for view results mode
+  const existingSession = useMemo(() => {
+    if (!todayISO || !sessions) return null;
+    return sessions.find(s => s.date === todayISO && s.completed && s.type !== 'morning' && s.type !== 'evening') || null;
+  }, [todayISO, sessions]);
+
+  // Weekly Review Card state (Monday only)
+  const [weeklyReviewDismissed, setWeeklyReviewDismissed] = useState(null);
+  const weeklyReviewData = useMemo(() => {
+    const now = new Date();
+    if (now.getDay() !== 1) return { show: false };
+    const thisMonday = mondayOfWeek(now);
+    const thisWeekISO = formatISO(thisMonday);
+    if (weeklyReviewDismissed === thisWeekISO) return { show: false };
+    const wasDismissed = (() => { try { return localStorage.getItem('weeklyReviewDismissed') === thisWeekISO; } catch { return false; } })();
+    if (wasDismissed) return { show: false };
+    const bestLift = getBestLiftDelta(sessions || []);
+    const scoreAvg = getPreviousWeekAvgScore(trendData30 || []);
+    const completedSessions = (sessions || []).filter(s => s.completed).length;
+    const totalPlanned = weeklyPlan?.days?.filter(d => d !== null).length || completedSessions;
+    if (completedSessions < 2) return { show: false };
+    return { show: true, bestLift, scoreAvg, completedSessions, totalPlanned, thisWeekISO };
+  }, [sessions, trendData30, weeklyReviewDismissed, weeklyPlan]);
+
+  const handleDismissWeeklyReview = () => {
+    if (weeklyReviewData.thisWeekISO) {
+      try { localStorage.setItem('weeklyReviewDismissed', weeklyReviewData.thisWeekISO); } catch {}
+      setWeeklyReviewDismissed(weeklyReviewData.thisWeekISO);
+    }
+  };
+
+  const handleNavigateAnalytics = () => setActiveTab(2);
 
   // Inject demo data for guided tour
   useEffect(() => {
@@ -327,21 +365,6 @@ export default function TodayPage() {
     return () => window.removeEventListener('tour-demo-data', handler);
   }, []);
 
-  // Explanation
-  const explanation = useMemo(() => {
-    if (!lastCheckin) return [];
-    return getExplanation(
-      recoveryScore || 0,
-      readiness,
-      recoveryDebt,
-      lastCheckin || {},
-      trendData7 || [],
-      trendData7 || [],
-      planModifications || [],
-      t
-    );
-  }, [recoveryScore, readiness, recoveryDebt, lastCheckin, trendData7, planModifications, t]);
-
   // Exercise configuration state
   const { exercises: configs, updateExerciseById } = useFitnessData();
   const [configModalOpen, setConfigModalOpen] = useState(false);
@@ -350,6 +373,8 @@ export default function TodayPage() {
   // Layer visibility states
   const [showSparklines, setShowSparklines] = useState(false);
   const [showTrainingDetails, setShowTrainingDetails] = useState(false);
+  const [showWorkoutMode, setShowWorkoutMode] = useState(false);
+  const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
 
   // Map exercise names to config IDs for lookup
   const nameToIdMap = {
@@ -394,8 +419,8 @@ export default function TodayPage() {
     }
   };
 
-  const handleSaveExerciseConfig = ({ id, protocol, currentRM, currentLevel }) => {
-    updateExerciseById(id, { protocol, currentRM, currentLevel });
+  const handleSaveExerciseConfig = ({ id, protocol, currentRM, currentLevel, usesWeight }) => {
+    updateExerciseById(id, { protocol, currentRM, currentLevel, usesWeight });
   };
 
   // Derived values
@@ -459,7 +484,8 @@ export default function TodayPage() {
     return { date: d.getDate(), name: DAY_NAMES[i], isTod, type: hasW ? (dow===1||dow===5?'A':dow===3?'B':'C') : null };
   });
 
-  return React.createElement('div', { className: 'today-page' },
+  return React.createElement(React.Fragment, null,
+    React.createElement('div', { className: 'today-page' },
 
     // ═══════════════════════════════════════════════════════════════════
     // LAYER 0: Adaptive Tier Suggestion Banner
@@ -502,18 +528,40 @@ export default function TodayPage() {
     ),
 
     // ═══════════════════════════════════════════════════════════════════
+    // LAYER 0.5a: Adherence-based Volume Adjustment Banner
+    weeklyAdherenceMultiplier !== 1.0 && React.createElement('div', {
+      className: 'card',
+      style: {
+        padding: 'var(--spacing-sm) var(--spacing-md)',
+        display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)',
+        fontSize: 'var(--font-size-caption)',
+        borderLeft: `4px solid ${weeklyAdherenceMultiplier > 1.0 ? 'var(--green)' : 'var(--yellow)'}`,
+      },
+    },
+      React.createElement('span', { style: { fontSize: '1rem' } },
+        weeklyAdherenceMultiplier > 1.0 ? '\u{1F53C}' : '\u{1F53D}'
+      ),
+      React.createElement('span', null,
+        weeklyAdherenceMultiplier > 1.0
+          ? `Нагрузка увеличена на ${Math.round((weeklyAdherenceMultiplier - 1) * 100)}% — отличное выполнение на прошлой неделе`
+          : `Нагрузка снижена на ${Math.round((1 - weeklyAdherenceMultiplier) * 100)}% — восстановительная неделя`
+      )
+    ),
+
+    // ═══════════════════════════════════════════════════════════════════
     // LAYER 0.6: Weekly Plan Card (expandable, shows exact plan per day)
     React.createElement(WeeklyPlanCard, { plan: weeklyPlan, t }),
 
-    // Explanation card
-    explanation.length > 0 && React.createElement('div', { className: 'card explanation-card card-appear', style: { animationDelay: '0.05s' } },
-      React.createElement('h4', { className: 'explanation-title', style: { marginBottom: 'var(--spacing-sm)', fontSize: 'var(--font-size-body)', fontWeight: 600 } }, t('today.why')),
-      React.createElement('ul', { className: 'explanation-list', style: { paddingLeft: '1.25rem', margin: 0 } },
-        explanation.map((item, i) =>
-          React.createElement('li', { key: i, className: 'explanation-item', style: { marginBottom: 'var(--spacing-xs)', fontSize: 'var(--font-size-caption)', lineHeight: 1.5 } }, item)
-        )
-      )
-    ),
+    // Weekly Review Card (Monday only, dismissible)
+    weeklyReviewData.show && React.createElement(WeeklyReviewCard, {
+      bestLift: weeklyReviewData.bestLift,
+      sessionsCompleted: weeklyReviewData.completedSessions,
+      totalPlannedSessions: weeklyReviewData.totalPlanned,
+      avgScoreCurrent: weeklyReviewData.scoreAvg?.currentAvg ?? null,
+      avgScorePrevious: weeklyReviewData.scoreAvg?.previousAvg ?? null,
+      onDismiss: handleDismissWeeklyReview,
+      onNavigateAnalytics: handleNavigateAnalytics,
+    }),
 
     // LAYER 1: Hero Ring (always visible)
     // ═══════════════════════════════════════════════════════════════════
@@ -534,6 +582,21 @@ export default function TodayPage() {
         className: 'status-pill',
         style: { backgroundColor: status.color },
       }, status.text),
+      scoreLast30DayAvg !== null && React.createElement('p', {
+        style: { fontSize: '0.75rem', color: 'var(--text2)', textAlign: 'center', margin: '4px 0' },
+      },
+        (() => {
+          const diff = (recoveryScore || 0) - scoreLast30DayAvg;
+          if (diff > 5) return `↑ ${t('score.above', { score: recoveryScore || 0, avg: scoreLast30DayAvg })}`;
+          if (diff < -5) return `↓ ${t('score.below', { score: recoveryScore || 0, avg: scoreLast30DayAvg })}`;
+          return `~ ${t('score.average', { score: recoveryScore || 0, avg: scoreLast30DayAvg })}`;
+        })()
+      ),
+      scoreLast30DayAvg === null && (recoveryScore || 0) > 0 && React.createElement('p', {
+        style: { fontSize: '0.75rem', color: 'var(--text2)', textAlign: 'center', margin: '4px 0' },
+      },
+        t('score.building')
+      ),
       React.createElement('p', { className: 'readiness-hint mt-sm' },
         t('today.tapForMetrics'),
         React.createElement(HelpIcon, {
@@ -573,195 +636,103 @@ export default function TodayPage() {
     ),
 
     // ═══════════════════════════════════════════════════════════════════
+    // LAYER 2.5: Start Workout Button / Completed Card (training days only)
+    // ═══════════════════════════════════════════════════════════════════
+    !isRestDay && !showWorkoutMode && (
+      hasCompletedSession
+        ? React.createElement('div', {
+            className: 'card card-appear',
+            'data-testid': 'workout-completed-card',
+            style: { animationDelay: '0.09s', padding: 'var(--spacing-md)' },
+          },
+            React.createElement('div', { style: { textAlign: 'center', marginBottom: 'var(--spacing-sm)' } },
+              React.createElement(CheckCircle, { size: 28, style: { color: 'var(--green)' } }),
+            ),
+            React.createElement('p', { style: { textAlign: 'center', fontWeight: 600, color: 'var(--text)', marginBottom: 'var(--spacing-md)' } },
+              t('today.workoutCompleted')
+            ),
+            React.createElement('div', { style: { display: 'flex', gap: 'var(--spacing-sm)' } },
+              React.createElement('button', {
+                className: 'btn btn-outline',
+                'data-testid': 'view-results-btn',
+                onClick: () => setShowWorkoutMode(true),
+                style: { flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'var(--spacing-xs)' },
+              },
+                React.createElement(Eye, { size: 16 }),
+                React.createElement('span', null, t('today.viewResults'))
+              ),
+              React.createElement('button', {
+                className: 'btn btn-outline',
+                'data-testid': 'reset-workout-btn',
+                onClick: () => setResetConfirmOpen(true),
+                style: { flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'var(--spacing-xs)', color: 'var(--red)' },
+              },
+                React.createElement(Trash2, { size: 16 }),
+                React.createElement('span', null, t('today.resetWorkout'))
+              ),
+            ),
+            resetConfirmOpen && React.createElement('div', {
+              style: {
+                marginTop: 'var(--spacing-sm)',
+                padding: 'var(--spacing-md)',
+                background: 'var(--surface2)',
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid var(--red)',
+              },
+            },
+              React.createElement('p', { style: { fontSize: 'var(--font-size-caption)', color: 'var(--text2)', marginBottom: 'var(--spacing-sm)' } },
+                t('today.resetWorkoutConfirm')
+              ),
+              React.createElement('div', { style: { display: 'flex', gap: 'var(--spacing-sm)' } },
+                React.createElement('button', {
+                  className: 'btn btn-sm',
+                  onClick: () => setResetConfirmOpen(false),
+                  style: { flex: 1 },
+                }, t('app.cancel')),
+                React.createElement('button', {
+                  className: 'btn btn-sm',
+                  'data-testid': 'confirm-reset-btn',
+                  onClick: () => {
+                    setResetConfirmOpen(false);
+                    handleToggleTraining();
+                  },
+                  style: { flex: 1, background: 'var(--red)', color: '#fff' },
+                }, t('app.confirm')),
+              ),
+            ),
+          )
+        : React.createElement('div', {
+            className: 'card card-appear',
+            style: { animationDelay: '0.09s', padding: 0, overflow: 'hidden' },
+          },
+            React.createElement('button', {
+              className: 'btn btn-accent',
+              'data-testid': 'start-workout-btn',
+              onClick: () => setShowWorkoutMode(true),
+              style: {
+                width: '100%', minHeight: '56px', fontSize: '1.1rem',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                gap: 'var(--spacing-sm)', padding: 'var(--spacing-md)',
+                border: 'none', borderRadius: 0, cursor: 'pointer',
+              },
+            },
+              React.createElement(Play, { size: 24 }),
+              React.createElement('span', null, t('today.startWorkout') || 'Начать тренировку')
+            ),
+          )
+    ),
+
+    // ═══════════════════════════════════════════════════════════════════
     // LAYER 3: Training Plan / Rest Day
     // ═══════════════════════════════════════════════════════════════════
-    isRestDay
-      ? React.createElement('div', { className: 'card rest-day-card card-appear', 'data-testid': 'workout-card', style: { animationDelay: '0.1s' } },
-          React.createElement('span', { className: 'rest-day-icon' }, React.createElement(PersonStanding, { size: 20 })),
-          React.createElement('span', { className: 'rest-day-title' }, t('today.restDay')),
-          React.createElement('span', { className: 'rest-day-desc' }, t('today.restDescription'))
-        )
-      : React.createElement('div', { className: 'card card-appear', 'data-testid': 'workout-card', style: { animationDelay: '0.1s', padding: 0, overflow: 'hidden' } },
-          // Training Header
-          React.createElement('div', { className: 'training-header' },
-            React.createElement('span', { className: 'training-type' }, sessionPlan?.sport || sessionPlan?.sessionType || null),
-            React.createElement('div', { className: 'training-meta' },
-              React.createElement('div', { className: 'training-week' },
-                weekLabel,
-                  totalWeek % 4 === 0 && React.createElement('span', {
-                    className: 'deload-badge',
-                    style: { marginLeft: '8px', fontSize: '0.75rem', color: 'var(--blue)' }
-                  }, t('training.deload'))
-              ),
-              React.createElement('div', { className: 'training-title' },
-                sessionPlan?.mode === 'test' ? t('training.testDay') : t('training.trainingDay'))
-            )
-          ),
-          // Exercise List
-          sessionPlan?.exercises && React.createElement(Collapsible, {
-            open: showTrainingDetails,
-            onToggle: () => setShowTrainingDetails(o => !o),
-            title: t('today.exercises'),
-            summary: t('today.exerciseCount', { count: sessionPlan.exercises.length }),
-          },
-            React.createElement('div', { className: 'exercise-list' },
-              sessionPlan.exercises.map((ex, idx) => {
-                // Find user config for this exercise
-                const userConfig = findExerciseConfig(ex);
-
-                // Create mapped exercise with user config applied
-                const mappedEx = { ...ex };
-
-                if (userConfig) {
-                  // Force overwrite with user config values
-                  mappedEx.protocol = userConfig.protocol;
-                  mappedEx.currentRM = userConfig.currentRM;
-                  mappedEx.currentLevel = userConfig.currentLevel;
-                  mappedEx.isCalisthenics = userConfig.isCalisthenics;
-                  mappedEx.unit = userConfig.unit;
-                  mappedEx.id = userConfig.id; // Ensure id is set for future lookups
-                }
-
-                const isConfigured = userConfig ? isExerciseConfigured(userConfig) : false;
-
-                return React.createElement(ExerciseCard, {
-                  key: `${mappedEx.n}-${idx}`,
-                  ex: mappedEx,
-                  recoveryScore: recoveryScore || 0,
-                  onApreResult: updateApreResult,
-                  isConfigured,
-                  onConfigure: () => handleConfigureExercise(idx),
-                  onSetComplete: (exName, setNum, reps, rpe) => {
-                    updateSetResult({ exerciseName: exName, setNumber: setNum, completed: reps > 0, repsDone: reps, rpe });
-                  },
-                });
-              })
-            ),
-
-            // Exercise Config Modal
-            React.createElement(ExerciseConfigModal, {
-              isOpen: configModalOpen,
-              onClose: () => setConfigModalOpen(false),
-              exercise: selectedExercise,
-              onSave: handleSaveExerciseConfig,
-            }),
-
-            // Post-session fatigue / pain feedback
-            React.createElement(Collapsible, {
-              title: 'Самочувствие после тренировки',
-              defaultOpen: false,
-            },
-              React.createElement('div', { style: { padding: 'var(--spacing-sm) 0' } },
-                React.createElement('label', { style: { display: 'block', marginBottom: 'var(--spacing-sm)' } },
-                  React.createElement('span', { style: { fontSize: '0.85rem', color: 'var(--text2)', display: 'block', marginBottom: '4px' } },
-                    'Усталость (1-10)'
-                  ),
-                  React.createElement('input', {
-                    type: 'range', min: 1, max: 10,
-                    value: postSessionFatigue || 1,
-                    onChange: e => setPostSessionFatigue(Number(e.target.value)),
-                    style: { width: '100%' },
-                  }),
-                  React.createElement('span', { style: { fontSize: '0.75rem', color: 'var(--text3)' } },
-                    postSessionFatigue ? `${postSessionFatigue}/10` : '—'
-                  )
-                ),
-                React.createElement('label', { style: { display: 'block' } },
-                  React.createElement('span', { style: { fontSize: '0.85rem', color: 'var(--text2)', display: 'block', marginBottom: '4px' } },
-                    'Боль (0-10)'
-                  ),
-                  React.createElement('input', {
-                    type: 'range', min: 0, max: 10,
-                    value: postSessionPain || 0,
-                    onChange: e => setPostSessionPain(Number(e.target.value)),
-                    style: { width: '100%' },
-                  }),
-                  React.createElement('span', { style: { fontSize: '0.75rem', color: 'var(--text3)' } },
-                    postSessionPain !== undefined ? `${postSessionPain}/10` : '—'
-                  )
-                )
-              )
-            ),
-          ),
-          // Test inputs if test day
-          sessionPlan?.isTestDay && React.createElement('div', { className: 'grid-3', style: { padding: '0 var(--spacing-md) var(--spacing-md)' } },
-            React.createElement('label', { className: 'flex flex-column gap-xs font-body' },
-              t('training.pullUps'),
-              React.createElement('input', { type: 'number', value: testPullUps, onChange: e => setTestPullUps(Number(e.target.value)), min: 0, style: { padding: '0.5rem' } })
-            ),
-            React.createElement('label', { className: 'flex flex-column gap-xs font-body' },
-              t('training.pushUps'),
-              React.createElement('input', { type: 'number', value: testPushUps, onChange: e => setTestPushUps(Number(e.target.value)), min: 0, style: { padding: '0.5rem' } })
-            ),
-            React.createElement('label', { className: 'flex flex-column gap-xs font-body' },
-              t('training.plank'),
-              React.createElement('input', { type: 'number', value: testPlank, onChange: e => setTestPlank(Number(e.target.value)), min: 0, style: { padding: '0.5rem' } })
-            )
-          ),
-          // RPE Form
-          React.createElement('div', { style: { padding: '0 var(--spacing-md) var(--spacing-md)' } },
-            React.createElement('div', { className: 'flex justify-between items-center mb-sm' },
-              React.createElement('span', { className: 'font-body font-weight-600' }, t('today.howWasWorkout')),
-              React.createElement('strong', { className: 'font-mono', style: { fontSize: '1.5rem', color: zone.color } }, rpe || '?')
-            ),
-            React.createElement('div', { className: 'font-body text-secondary mb-sm' }, rpeDesc),
-            React.createElement('input', {
-              type: 'range', min: 0, max: 10, step: 0.5, value: rpe,
-              onChange: e => setRpe(Number(e.target.value)),
-              className: 'w-full',
-              style: { marginBottom: 'var(--spacing-sm)' }
-            }),
-            React.createElement('div', { className: 'flex gap-sm mb-sm' },
-              React.createElement('label', { className: 'flex-1 font-body' },
-                t('today.duration'),
-                React.createElement('input', {
-                  type: 'number', min: 0, max: 300, value: durationMinutes,
-                  onChange: e => setDurationMinutes(Number(e.target.value)),
-                  className: 'w-full', style: { padding: '0.5rem', marginTop: '0.25rem' }
-                })
-              ),
-              React.createElement('div', { style: { flex: 2 } },
-                React.createElement('label', { className: 'font-body' }, t('today.notes')),
-                React.createElement('textarea', {
-                  value: sessionNote, onChange: e => setSessionNote(e.target.value),
-                  placeholder: t('today.notesPlaceholder'),
-                  rows: 2, className: 'w-full', style: { marginTop: '0.25rem' }
-                })
-              )
-            ),
-            React.createElement('button', {
-              className: `${trainingDone ? 'btn btn-red' : 'btn btn-accent'} w-full`,
-              onClick: handleToggleTraining,
-              style: { minHeight: '48px' }
-            }, trainingDone ? t('today.cancelWorkout') : t('today.saveWorkout'))
-          ),
-        ),
+    isRestDay && React.createElement('div', { className: 'card rest-day-card card-appear', 'data-testid': 'workout-card', style: { animationDelay: '0.1s' } },
+        React.createElement('span', { className: 'rest-day-icon' }, React.createElement(PersonStanding, { size: 20 })),
+        React.createElement('span', { className: 'rest-day-title' }, t('today.restDay')),
+        React.createElement('span', { className: 'rest-day-desc' }, t('today.restDescription'))
+      ),
 
   // ═══════════════════════════════════════════════════════════════════
-  React.createElement('div', { className: 'card card-appear', style: { animationDelay: '0.2s', padding: 'var(--spacing-md)' } },
-    React.createElement(CoachTipsPanel, { tips: coachAdvice || [], t }),
-    React.createElement('div', { style: { display: 'flex', gap: 'var(--spacing-sm)', marginTop: 'var(--spacing-md)' } },
-      React.createElement(QuickActionToggle, {
-        icon: React.createElement(Sun, { size: 20 }),
-        label: t('today.morning'),
-        statusLabel: t('today.morningStatus'),
-        active: morningDone,
-        onClick: handleMarkMorning,
-        t
-      }),
-      React.createElement(QuickActionToggle, {
-        icon: React.createElement(Moon, { size: 20 }),
-        label: t('today.evening'),
-        statusLabel: t('today.eveningStatus'),
-        active: eveningDone,
-        onClick: handleMarkEvening,
-        t
-      })
-    )
-  ),
-
-    // ═══════════════════════════════════════════════════════════════════
-    // LAYER 6: Tomorrow Preview (compact)
+  // LAYER 6: Tomorrow Preview (compact)
     // ══════════════════════════════════════════════════════════════
     React.createElement(TomorrowMini, { tomorrowPlan, t }),
 
@@ -770,5 +741,51 @@ export default function TodayPage() {
       React.createElement('span', { className: 'today-header__date' }, todayStr),
       streak >= 2 && React.createElement('span', { className: 'streak-badge', style: { marginLeft: 'var(--spacing-sm)' } }, React.createElement(Flame, { size: 20 }), ` ${streak}`)
     )
-  );
+  ),
+
+  // ═══════════════════════════════════════════════════════════════════
+  // WORKOUT MODE OVERLAY (full-screen)
+  // ═══════════════════════════════════════════════════════════════════
+  showWorkoutMode && React.createElement(WorkoutMode, {
+    sessionPlan,
+    recoveryScore,
+    exercises: sessionPlan?.exercises || [],
+    pendingSetResults,
+    setProgress,
+    rpe,
+    sessionNote,
+    durationMinutes,
+    postSessionFatigue,
+    postSessionPain,
+    trainingDone,
+    existingSession,
+    onApreResult: updateApreResult,
+    onSetComplete: updateSetResult,
+    onRpeChange: setRpe,
+    onSessionNoteChange: setSessionNote,
+    onDurationChange: setDurationMinutes,
+    onPostSessionFatigueChange: setPostSessionFatigue,
+    onPostSessionPainChange: setPostSessionPain,
+    onSaveWorkout: () => {
+      handleToggleTraining();
+      setShowWorkoutMode(false);
+    },
+    onCancelWorkout: () => setShowWorkoutMode(false),
+    findExerciseConfig,
+    isExerciseConfigured,
+    handleConfigureExercise,
+    configModalOpen,
+    setConfigModalOpen,
+    selectedExercise,
+    handleSaveExerciseConfig,
+    testPullUps,
+    testPushUps,
+    testPlank,
+    onTestPullUpsChange: setTestPullUps,
+    onTestPushUpsChange: setTestPushUps,
+    onTestPlankChange: setTestPlank,
+    showTrainingDetails,
+    setShowTrainingDetails,
+  }),
+);
 }

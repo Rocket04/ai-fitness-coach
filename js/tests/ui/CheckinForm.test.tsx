@@ -7,20 +7,26 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 let mockTier: 'full' | 'medium' | 'light' = 'full';
+let mockCheckins: Array<{ date: string }> = [{ date: '2026-05-24' }];
 const mockStore = {
   weight: 0, restHR: 0, hrv: 0, sleepHours: 0,
   hipPain: 0, shoulderPain: 0, breathing: 'good' as const, notes: '',
   muscleSoreness: 0, energy: 0, mood: 0, sleepQuality: 0, stress: 0,
   setWeight: (v: number) => { mockStore.weight = v; },
-  setRestHR: vi.fn(), setHrv: vi.fn(), setSleepHours: vi.fn(),
+  setRestHR: vi.fn(), setHrv: vi.fn(), setSleepHours: (v: number) => { mockStore.sleepHours = v; },
   setHipPain: vi.fn(), setShoulderPain: vi.fn(), setBreathing: vi.fn(), setNotes: vi.fn(),
-  setMuscleSoreness: vi.fn(), setEnergy: vi.fn(), setMood: vi.fn(), setSleepQuality: vi.fn(), setStress: vi.fn(),
+  setMuscleSoreness: (v: number) => { mockStore.muscleSoreness = v; },
+  setEnergy: (v: number) => { mockStore.energy = v; },
+  setMood: (v: number) => { mockStore.mood = v; },
+  setSleepQuality: (v: number) => { mockStore.sleepQuality = v; },
+  setStress: (v: number) => { mockStore.stress = v; },
   handleSaveCheckin: vi.fn().mockResolvedValue(undefined),
-  checkins: [], showToast: vi.fn(), todayISO: '2026-05-24',
+  get checkins() { return mockCheckins; },
+  showToast: vi.fn(), todayISO: '2026-05-24',
   get checkinTier() { return mockTier; },
 };
 
-vi.mock('../../stores/useAppStore.js', () => ({
+vi.mock('../../store/index.js', () => ({
   useAppStore: () => mockStore,
 }));
 
@@ -38,6 +44,7 @@ vi.mock('../../ui/components/Collapsible.jsx', () => ({
 import CheckinForm from '../../ui/pages/CheckinForm.jsx';
 
 beforeEach(() => {
+  mockCheckins = [{ date: '2026-05-24' }];
   mockStore.weight = 0;
   mockStore.restHR = 0;
   mockStore.hrv = 0;

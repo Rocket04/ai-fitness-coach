@@ -4,7 +4,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Moon, TrendingUp } from 'lucide-react';
-import { useAppStore } from '../../stores/useAppStore.js';
+import { useAppStore } from '../../store/index.js';
 import CheckinForm from './CheckinForm.jsx';
 import SessionLogger from './SessionLogger.jsx';
 import CheckinHistory from '../components/CheckinHistory.jsx';

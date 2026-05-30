@@ -3,6 +3,7 @@
 
 import React from 'react';
 import { Moon, Sparkles, Activity, Zap, Radio, Scale, HelpCircle } from 'lucide-react';
+import styles from './CorrelationCard.module.css';
 
 const iconMap = {
   Moon,
@@ -29,21 +30,21 @@ export default function CorrelationCard({ result }) {
 
   return React.createElement(
     'div',
-    { className: 'correlation-card' },
+    { className: styles['correlation-card'] },
     React.createElement(
       'div',
-      { className: 'correlation-card__header' },
-      React.createElement('span', { className: 'correlation-card__icon' }, React.createElement(IconComponent, { size: 16 })),
-      React.createElement('span', { className: 'correlation-card__title' }, result.title)
+      { className: styles['correlation-card__header'] },
+      React.createElement('span', { className: styles['correlation-card__icon'] }, React.createElement(IconComponent, { size: 16 })),
+      React.createElement('span', { className: styles['correlation-card__title'] }, result.title)
     ),
     React.createElement(
       'p',
-      { className: 'correlation-card__insight', style: { color: accent } },
+      { className: styles['correlation-card__insight'], style: { color: accent } },
       result.insight
     ),
     React.createElement(
       'span',
-      { className: 'correlation-card__sample' },
+      { className: styles['correlation-card__sample'] },
       `n=${result.sampleSize}`
     )
   );

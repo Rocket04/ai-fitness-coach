@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { I18nextProvider, useTranslation } from 'react-i18next';
 import { Home, BookOpen, TrendingUp, User, X, Check, RefreshCw } from 'lucide-react';
 import i18n from './i18n/index.js';
-import { useAppStore } from './stores/useAppStore.js';
+import { useAppStore } from './store/index.js';
 import { DAYS, DAYS_TO_DOW } from './config/constants.js';
 import Modal from './ui/components/Modal.jsx';
 import ErrorBoundary from './ui/components/ErrorBoundary.jsx';
@@ -15,6 +15,7 @@ import OnlineStatus from './ui/components/OnlineStatus.jsx';
 import UpdateBanner from './ui/components/UpdateBanner.tsx';
 import { useServiceWorkerUpdate } from './hooks/useServiceWorkerUpdate.js';
 import { isOnboardingCompleted } from './core/onboardingStorage.js';
+import { showDailyReminder, showMondaySummary, getStoredNotifyTime, NOTIFY_ENABLED_KEY } from './domains/notifications/notifications.js';
 
 const TodayPage = lazy(() => import('./ui/pages/TodayPage.jsx'));
 const LogPage = lazy(() => import('./ui/pages/LogPage.jsx'));
@@ -61,7 +62,7 @@ function AppContent() {
   const { t } = useTranslation();
   const {
     dataLoaded, toast, showSettings, editStartDate, editTrainDays, activeTab, demoMode,
-    guestMode, showGuestModal,
+    guestMode, showGuestModal, todayISO, checkins,
     setActiveTab, setShowSettings, setEditStartDate, toggleDay, handleSaveSettings,
     initApp, completeOnboarding, startTracking, completeGuestModeOnboarding,
     setShowGuestModal,
@@ -89,6 +90,20 @@ function AppContent() {
       }
     }
   }, [dataLoaded, guestMode, forceShowOnboarding]);
+
+  // Schedule daily reminder notification after data load
+  useEffect(() => {
+    if (!dataLoaded) return;
+    const enabled = (() => { try { return localStorage.getItem(NOTIFY_ENABLED_KEY) === 'true'; } catch { return false; } })();
+    if (!enabled) return;
+    const checkinDone = checkins.some(c => c.date === todayISO);
+    const time = getStoredNotifyTime();
+    showDailyReminder(checkinDone, time);
+    const now = new Date();
+    if (now.getDay() === 1) {
+      showMondaySummary();
+    }
+  }, [dataLoaded]);
 
   if (!dataLoaded) {
     return (

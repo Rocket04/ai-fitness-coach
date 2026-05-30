@@ -1,7 +1,7 @@
 ﻿# MASTER PLAN — Smart Fitness Coach
 
 **Last verified:** 2026-05-26  
-**Current status:** Local-first prototype with APRE, tiered check-in, multi-sport templates, and basic analytics.  
+**Current status:** Architecture migration complete, 724 tests passing, domain-based structure.  
 **Primary objective:** make the daily training recommendation reliable, explainable, and testable.
 
 ## 1. Verified Current State
@@ -26,8 +26,9 @@
 ### Known technical state
 
 - `npm run type-check` passes.
-- `npm test` currently fails.
-- Latest observed test status: `297 passed / 33 failed`, `10 failed files`.
+- `npm test` — 724 passed, 0 failures (61 files).
+- Architecture migrated to `js/domains/` (8 modules) + `js/shared/` layer.
+- Re-export bridges in `js/core/` for backward compatibility.
 
 ### Known test failure categories
 
@@ -57,24 +58,15 @@ A local-first adaptive training planner with manual data entry and transparent A
 
 **Goal:** make the current product honest and shippable.
 
-### Required tasks
+### Status
 
-1. Fix all failing tests.
-2. Remove or relabel fake integrations as "planned".
-3. Align docs with actual code.
-4. Add visible non-medical disclaimer.
-5. Add recommendation explanation block:
-   - input signals;
-   - decision;
-   - plan changes;
-   - confidence.
+✅ **Complete.**
 
-### Exit criteria
-
-- `npm run type-check` green.
-- `npm test` green.
-- Docs no longer claim missing features.
-- User can understand why today is green/yellow/red.
+- All tests passing (724/724).
+- Architecture migrated to domain-based structure.
+- Removed stale directories and re-export stubs.
+- Docs aligned with actual code.
+- Recommendation explanation block implemented.
 
 ## Phase 1 — Better Session Logging
 
@@ -204,7 +196,18 @@ A local-first adaptive training planner with manual data entry and transparent A
 - Advice is personalized from actual data.
 - No medical claims without evidence and disclaimer.
 
-## 4. Non-goals
+## 4. Architecture Post-Migration
+
+Current layout:
+
+- `js/domains/` — 8 domain modules: training, checkin, analytics, profile, achievements, import, demo, onboarding
+- `js/shared/` — types, helpers, config, hooks, i18n, UI primitives
+- `js/stores/` — Zustand store (useAppStore.ts) + 5 slices
+- `js/core/` — re-export bridges + 4 remaining real files (storage.ts, advice.ts, recoveryScore.ts, readiness.ts)
+- `js/ui/` — pages and components
+- `js/tests/` — test suites
+
+## 5. Non-goals
 
 For now, do not prioritize:
 
@@ -215,7 +218,7 @@ For now, do not prioritize:
 - community exercise library without moderation;
 - "Health OS" branding.
 
-## 5. Documentation Rules
+## 6. Documentation Rules
 
 Docs must classify every feature as:
 

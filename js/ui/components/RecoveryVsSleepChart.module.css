@@ -1,0 +1,27 @@
+.recovery-chart-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.recovery-chart-container__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.recovery-chart-container__title {
+  font-size: var(--font-size-body);
+  font-weight: 600;
+}
+
+.recovery-chart-container__subtitle {
+  font-size: var(--font-size-caption);
+  color: var(--text3);
+}
+
+.recovery-chart {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}

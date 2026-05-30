@@ -25,21 +25,36 @@ Removed stale/untracked files:
 Committed valid doc:
 - `docs/onboarding-e2e-report.md`
 
+### Type Safety
+- Removed all `any` types from `js/core/` ✅
+- Added proper TypeScript interfaces for `ImportedData`, `ImportedAchievement`, etc.
+
+### Test Coverage Improvements
+- `js/tests/core/storage.test.ts` — added 25 tests
+- `js/tests/core/useAppStore.test.ts` — extended to 26 tests
+- `js/tests/core/importSchemas.test.ts` — added 19 tests (now 100%)
+- `js/tests/core/advice.test.ts` — added tests
+- Fixed `js/tests/core/weeklyPlan.test.ts` date formatting issue
+
 ### Key Decisions
 - Keep upstream `.gitignore` exclusions to avoid committing local config files
 - Amend commit to remove exposed PAT instead of creating new commit to keep history clean
 - Delete stale/untracked generated files instead of committing them
 
 ## Current State
-- Test coverage: 57.2% (target ≥80% per AGENTS.md)
-- `js/core/analytics.ts`, `js/core/advice.ts` have `any` type violations
-- GitHub push protection: resolved
+- Test coverage: **62.57%** (target ≥80% per AGENTS.md)
+- All tests passing: **408/408** ✅
+- `importSchemas.ts` — 100% ✅
+- `useAppStore.ts` — 24.21% (biggest gap)
+- `analytics.ts` — 62.23%
+- `planning.ts` — 55.19%
+- `advice.ts` — 69.66%
 
 ## Next Steps
-1. Fix `any` type usages in `js/core/` (analytics.ts, advice.ts)
-2. Backfill test coverage for `storage.ts` and `useAppStore.ts`
-3. Update README.md to reflect completed work
+1. Continue backfilling tests for `useAppStore.ts` (low coverage)
+2. Improve `analytics.ts` coverage (RPE comparison logic needs more tests)
+3. Improve `planning.ts` coverage
+4. Push changes when coverage reaches target
 
-## Critical Context
-- 44 untracked files existed before cleanup (stale scripts, generated docs, coverage artifacts)
-- GitHub push protection blocked initial push due to exposed PAT, resolved by amending the commit
+## Summary (Session End)
+Fixed `any` types in `js/core/`, added 50+ new tests, improved coverage from 60.67% to 62.57%, all 408 tests now pass. Still need ~17% more coverage to reach 80% target.

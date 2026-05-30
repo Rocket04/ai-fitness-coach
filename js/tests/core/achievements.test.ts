@@ -40,7 +40,7 @@ const mockToArray = vi.fn();
 const mockBulkAdd = vi.fn();
 const mockClear = vi.fn();
 
-vi.mock('../../core/storage.js', () => ({
+vi.mock('../../data/storage.js', () => ({
   getActiveDatabase: () => ({
     achievements: {
       toArray: () => mockToArray(),

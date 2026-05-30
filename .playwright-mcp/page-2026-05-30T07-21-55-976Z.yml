@@ -1,0 +1,131 @@
+- generic [ref=e2]:
+  - main [ref=e16]:
+    - generic [ref=e112]:
+      - generic [ref=e113]:
+        - img [ref=e115]
+        - generic [ref=e118]:
+          - heading "Атлет" [level=2] [ref=e119]
+          - generic [ref=e121]:
+            - img [ref=e122]
+            - text: 1 дн.
+      - generic [ref=e124]:
+        - button "ТРЕНИРОВКИ" [ref=e125] [cursor=pointer]:
+          - generic [ref=e126]:
+            - img [ref=e127]
+            - generic [ref=e133]: ТРЕНИРОВКИ
+          - img [ref=e135]
+        - generic [ref=e137]:
+          - generic [ref=e138]:
+            - generic [ref=e139]: Расписание
+            - generic [ref=e140]:
+              - button "Пн" [ref=e141] [cursor=pointer]
+              - button "Вт" [ref=e142] [cursor=pointer]
+              - button "Ср" [ref=e143] [cursor=pointer]
+              - button "Чт" [ref=e144] [cursor=pointer]
+              - button "Пт" [ref=e145] [cursor=pointer]
+              - button "Сб" [ref=e146] [cursor=pointer]
+              - button "Вс" [ref=e147] [cursor=pointer]
+          - generic [ref=e148]:
+            - generic [ref=e149]: Уровень чек-ина
+            - generic [ref=e150]:
+              - button "Легкий" [ref=e151] [cursor=pointer]
+              - button "Средний" [ref=e152] [cursor=pointer]
+              - button "Полный" [ref=e153] [cursor=pointer]
+          - generic [ref=e154]:
+            - generic [ref=e155]: Дата старта
+            - textbox [ref=e156]
+      - generic [ref=e157]:
+        - button "ЗДОРОВЬЕ" [ref=e158] [cursor=pointer]:
+          - generic [ref=e159]:
+            - img [ref=e160]
+            - generic [ref=e162]: ЗДОРОВЬЕ
+          - img [ref=e164]
+        - generic [ref=e167]:
+          - generic [ref=e168]: Реабилитация
+          - generic [ref=e169]:
+            - generic [ref=e170]:
+              - generic [ref=e171]: Тазобедренные суставы
+              - generic [ref=e172]: Плечи
+              - generic [ref=e173]: Спина
+            - button "Изменить" [ref=e174] [cursor=pointer]
+      - generic [ref=e175]:
+        - button "ИНТЕГРАЦИИ" [ref=e176] [cursor=pointer]:
+          - generic [ref=e177]:
+            - img [ref=e178]
+            - generic [ref=e181]: ИНТЕГРАЦИИ
+          - img [ref=e183]
+        - generic [ref=e185]:
+          - generic [ref=e186]:
+            - generic [ref=e187]: ⌚
+            - generic [ref=e188]: Garmin Connect
+            - generic [ref=e189]: Не подключено
+            - button "Подключить" [ref=e190] [cursor=pointer]
+          - generic [ref=e191]:
+            - generic [ref=e192]: 🍎
+            - generic [ref=e193]: Apple Health
+            - generic [ref=e194]: Не подключено
+            - button "Подключить" [ref=e195] [cursor=pointer]
+          - generic [ref=e196]:
+            - generic [ref=e197]: 🔵
+            - generic [ref=e198]: Google Fit
+            - generic [ref=e199]: Не подключено
+            - button "Подключить" [ref=e200] [cursor=pointer]
+      - generic [ref=e201]:
+        - button "ДАННЫЕ" [ref=e202] [cursor=pointer]:
+          - generic [ref=e203]:
+            - img [ref=e204]
+            - generic [ref=e208]: ДАННЫЕ
+          - img [ref=e210]
+        - generic [ref=e212]:
+          - button "📲 Импорт Health Sync (CSV)" [ref=e213] [cursor=pointer]:
+            - img [ref=e214]
+            - generic [ref=e217]: 📲 Импорт Health Sync (CSV)
+          - generic [ref=e218]:
+            - button "💾 Экспорт" [ref=e219] [cursor=pointer]:
+              - img [ref=e220]
+              - text: 💾 Экспорт
+            - button "📂 Импорт" [ref=e223] [cursor=pointer]:
+              - img [ref=e224]
+              - text: 📂 Импорт
+          - button "Восстановить backup" [ref=e229] [cursor=pointer]:
+            - img [ref=e230]
+            - text: Восстановить backup
+          - button "Сброс данных" [ref=e233] [cursor=pointer]:
+            - img [ref=e234]
+            - text: Сброс данных
+      - generic [ref=e237]:
+        - button "ПРИЛОЖЕНИЕ" [ref=e238] [cursor=pointer]:
+          - generic [ref=e239]:
+            - img [ref=e240]
+            - generic [ref=e242]: ПРИЛОЖЕНИЕ
+          - img [ref=e244]
+        - generic [ref=e246]:
+          - generic [ref=e247]:
+            - generic [ref=e248]: 🌐 Язык
+            - generic [ref=e249]:
+              - button "Русский" [ref=e250] [cursor=pointer]
+              - button "English" [ref=e251] [cursor=pointer]
+          - generic [ref=e253] [cursor=pointer]:
+            - generic [ref=e254]:
+              - img [ref=e255]
+              - text: Утреннее напоминание
+            - checkbox "Утреннее напоминание" [ref=e258]
+          - button "Версия 1.0.0" [ref=e260] [cursor=pointer]:
+            - img [ref=e261]
+            - text: Версия 1.0.0
+  - status [ref=e82]:
+    - img [ref=e83]
+    - text: Онлайн
+  - navigation "Главное меню" [ref=e87]:
+    - button "Сегодня" [ref=e88] [cursor=pointer]:
+      - img [ref=e90]
+      - generic [ref=e93]: Сегодня
+    - button "Дневник" [ref=e94] [cursor=pointer]:
+      - img [ref=e96]
+      - generic [ref=e98]: Дневник
+    - button "Аналитика" [ref=e99] [cursor=pointer]:
+      - img [ref=e101]
+      - generic [ref=e104]: Аналитика
+    - button "Профиль" [active] [ref=e105] [cursor=pointer]:
+      - img [ref=e107]
+      - generic [ref=e110]: Профиль

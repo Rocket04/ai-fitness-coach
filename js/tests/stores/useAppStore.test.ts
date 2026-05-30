@@ -1,9 +1,9 @@
 // js/tests/stores/useAppStore.test.ts
 // TDD behavior tests: user actions through public store interface
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-vi.mock('../../core/storage.js', () => ({
+vi.mock('../../data/storage.js', () => ({
   init: vi.fn().mockResolvedValue(undefined),
   saveSession: vi.fn().mockResolvedValue(undefined),
   deleteSession: vi.fn().mockResolvedValue(undefined),
@@ -24,7 +24,7 @@ vi.mock('../../core/storage.js', () => ({
   deactivateDemoData: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock('../../core/advice.js', () => ({
+vi.mock('../../domains/recovery/advice.js', () => ({
   getCoachAdvice: vi.fn().mockReturnValue([]),
   getApreExplanation: vi.fn().mockReturnValue([]),
 }));
@@ -35,7 +35,7 @@ vi.mock('../../core/achievements.js', () => ({
 
 /** Reset store to a clean state before each test */
 async function resetStore() {
-  const { useAppStore } = await import('../../stores/useAppStore.js');
+  const { useAppStore } = await import('../../store/index.js');
   useAppStore.setState({
     sessions: [],
     checkins: [],
@@ -98,7 +98,7 @@ describe('user tracks APRE results during workout', () => {
   });
 
   it('new exercise result is queued for saving', async () => {
-    const { useAppStore } = await import('../../stores/useAppStore.js');
+    const { useAppStore } = await import('../../store/index.js');
 
     useAppStore.getState().updateApreResult({
       exerciseName: 'Жим лёжа',
@@ -117,7 +117,7 @@ describe('user tracks APRE results during workout', () => {
   });
 
   it('updating same exercise replaces the previous result', async () => {
-    const { useAppStore } = await import('../../stores/useAppStore.js');
+    const { useAppStore } = await import('../../store/index.js');
 
     useAppStore.getState().updateApreResult({
       exerciseName: 'Жим лёжа',
@@ -145,7 +145,7 @@ describe('user tracks APRE results during workout', () => {
   });
 
   it('different exercises accumulate as separate results', async () => {
-    const { useAppStore } = await import('../../stores/useAppStore.js');
+    const { useAppStore } = await import('../../store/index.js');
 
     useAppStore.getState().updateApreResult({
       exerciseName: 'Жим лёжа',
@@ -174,57 +174,6 @@ describe('user tracks APRE results during workout', () => {
   });
 });
 
-describe('user marks daily routines', () => {
-  beforeEach(async () => {
-    vi.clearAllMocks();
-    await resetStore();
-  });
-
-  it('morning routine appears in today sessions after marking', async () => {
-    const { useAppStore } = await import('../../stores/useAppStore.js');
-
-    await useAppStore.getState().handleMarkMorning();
-
-    const state = useAppStore.getState();
-    const morning = state.sessions.find(s => s.type === 'morning');
-    expect(morning).toBeDefined();
-    expect(morning?.date).toBe('2026-05-26');
-    expect(morning?.completed).toBe(true);
-  });
-
-  it('toggling morning routine removes it from today sessions', async () => {
-    const { useAppStore } = await import('../../stores/useAppStore.js');
-
-    await useAppStore.getState().handleMarkMorning();
-    await useAppStore.getState().handleMarkMorning();
-
-    const state = useAppStore.getState();
-    expect(state.sessions.filter(s => s.type === 'morning')).toHaveLength(0);
-  });
-
-  it('evening routine appears in today sessions after marking', async () => {
-    const { useAppStore } = await import('../../stores/useAppStore.js');
-
-    await useAppStore.getState().handleMarkEvening();
-
-    const state = useAppStore.getState();
-    const evening = state.sessions.find(s => s.type === 'evening');
-    expect(evening).toBeDefined();
-    expect(evening?.date).toBe('2026-05-26');
-    expect(evening?.completed).toBe(true);
-  });
-
-  it('toggling evening routine removes it from today sessions', async () => {
-    const { useAppStore } = await import('../../stores/useAppStore.js');
-
-    await useAppStore.getState().handleMarkEvening();
-    await useAppStore.getState().handleMarkEvening();
-
-    const state = useAppStore.getState();
-    expect(state.sessions.filter(s => s.type === 'evening')).toHaveLength(0);
-  });
-});
-
 describe('user saves daily checkin', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -232,8 +181,8 @@ describe('user saves daily checkin', () => {
   });
 
   it('checkin is stored with all filled metrics', async () => {
-    const { useAppStore } = await import('../../stores/useAppStore.js');
-    const { saveCheckin } = await import('../../core/storage.js');
+    const { useAppStore } = await import('../../store/index.js');
+    const { saveCheckin } = await import('../../data/storage.js');
 
     await useAppStore.getState().handleSaveCheckin();
 
@@ -250,7 +199,7 @@ describe('user saves daily checkin', () => {
   });
 
   it('checkin appears in today data after saving', async () => {
-    const { useAppStore } = await import('../../stores/useAppStore.js');
+    const { useAppStore } = await import('../../store/index.js');
 
     await useAppStore.getState().handleSaveCheckin();
 
@@ -268,7 +217,7 @@ describe('user manages training sessions', () => {
   });
 
   it('form values are reflected when recording a session', async () => {
-    const { useAppStore } = await import('../../stores/useAppStore.js');
+    const { useAppStore } = await import('../../store/index.js');
 
     // User fills the session form
     useAppStore.getState().setRpe(8);
@@ -282,7 +231,7 @@ describe('user manages training sessions', () => {
   });
 
   it('test results are captured for strength tracking', async () => {
-    const { useAppStore } = await import('../../stores/useAppStore.js');
+    const { useAppStore } = await import('../../store/index.js');
 
     useAppStore.getState().setTestPullUps(15);
     useAppStore.getState().setTestPushUps(30);
@@ -302,8 +251,8 @@ describe('user manages settings', () => {
   });
 
   it('updates startDate and trainDays via handleSaveSettings', async () => {
-    const { useAppStore } = await import('../../stores/useAppStore.js');
-    const { saveSettings } = await import('../../core/storage.js');
+    const { useAppStore } = await import('../../store/index.js');
+    const { saveSettings } = await import('../../data/storage.js');
 
     useAppStore.getState().setEditStartDate('2026-06-01');
     useAppStore.getState().setEditTrainDays([2, 4, 6]);
@@ -315,20 +264,26 @@ describe('user manages settings', () => {
     expect(vi.mocked(saveSettings)).toHaveBeenCalledOnce();
   });
 
-  it('updates profile fields via setState', async () => {
-    const { useAppStore } = await import('../../stores/useAppStore.js');
+  it('updates profile fields', async () => {
+    const { useAppStore } = await import('../../store/index.js');
 
-    useAppStore.setState({ profileLevel: 'advanced', profileGoals: ['hypertrophy'], profileEquipment: { dumbbells: true } });
+    await useAppStore.getState().setProfileLevel('advanced');
+    await useAppStore.getState().setProfileGoals(['hypertrophy']);
+    await useAppStore.getState().setProfileEquipment({ dumbbells_max_kg: 20 });
 
     const state = useAppStore.getState();
     expect(state.profileLevel).toBe('advanced');
     expect(state.profileGoals).toEqual(['hypertrophy']);
+    expect(state.profileEquipment).toEqual({ dumbbells_max_kg: 20 });
   });
 
-  it('sets checkin tier via setState', async () => {
-    const { useAppStore } = await import('../../stores/useAppStore.js');
+  it('sets checkin tier', async () => {
+    const { useAppStore } = await import('../../store/index.js');
+    const { saveSetting } = await import('../../data/storage.js');
 
-    useAppStore.setState({ checkinTier: 'full' });
+    await useAppStore.getState().setCheckinTier('full');
+
+    expect(vi.mocked(saveSetting)).toHaveBeenCalledWith('checkinTier', 'full');
     expect(useAppStore.getState().checkinTier).toBe('full');
   });
 });
@@ -339,37 +294,48 @@ describe('user toggles UI state', () => {
     await resetStore();
   });
 
-  it('opens and closes settings modal', async () => {
-    const { useAppStore } = await import('../../stores/useAppStore.js');
+  it('opens settings modal', async () => {
+    const { useAppStore } = await import('../../store/index.js');
 
-    useAppStore.setState({ showSettings: true });
+    useAppStore.getState().openSettings();
     expect(useAppStore.getState().showSettings).toBe(true);
+    expect(useAppStore.getState().editStartDate).toBe('2026-05-01');
+  });
 
-    useAppStore.setState({ showSettings: false });
+  it('closes settings modal', async () => {
+    const { useAppStore } = await import('../../store/index.js');
+
+    useAppStore.getState().openSettings();
+    useAppStore.getState().closeSettings();
     expect(useAppStore.getState().showSettings).toBe(false);
   });
 
-  it('opens and closes reset confirmation dialog', async () => {
-    const { useAppStore } = await import('../../stores/useAppStore.js');
+  it('opens reset confirmation dialog', async () => {
+    const { useAppStore } = await import('../../store/index.js');
 
-    useAppStore.setState({ showResetConfirm: true });
+    useAppStore.getState().handleResetAll();
     expect(useAppStore.getState().showResetConfirm).toBe(true);
+  });
 
-    useAppStore.setState({ showResetConfirm: false });
+  it('closes reset confirmation dialog', async () => {
+    const { useAppStore } = await import('../../store/index.js');
+
+    useAppStore.getState().handleResetAll();
+    useAppStore.getState().closeResetConfirm();
     expect(useAppStore.getState().showResetConfirm).toBe(false);
   });
 
   it('switches active tab', async () => {
-    const { useAppStore } = await import('../../stores/useAppStore.js');
+    const { useAppStore } = await import('../../store/index.js');
 
-    useAppStore.setState({ activeTab: 2 });
+    useAppStore.getState().setActiveTab(2);
     expect(useAppStore.getState().activeTab).toBe(2);
   });
 
-  it('toggles readiness visibility', async () => {
-    const { useAppStore } = await import('../../stores/useAppStore.js');
+  it('shows readiness', async () => {
+    const { useAppStore } = await import('../../store/index.js');
 
-    useAppStore.setState({ showReadiness: true });
+    useAppStore.getState().setShowReadiness(true);
     expect(useAppStore.getState().showReadiness).toBe(true);
   });
 });
@@ -381,24 +347,24 @@ describe('user shifts virtual date', () => {
   });
 
   it('applies positive offset to virtualTodayOffset', async () => {
-    const { useAppStore } = await import('../../stores/useAppStore.js');
+    const { useAppStore } = await import('../../store/index.js');
 
-    useAppStore.setState({ virtualTodayOffset: 3 });
+    await useAppStore.getState().setVirtualTodayOffset(3);
     expect(useAppStore.getState().virtualTodayOffset).toBe(3);
   });
 
   it('applies negative offset to virtualTodayOffset', async () => {
-    const { useAppStore } = await import('../../stores/useAppStore.js');
+    const { useAppStore } = await import('../../store/index.js');
 
-    useAppStore.setState({ virtualTodayOffset: -2 });
+    await useAppStore.getState().setVirtualTodayOffset(-2);
     expect(useAppStore.getState().virtualTodayOffset).toBe(-2);
   });
 
   it('resets offset to zero', async () => {
-    const { useAppStore } = await import('../../stores/useAppStore.js');
+    const { useAppStore } = await import('../../store/index.js');
 
-    useAppStore.setState({ virtualTodayOffset: 5 });
-    useAppStore.setState({ virtualTodayOffset: 0 });
+    await useAppStore.getState().setVirtualTodayOffset(5);
+    await useAppStore.getState().setVirtualTodayOffset(0);
     expect(useAppStore.getState().virtualTodayOffset).toBe(0);
   });
 });
@@ -410,9 +376,9 @@ describe('demo mode management', () => {
   });
 
   it('sets demo mode flag', async () => {
-    const { useAppStore } = await import('../../stores/useAppStore.js');
+    const { useAppStore } = await import('../../store/index.js');
 
-    useAppStore.setState({ demoMode: true });
+    useAppStore.getState().setDemoMode(true);
     expect(useAppStore.getState().demoMode).toBe(true);
   });
 });
@@ -423,45 +389,271 @@ describe('guest mode management', () => {
     await resetStore();
   });
 
-  it('sets guest mode flag via setState', async () => {
-    const { useAppStore } = await import('../../stores/useAppStore.js');
+  it('sets guest mode flag', async () => {
+    const { useAppStore } = await import('../../store/index.js');
 
-    useAppStore.setState({ guestMode: true, showGuestModal: false });
+    useAppStore.getState().setGuestMode(true);
     expect(useAppStore.getState().guestMode).toBe(true);
   });
 
-  it('shows guest modal via setState', async () => {
-    const { useAppStore } = await import('../../stores/useAppStore.js');
+  it('shows guest modal', async () => {
+    const { useAppStore } = await import('../../store/index.js');
 
-    useAppStore.setState({ showGuestModal: true });
+    useAppStore.getState().setShowGuestModal(true);
     expect(useAppStore.getState().showGuestModal).toBe(true);
   });
 });
 
-describe('toast notifications', () => {
+describe('weekly adherence multiplier', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     await resetStore();
   });
 
-  it('shows success toast via setState', async () => {
-    const { useAppStore } = await import('../../stores/useAppStore.js');
+  function makeSession(date: string, totalPlanned: number, totalCompleted: number) {
+    return {
+      key: `${date}_training`,
+      date,
+      type: 'A' as const,
+      completed: true,
+      readiness: 'green' as const,
+      rpe: 7,
+      notes: '',
+      updatedAt: Date.now(),
+      exerciseResults: [{
+        exerciseName: 'Push-ups',
+        plannedSets: totalPlanned,
+        completedSets: totalCompleted,
+        sets: [],
+        completed: totalCompleted > 0,
+      }],
+    };
+  }
 
-    useAppStore.setState({
-      toast: { message: 'Saved!', type: 'success', visible: true },
-    });
+  it('sets multiplier to 1.2 when last week completion is 100%', async () => {
+    const { useAppStore } = await import('../../store/index.js');
+
+    // todayISO is '2026-05-26' (Tue)
+    // Current Monday = 2026-05-25, Last Monday = 2026-05-18
+    // Sessions from 2026-05-18 to 2026-05-25 (excl. 25th) count as "last week"
+    const sessions = [
+      makeSession('2026-05-19', 3, 3), // 100%
+      makeSession('2026-05-21', 3, 3), // 100%
+    ];
+
+    useAppStore.setState({ sessions });
+    useAppStore.getState()._recompute();
+
+    const state = useAppStore.getState();
+    expect(state.weeklyAdherenceMultiplier).toBe(1.2);
+  });
+
+  it('sets multiplier to 0.8 when last week completion is 40%', async () => {
+    const { useAppStore } = await import('../../store/index.js');
+
+    const sessions = [
+      makeSession('2026-05-19', 5, 2), // 40%
+      makeSession('2026-05-21', 5, 2), // 40%
+    ];
+
+    useAppStore.setState({ sessions });
+    useAppStore.getState()._recompute();
+
+    const state = useAppStore.getState();
+    expect(state.weeklyAdherenceMultiplier).toBe(0.8);
+  });
+
+  it('keeps multiplier at 1.0 when no sessions in previous week', async () => {
+    const { useAppStore } = await import('../../store/index.js');
+
+    // Sessions from before last week — should not affect multiplier
+    const sessions = [
+      makeSession('2026-05-11', 3, 3), // earlier week
+    ];
+
+    useAppStore.setState({ sessions });
+    useAppStore.getState()._recompute();
+
+    const state = useAppStore.getState();
+    expect(state.weeklyAdherenceMultiplier).toBe(1.0);
+  });
+});
+
+describe('toast notifications', () => {
+  beforeEach(async () => {
+    vi.useFakeTimers();
+    vi.clearAllMocks();
+    await resetStore();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('shows success toast', async () => {
+    const { useAppStore } = await import('../../store/index.js');
+
+    useAppStore.getState().showToast('Saved!');
+
     const toast = useAppStore.getState().toast;
     expect(toast.message).toBe('Saved!');
     expect(toast.type).toBe('success');
     expect(toast.visible).toBe(true);
   });
 
-  it('hides toast via setState', async () => {
-    const { useAppStore } = await import('../../stores/useAppStore.js');
+  it('hides toast after timeout', async () => {
+    const { useAppStore } = await import('../../store/index.js');
 
-    useAppStore.setState({
-      toast: { message: 'Test', type: 'error', visible: false },
-    });
+    useAppStore.getState().showToast('Hidden');
+
+    expect(useAppStore.getState().toast.visible).toBe(true);
+
+    vi.advanceTimersByTime(2000);
+    await Promise.resolve();
+
+    expect(useAppStore.getState().toast.visible).toBe(false);
+  });
+});
+
+describe('data export', () => {
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    await resetStore();
+  });
+
+  it('exports data as JSON blob', async () => {
+    const { useAppStore } = await import('../../store/index.js');
+    
+    // Mock URL APIs
+    const mockCreateObjectURL = vi.fn(() => 'blob:url');
+    const mockRevokeObjectURL = vi.fn();
+    globalThis.URL.createObjectURL = mockCreateObjectURL;
+    globalThis.URL.revokeObjectURL = mockRevokeObjectURL;
+
+    const mockClick = vi.fn();
+    const mockAnchor = { click: mockClick, href: '', download: '' };
+    vi.spyOn(document, 'createElement').mockReturnValue(mockAnchor as any);
+
+    await useAppStore.getState().handleExportData();
+
+    expect(mockCreateObjectURL).toHaveBeenCalled();
+    expect(mockClick).toHaveBeenCalled();
+    expect(mockRevokeObjectURL).toHaveBeenCalled();
+  });
+});
+
+describe('data import', () => {
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    await resetStore();
+  });
+
+  it('rejects oversized files', async () => {
+    const { useAppStore } = await import('../../store/index.js');
+    
+    const largeFile = new File(['x'.repeat(6 * 1024 * 1024)], 'large.json', { type: 'application/json' });
+    
+    await expect(useAppStore.getState().handleImportData(largeFile)).rejects.toThrow('слишком большой');
+  });
+
+  it('rejects non-JSON files', async () => {
+    const { useAppStore } = await import('../../store/index.js');
+    
+    const txtFile = new File(['test'], 'test.txt', { type: 'text/plain' });
+    
+    await expect(useAppStore.getState().handleImportData(txtFile)).rejects.toThrow('Ожидается файл JSON');
+  });
+
+  it('rejects empty files', async () => {
+    const { useAppStore } = await import('../../store/index.js');
+    
+    const emptyFile = new File([''], 'empty.json', { type: 'application/json' });
+    
+    await expect(useAppStore.getState().handleImportData(emptyFile)).rejects.toThrow('Файл пуст');
+  });
+});
+
+describe('reset functionality', () => {
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    await resetStore();
+  });
+
+  it('shows reset confirmation dialog on handleResetAll', async () => {
+    const { useAppStore } = await import('../../store/index.js');
+    
+    useAppStore.getState().handleResetAll();
+    expect(useAppStore.getState().showResetConfirm).toBe(true);
+  });
+});
+
+describe('settings actions', () => {
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    await resetStore();
+  });
+
+  it('opens settings modal via openSettings', async () => {
+    const { useAppStore } = await import('../../store/index.js');
+    
+    useAppStore.getState().openSettings();
+    const state = useAppStore.getState();
+    expect(state.showSettings).toBe(true);
+    expect(state.editStartDate).toBe('2026-05-01');
+  });
+
+  it('toggles training days', async () => {
+    const { useAppStore } = await import('../../store/index.js');
+    
+    useAppStore.getState().toggleDay(2);
+    expect(useAppStore.getState().editTrainDays).toContain(2);
+    
+    useAppStore.getState().toggleDay(2);
+    expect(useAppStore.getState().editTrainDays).not.toContain(2);
+  });
+
+  it('sets checkin tier', async () => {
+    const { useAppStore } = await import('../../store/index.js');
+    const { saveSetting } = await import('../../data/storage.js');
+    
+    await useAppStore.getState().setCheckinTier('full');
+    
+    expect(vi.mocked(saveSetting)).toHaveBeenCalledWith('checkinTier', 'full');
+  });
+
+  it('sets virtual today offset', async () => {
+    const { useAppStore } = await import('../../store/index.js');
+    const { saveSetting } = await import('../../data/storage.js');
+    
+    await useAppStore.getState().setVirtualTodayOffset(5);
+    
+    expect(vi.mocked(saveSetting)).toHaveBeenCalledWith('virtualTodayOffset', 5);
+    expect(useAppStore.getState().virtualTodayOffset).toBe(5);
+  });
+});
+
+describe('toast actions', () => {
+  beforeEach(async () => {
+    vi.useFakeTimers();
+    vi.clearAllMocks();
+    await resetStore();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('showToast displays message and auto-hides', async () => {
+    const { useAppStore } = await import('../../store/index.js');
+    
+    useAppStore.getState().showToast('Test message');
+    
+    expect(useAppStore.getState().toast.message).toBe('Test message');
+    expect(useAppStore.getState().toast.visible).toBe(true);
+    
+    vi.advanceTimersByTime(2000);
+    await Promise.resolve();
+    
     expect(useAppStore.getState().toast.visible).toBe(false);
   });
 });

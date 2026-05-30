@@ -3,10 +3,10 @@
 
 import React, { useMemo, useEffect, useState } from 'react';
 import { BarChart3, Target, Scale, AlertTriangle, TrendingUp, Activity, Circle, BookOpen, Play, RotateCcw } from 'lucide-react';
-import { useAppStore } from '../../stores/useAppStore.js';
-import { RECOVERY_WEIGHTS, SUBJECTIVE_THRESHOLDS } from '../../config/constants.js';
-import { calculateRecoveryScore } from '../../core/recoveryScore.js';
-import { applyApre, calcNextWeekRM } from '../../core/apre/engine.js';
+import { useAppStore } from '../../store/index.js';
+import { RECOVERY_WEIGHTS, SUBJECTIVE_THRESHOLDS } from '../../shared/config/constants.js';
+import { calculateRecoveryScore } from '../../domains/recovery/recoveryScore.js';
+import { applyApre, calcNextWeekRM } from '../../domains/training/apre/engine.js';
 import HelpIcon from '../components/HelpIcon.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 

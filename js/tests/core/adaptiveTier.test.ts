@@ -36,41 +36,41 @@ function makeHistory(days: number, fillHRV: boolean = true, fillRHR: boolean = t
 
 describe('detectOptimalTier (Phase 3)', () => {
   it('returns "full" when HRV is consistently provided in recent checkins', async () => {
-    const { detectOptimalTier } = await import('../../core/recoveryScore.js');
+    const { detectOptimalTier } = await import('../../domains/recovery/recoveryScore.js');
     const checkins = makeHistory(7, true, true); // 7 days with HRV+RHR
     const suggestion = detectOptimalTier(checkins);
     expect(suggestion).toBe('full');
   });
 
   it('suggests "medium" when HRV is missing but RHR is provided', async () => {
-    const { detectOptimalTier } = await import('../../core/recoveryScore.js');
+    const { detectOptimalTier } = await import('../../domains/recovery/recoveryScore.js');
     const checkins = makeHistory(7, false, true); // 7 days with RHR but no HRV
     const suggestion = detectOptimalTier(checkins);
     expect(suggestion).toBe('medium');
   });
 
   it('suggests "light" when neither HRV nor RHR is consistently provided', async () => {
-    const { detectOptimalTier } = await import('../../core/recoveryScore.js');
+    const { detectOptimalTier } = await import('../../domains/recovery/recoveryScore.js');
     const checkins = makeHistory(7, false, false); // 7 days with no biometrics
     const suggestion = detectOptimalTier(checkins);
     expect(suggestion).toBe('light');
   });
 
   it('returns null when insufficient data (less than 3 checkins)', async () => {
-    const { detectOptimalTier } = await import('../../core/recoveryScore.js');
+    const { detectOptimalTier } = await import('../../domains/recovery/recoveryScore.js');
     const checkins = makeHistory(2, true, true);
     const suggestion = detectOptimalTier(checkins);
     expect(suggestion).toBeNull();
   });
 
   it('handles empty checkins array', async () => {
-    const { detectOptimalTier } = await import('../../core/recoveryScore.js');
+    const { detectOptimalTier } = await import('../../domains/recovery/recoveryScore.js');
     const suggestion = detectOptimalTier([]);
     expect(suggestion).toBeNull();
   });
 
   it('suggests "full" when HRV is present in >=70% of recent checkins', async () => {
-    const { detectOptimalTier } = await import('../../core/recoveryScore.js');
+    const { detectOptimalTier } = await import('../../domains/recovery/recoveryScore.js');
     // 5 out of 7 with HRV = ~71%
     const checkins = [
       ...makeHistory(5, true, true),

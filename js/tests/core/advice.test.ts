@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getExplanation, getCoachAdvice } from '../../core/advice.js';
+import { getExplanation, getCoachAdvice } from '../../domains/recovery/advice.js';
 import type { Checkin, TrendPoint } from '../../core/types.js';
 
 function makeCheckin(overrides: Partial<Checkin> = {}): Checkin {
@@ -140,7 +140,7 @@ describe('getCoachAdvice — biometrics warnings', () => {
   });
 
   it('no warnings for normal biometrics', () => {
-    const advice = getCoachAdvice(80, { sleepHours: 8, hrv: 50, restHR: 55, hipPain: 1 }, [], { green: 4 });
+    const advice = getCoachAdvice(80, { sleepHours: 8, hrv: 50, restHR: 55, hipPain: 1 }, [], { completed: 0, avgRPE: null, green: 4, yellow: 2, red: 1, dominantStatus: 'green' });
     const warnings = advice.filter(a => a.includes('мало') || a.includes('ниже') || a.includes('выше') || a.includes('Боль'));
     expect(warnings.length).toBe(0);
   });

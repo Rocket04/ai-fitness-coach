@@ -1,0 +1,122 @@
+.exercise-config-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 0.5rem 0;
+}
+
+.config-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.config-label {
+  font-weight: 600;
+  font-size: var(--font-size-body);
+  color: var(--text);
+}
+
+.protocol-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.protocol-btn {
+  flex: 1;
+  padding: 0.75rem;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.protocol-btn:hover {
+  border-color: var(--accent);
+}
+
+.protocol-btn--active {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+  color: var(--accent);
+}
+
+.protocol-hint {
+  font-size: var(--font-size-caption);
+  color: var(--text2);
+  font-style: italic;
+  margin: 0;
+}
+
+.level-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.level-btn {
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: var(--font-size-body);
+}
+
+.level-btn:hover {
+  border-color: var(--accent);
+}
+
+.level-btn--active {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.config-input {
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font-size: var(--font-size-body);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.config-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.weight-hint {
+  font-size: var(--font-size-caption);
+  color: var(--text2);
+  margin: 0;
+}
+
+.config-error {
+  color: var(--red);
+  font-size: var(--font-size-caption);
+  margin: 0;
+  padding: 0.5rem;
+  background: color-mix(in srgb, var(--red) 10%, transparent);
+  border-radius: var(--radius);
+  text-align: center;
+}
+
+.config-buttons {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 0.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}

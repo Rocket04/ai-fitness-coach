@@ -19,7 +19,7 @@ vi.mock('dexie', () => {
   };
 });
 
-import { isDemoMode, activateDemoData, deactivateDemoData, loadDemoModeState } from '../../core/storage.js';
+import { isDemoMode, activateDemoData, deactivateDemoData, loadDemoModeState } from '../../data/storage.js';
 
 const localStorageMock = {
   getItem: vi.fn(),

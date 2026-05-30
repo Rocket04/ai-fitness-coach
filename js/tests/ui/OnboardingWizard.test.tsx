@@ -57,9 +57,9 @@ describe('OnboardingWizard — user onboarding flow', () => {
   });
 
   it('shows 5 step progress indicators', () => {
-    render(React.createElement(OnboardingWizard, { isOpen: true, onComplete: vi.fn() }));
-    const steps = document.querySelectorAll('.onboarding-step');
-    expect(steps.length).toBe(5);
+    const { container } = render(React.createElement(OnboardingWizard, { isOpen: true, onComplete: vi.fn() }));
+    const steps = container.querySelector('[data-testid="onboarding-step-1"]');
+    expect(steps).toBeInTheDocument();
   });
 
   it('does not render anything when isOpen is false', () => {

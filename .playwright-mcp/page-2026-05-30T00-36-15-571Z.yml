@@ -1,0 +1,190 @@
+- generic [ref=e2]:
+  - main [ref=e16]:
+    - generic [ref=e19]:
+      - generic [ref=e20]:
+        - img [ref=e21]
+        - generic [ref=e23]: "Совет: переключите уровень чек-ина на \"Полный\" — вы редко заполняете текущие метрики."
+        - button "Переключить" [ref=e24] [cursor=pointer]
+      - generic [ref=e25]:
+        - button "Пн 25 A" [ref=e26] [cursor=pointer]:
+          - generic [ref=e27]: Пн
+          - generic [ref=e28]: "25"
+          - generic [ref=e29]: A
+        - button "Вт 26 Отдых" [ref=e30] [cursor=pointer]:
+          - generic [ref=e31]: Вт
+          - generic [ref=e32]: "26"
+          - generic [ref=e33]: Отдых
+        - button "Ср 27 B" [ref=e34] [cursor=pointer]:
+          - generic [ref=e35]: Ср
+          - generic [ref=e36]: "27"
+          - generic [ref=e37]: B
+        - button "Чт 28 Отдых" [ref=e38] [cursor=pointer]:
+          - generic [ref=e39]: Чт
+          - generic [ref=e40]: "28"
+          - generic [ref=e41]: Отдых
+        - button "Пт 29 A" [ref=e42] [cursor=pointer]:
+          - generic [ref=e43]: Пт
+          - generic [ref=e44]: "29"
+          - generic [ref=e45]: A
+        - button "Сб 30 Отдых" [ref=e46] [cursor=pointer]:
+          - generic [ref=e47]: Сб
+          - generic [ref=e48]: "30"
+          - generic [ref=e49]: Отдых
+        - button "Вс 31 Отдых" [ref=e50] [cursor=pointer]:
+          - generic [ref=e51]: Вс
+          - generic [ref=e52]: "31"
+          - generic [ref=e53]: Отдых
+      - generic [ref=e54]:
+        - button "План на неделю Неделя 2" [ref=e55] [cursor=pointer]:
+          - img [ref=e56]
+          - generic [ref=e58]: План на неделю
+          - generic [ref=e59]: Неделя 2
+          - img [ref=e172]
+        - generic [ref=e175]:
+          - generic [ref=e176] [cursor=pointer]:
+            - generic [ref=e177]:
+              - generic [ref=e178]: пн, 25 мая
+              - generic [ref=e179]:
+                - generic "Реабилитационные упражнения" [ref=e180]: РЕХАБ
+                - generic [ref=e181]: calisthenics
+            - generic [ref=e218]:
+              - generic [ref=e219]:
+                - generic [ref=e220]: Реабилитационные
+                - generic [ref=e221]:
+                  - generic [ref=e222]: Контролируемые вращения в тазобедренном суставе (на каждую сторону)
+                  - generic [ref=e223]: 2×10
+              - generic [ref=e224]:
+                - generic [ref=e225]: Контролируемые вращения в тазобедренном суставе (на каждую сторону)
+                - generic [ref=e226]: 1×10
+              - generic [ref=e227]:
+                - generic [ref=e228]: Скольжение у стены
+                - generic [ref=e229]: 2×8-10
+              - generic [ref=e230]:
+                - generic [ref=e231]: Кошка-корова
+                - generic [ref=e232]: 2×10
+              - generic [ref=e233]:
+                - generic [ref=e234]: Мобильность ТБС 90/90
+                - generic [ref=e235]: 1×5-6 / сторона
+              - generic [ref=e236]: "Режим: yellow"
+              - generic [ref=e237]:
+                - generic [ref=e238]: Recovery Score средний (yellow readiness) → объём снижен (минус 1 подход)
+                - generic [ref=e239]: Обнаружен recovery debt → нагрузка адаптирована
+                - generic [ref=e240]: Добавлены разогревающие реабилитационные упражнения перед тренировкой
+          - generic [ref=e183] [cursor=pointer]:
+            - generic [ref=e184]: вт, 26 мая
+            - generic [ref=e185]:
+              - generic "Реабилитационные упражнения" [ref=e186]: РЕХАБ
+              - generic [ref=e187]: walking
+          - generic [ref=e189] [cursor=pointer]:
+            - generic [ref=e190]: ср, 27 мая
+            - generic [ref=e191]:
+              - generic "Реабилитационные упражнения" [ref=e192]: РЕХАБ
+              - generic [ref=e193]: stretching
+          - generic [ref=e195] [cursor=pointer]:
+            - generic [ref=e196]: чт, 28 мая
+            - generic [ref=e197]:
+              - generic "Реабилитационные упражнения" [ref=e198]: РЕХАБ
+              - generic [ref=e199]: Отдых
+          - generic [ref=e201] [cursor=pointer]:
+            - generic [ref=e202]: пт, 29 мая
+            - generic [ref=e203]:
+              - generic "Реабилитационные упражнения" [ref=e204]: РЕХАБ
+              - generic [ref=e205]: calisthenics
+          - generic [ref=e207] [cursor=pointer]:
+            - generic [ref=e208]: сб, 30 мая (сегодня)
+            - generic [ref=e209]:
+              - generic "Реабилитационные упражнения" [ref=e210]: РЕХАБ
+              - generic [ref=e211]: walking
+          - generic [ref=e213] [cursor=pointer]:
+            - generic [ref=e214]: вс, 31 мая
+            - generic [ref=e215]:
+              - generic "Реабилитационные упражнения" [ref=e216]: РЕХАБ
+              - generic [ref=e217]: stretching
+      - generic [ref=e63]:
+        - heading "Почему?" [level=4] [ref=e64]
+        - list [ref=e65]:
+          - listitem [ref=e66]: Recovery Score 58 — Красный
+          - listitem [ref=e67]: Обнаружен recovery debt (недовосстановление). Нагрузка адаптирована.
+          - listitem [ref=e68]: Recovery Score средний (yellow readiness) → объём снижен (минус 1 подход)
+          - listitem [ref=e69]: Обнаружен recovery debt → нагрузка адаптирована
+          - listitem [ref=e70]: Добавлены разогревающие реабилитационные упражнения перед тренировкой
+      - 'generic "Recovery Score: 58%" [ref=e71]':
+        - 'button "Recovery Score: 58%. Нажмите для метрик." [ref=e72]':
+          - img [ref=e73]:
+            - generic [ref=e76]: "58"
+            - generic [ref=e77]: Восстановление
+        - generic [ref=e78]: Средне
+        - paragraph [ref=e79]:
+          - text: Нажмите на кольцо для метрик за 7 дней
+          - button "Подробнее о термине \"Recovery Score\"" [ref=e81] [cursor=pointer]: ？
+      - generic [ref=e82]:
+        - generic [ref=e83]:
+          - generic [ref=e84]: walking
+          - generic [ref=e85]:
+            - generic [ref=e86]: Неделя 2
+            - generic [ref=e87]: Тренировочный день
+        - button "Упражнения 2 упражнений ▼" [ref=e89] [cursor=pointer]:
+          - generic [ref=e90]: Упражнения
+          - generic [ref=e91]: 2 упражнений
+          - generic [ref=e92]: ▼
+        - generic [ref=e93]:
+          - generic [ref=e94]:
+            - generic [ref=e95]: Как прошла тренировка?
+            - strong [ref=e96]: "?"
+          - generic [ref=e97]: Нет нагрузки — пропуск/отдых
+          - slider [ref=e98] [cursor=pointer]: "0"
+          - generic [ref=e99]:
+            - generic [ref=e100]:
+              - text: Длительность (мин)
+              - spinbutton "Длительность (мин)" [ref=e101]: "45"
+            - generic [ref=e102]:
+              - text: Заметки
+              - textbox "Какие подходы дались тяжело?" [ref=e103]
+          - button "Сохранить тренировку" [ref=e104] [cursor=pointer]
+      - generic [ref=e105]:
+        - button "Советы тренера 5 ▼" [ref=e107]:
+          - generic [ref=e108]:
+            - img [ref=e109]
+            - text: Советы тренера
+          - generic [ref=e111]: "5"
+          - text: ▼
+        - generic [ref=e112]:
+          - button "Утро Активация" [ref=e113] [cursor=pointer]:
+            - img [ref=e115]
+            - generic [ref=e121]:
+              - generic [ref=e122]: Утро
+              - generic [ref=e123]: Активация
+          - button "Вечер Восстановление" [ref=e124] [cursor=pointer]:
+            - img [ref=e126]
+            - generic [ref=e128]:
+              - generic [ref=e129]: Вечер
+              - generic [ref=e130]: Восстановление
+      - generic [ref=e131]:
+        - generic [ref=e132]: Завтра
+        - generic [ref=e133]:
+          - img [ref=e134]
+          - text: 🛌 Отдых
+      - generic [ref=e136]:
+        - text: суббота, 30 мая
+        - generic [ref=e137]:
+          - img [ref=e138]
+          - text: "30"
+  - generic [ref=e140]: 👤 ГОСТЕВОЙ РЕЖИМ
+  - generic [ref=e141]:
+    - button "Начать трекинг" [ref=e142] [cursor=pointer]
+    - status [ref=e143]:
+      - img [ref=e144]
+      - text: Онлайн
+  - navigation "Главное меню" [ref=e148]:
+    - button "Сегодня" [ref=e149] [cursor=pointer]:
+      - img [ref=e151]
+      - generic [ref=e154]: Сегодня
+    - button "Дневник" [ref=e155] [cursor=pointer]:
+      - img [ref=e157]
+      - generic [ref=e159]: Дневник
+    - button "Аналитика" [ref=e160] [cursor=pointer]:
+      - img [ref=e162]
+      - generic [ref=e165]: Аналитика
+    - button "Профиль" [ref=e166] [cursor=pointer]:
+      - img [ref=e168]
+      - generic [ref=e171]: Профиль

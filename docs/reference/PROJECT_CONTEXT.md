@@ -49,17 +49,16 @@
 │  js/ui/pages/   js/ui/components/       │
 ├─────────────────────────────────────────┤
 │  Zustand Store (useAppStore.ts)         │
-│  Данные + Derived State + Actions       │
+│  js/stores/ — Данные + Actions          │
 ├─────────────────────────────────────────┤
-│  Domain Logic (js/core/)                │
-│  readiness · recoveryScore · planning   │
-│  exerciseDatabase · apre/engine         │
-│  loadAdjustments · stats · analytics    │
+│  Domain Logic (js/domains/)             │
+│  training · checkin · analytics ·       │
+│  profile · achievements · import ·      │
+│  demo · onboarding                      │
 ├─────────────────────────────────────────┤
-│  Sport Plans (js/plans/*.ts)            │
-│  8 modules: running, strength_gym,      │
-│  cycling, swimming, calisthenics,       │
-│  yoga, stretching, walking              │
+│  Shared Layer (js/shared/)              │
+│  types · helpers · config · hooks ·     │
+│  i18n · ui primitives                   │
 ├─────────────────────────────────────────┤
 │  Storage (Dexie / IndexedDB)            │
 │  js/core/storage.ts                     │
@@ -70,9 +69,9 @@
 
 **Стор:** `js/stores/useAppStore.ts` — единый центральный Zustand-стор. `computeDerived()` пересчитывает все производные значения после каждого изменения данных. Включает профиль пользователя (уровень, цели, инвентарь, реабилитация).
 
-**Планы тренировок:** `js/plans/` — 8 модулей видов спорта, каждый экспортирует `{SportKey}PlanModule` с 4 фазами (base/build/peak/deload). Регистрируются в `SPORT_MODULES` в planning.ts.
+**Планы тренировок:** `js/domains/training/plans/` — 8 модулей видов спорта, каждый экспортирует `{SportKey}PlanModule` с 4 фазами (base/build/peak/deload). Регистрируются в `SPORT_MODULES` в `js/domains/training/planning/planning.ts`.
 
-**База упражнений:** `js/core/exerciseDatabase.ts` — библиотека упражнений с метаданными реабилитации (avoidIf/rehabFor) и оборудования. Фильтрация упражнений по профилю пользователя.
+**База упражнений:** `js/domains/profile/exerciseDatabase.ts` — библиотека упражнений с метаданными реабилитации (avoidIf/rehabFor) и оборудования. Фильтрация упражнений по профилю пользователя.
 
 ## 🧠 5. Научная база (Прозрачность вместо «чёрного ящика»)
 
@@ -88,7 +87,7 @@
 
 ### APRE (Autoregulatory Progressive Resistance Exercise)
 
-Реализован в `js/core/apre/engine.js`. Динамическое изменение весов/повторов на основе RPE прошлой тренировки по таблицам Mann.
+Реализован в `js/domains/training/apre/engine.js`. Динамическое изменение весов/повторов на основе RPE прошлой тренировки по таблицам Mann.
 
 ### Readiness (Статус готовности)
 
@@ -163,6 +162,7 @@
 | Фаза 3 — Адаптивность | ✅ 100% | Виртуальная дата, 30-дневная лента, Demo Mode, AI-советы |
 | Фаза 4 — Профиль и реабилитация | ✅ 100% | UserProfileEditor, exerciseDatabase, фильтрация по инвентарю/реабилитации |
 | Фаза 5 — Экосистема | ⏳ 20% | LiveWorkoutMode (планируется), гранулярное логирование (планируется), Apple Health / Google Fit, PDF-отчёты |
+| Архитектурная миграция | ✅ 100% | Перенос логики в `js/domains/` (8 модулей), выделение `js/shared/`, re-export мосты через `js/core/` |
 
 ---
 
@@ -207,7 +207,7 @@
 
 ## 🧪 11. Тесты (текущее состояние)
 
-**240+ тестов, 26 файлов, 0 failures.**
+**724+ тестов, 61 файл, 0 failures.**
 
 | Файл | Тесты | Покрывает |
 |------|:-----:|-----------|
@@ -231,5 +231,18 @@
 | `js/tests/core/recoveryScore.test.ts` | ~11 | Recovery Score |
 | `js/tests/ui/OnboardingWizard.test.tsx` | ~6 | Онбординг |
 | `js/tests/ui/CheckinForm.test.tsx` | ~4 | Форма чек-ина |
+| `js/tests/core/storage.test.ts` | ~25 | Хранилище Dexie |
+| `js/tests/core/completionRate.test.ts` | ~6 | Completion rate |
+| `js/tests/core/adherenceMultiplier.test.ts` | ~7 | Adherence multiplier |
+| `js/domains/achievements/tests/achievements.test.ts` | ~8 | Достижения |
+| `js/domains/analytics/tests/streak.test.ts` | ~12 | Streak-трекинг |
+| `js/domains/training/tests/planning.test.ts` | ~11 | Планирование (domain) |
+| `js/domains/training/tests/sessionLoad.test.ts` | ~6 | Нагрузка сессии |
+| `js/domains/checkin/tests/validation.test.ts` | ~9 | Валидация (domain) |
+| `js/domains/profile/tests/exerciseDatabase.test.ts` | ~4 | База упражнений |
+| `js/domains/profile/tests/rehabProtocol.test.ts` | ~4 | Реабилитация |
+| `js/domains/training/tests/loadAdjustments.test.ts` | ~6 | Adjustments |
+| `js/domains/import/tests/csvParser.test.ts` | ~4 | CSV парсер |
+| ... | ... | ... |
 
 **Инвариант:** `tsc --noEmit` + `vite build` + `npm test` — всегда зелёные.

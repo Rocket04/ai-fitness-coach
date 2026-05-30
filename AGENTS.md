@@ -68,15 +68,15 @@ Core files:
 
 - `js/stores/useAppStore.ts`;
 - `js/stores/slices/` — Zustand store slices (checkin, session, ui, data, demo);
-- `js/core/recoveryScore.ts`;
-- `js/core/readiness.ts`;
-- `js/core/planning.ts`;
-- `js/core/apre/engine.js`;
-- `js/core/exerciseDatabase.ts`;
-- `js/core/completionRate.ts`;
-- `js/core/import/csvParser.ts`;
-- `js/core/analytics.ts`;
-- `js/core/sessionLoad.ts`.
+- `js/domains/recovery/recoveryScore.ts`;
+- `js/domains/recovery/readiness.ts`;
+- `js/domains/training/planning/planning.ts`;
+- `js/domains/training/apre/engine.js`;
+- `js/domains/profile/exerciseDatabase.ts`;
+- `js/domains/training/planning/completionRate.ts`;
+- `js/domains/import/csvParser.ts`;
+- `js/domains/analytics/analytics.ts`;
+- `js/domains/training/session/sessionLoad.ts`.
 
 ## Coding Rules
 
@@ -84,7 +84,7 @@ Core files:
 
 - Keep domain logic pure when possible.
 - Add tests for new domain functions.
-- Avoid `any` in `js/core/`; use proper types or `unknown` with guards.
+- Avoid `any` in `js/domains/`; use proper types or `unknown` with guards.
 - Keep `types.ts` synchronized with store state.
 
 ### React
@@ -307,7 +307,7 @@ When a user request matches a trigger phrase, invoke the corresponding skill via
 
 ## Documentation Update Rule
 
-Любое изменение в ядре системы (каталоги `js/core/`, `js/plans/`, `js/stores/`, `js/ui/`) должно сопровождаться обновлением соответствующего файла `docs/domains/<домен>/README.md`.
+Любое изменение в ядре системы (каталоги `js/core/`, `js/domains/`, `js/stores/`, `js/ui/`) должно сопровождаться обновлением соответствующего файла `docs/domains/<домен>/README.md`.
 
 Если изменение затрагивает API, модель данных или архитектурное решение – README домена обязательно обновляется. В остальных случаях – по необходимости.
 
