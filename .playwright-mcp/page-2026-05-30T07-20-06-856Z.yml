@@ -1,0 +1,24 @@
+- generic [ref=e2]:
+  - main [ref=e16]:
+    - generic [ref=e129]:
+      - paragraph [ref=e130]: Ошибка отображения раздела
+      - button "Повторить" [ref=e131] [cursor=pointer]:
+        - generic [ref=e132]:
+          - img [ref=e133]
+          - text: Повторить
+  - status [ref=e82]:
+    - img [ref=e83]
+    - text: Онлайн
+  - navigation "Главное меню" [ref=e87]:
+    - button "Сегодня" [ref=e88] [cursor=pointer]:
+      - img [ref=e90]
+      - generic [ref=e93]: Сегодня
+    - button "Дневник" [ref=e94] [cursor=pointer]:
+      - img [ref=e96]
+      - generic [ref=e98]: Дневник
+    - button "Аналитика" [ref=e99] [cursor=pointer]:
+      - img [ref=e101]
+      - generic [ref=e104]: Аналитика
+    - button "Профиль" [active] [ref=e105] [cursor=pointer]:
+      - img [ref=e107]
+      - generic [ref=e110]: Профиль

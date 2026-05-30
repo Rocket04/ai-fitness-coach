@@ -1,0 +1,110 @@
+- generic [ref=e2]:
+  - main [ref=e3]:
+    - generic [ref=e6]:
+      - generic [ref=e7]:
+        - button "Пн 25 A" [ref=e8] [cursor=pointer]:
+          - generic [ref=e9]: Пн
+          - generic [ref=e10]: "25"
+          - generic [ref=e11]: A
+        - button "Вт 26 Отдых" [ref=e12] [cursor=pointer]:
+          - generic [ref=e13]: Вт
+          - generic [ref=e14]: "26"
+          - generic [ref=e15]: Отдых
+        - button "Ср 27 B" [ref=e16] [cursor=pointer]:
+          - generic [ref=e17]: Ср
+          - generic [ref=e18]: "27"
+          - generic [ref=e19]: B
+        - button "Чт 28 Отдых" [ref=e20] [cursor=pointer]:
+          - generic [ref=e21]: Чт
+          - generic [ref=e22]: "28"
+          - generic [ref=e23]: Отдых
+        - button "Пт 29 A" [ref=e24] [cursor=pointer]:
+          - generic [ref=e25]: Пт
+          - generic [ref=e26]: "29"
+          - generic [ref=e27]: A
+        - button "Сб 30 Отдых" [ref=e28] [cursor=pointer]:
+          - generic [ref=e29]: Сб
+          - generic [ref=e30]: "30"
+          - generic [ref=e31]: Отдых
+        - button "Вс 31 Отдых" [ref=e32] [cursor=pointer]:
+          - generic [ref=e33]: Вс
+          - generic [ref=e34]: "31"
+          - generic [ref=e35]: Отдых
+      - button "План на неделю Неделя 1" [ref=e37] [cursor=pointer]:
+        - img [ref=e38]
+        - generic [ref=e40]: План на неделю
+        - generic [ref=e41]: Неделя 1
+        - img [ref=e43]
+      - generic [ref=e45]:
+        - heading "Почему?" [level=4] [ref=e46]
+        - list [ref=e47]:
+          - listitem [ref=e48]: Recovery Score 86 — Зелёный
+          - listitem [ref=e49]: Добавлены разогревающие реабилитационные упражнения перед тренировкой
+      - 'generic "Recovery Score: 86%" [ref=e50]':
+        - 'button "Recovery Score: 86%. Нажмите для метрик." [ref=e51]':
+          - img [ref=e52]:
+            - generic [ref=e55]: "86"
+            - generic [ref=e56]: Восстановление
+        - generic [ref=e57]: Готов
+        - paragraph [ref=e58]: score.building
+        - paragraph [ref=e59]:
+          - text: Нажмите на кольцо для метрик за 7 дней
+          - button "Подробнее о термине \"Recovery Score\"" [ref=e61] [cursor=pointer]: ？
+      - button "Начать тренировку" [ref=e63] [cursor=pointer]:
+        - img [ref=e64]
+        - generic [ref=e66]: Начать тренировку
+      - generic [ref=e67]:
+        - generic [ref=e68]: Завтра
+        - generic [ref=e69]:
+          - img [ref=e70]
+          - text: 🛌 Отдых
+      - generic [ref=e72]: суббота, 30 мая
+  - status [ref=e74]:
+    - img [ref=e75]
+    - text: Онлайн
+  - navigation "Главное меню" [ref=e79]:
+    - button "Сегодня" [ref=e80] [cursor=pointer]:
+      - img [ref=e82]
+      - generic [ref=e85]: Сегодня
+    - button "Дневник" [ref=e86] [cursor=pointer]:
+      - img [ref=e88]
+      - generic [ref=e90]: Дневник
+    - button "Аналитика" [ref=e91] [cursor=pointer]:
+      - img [ref=e93]
+      - generic [ref=e96]: Аналитика
+    - button "Профиль" [ref=e97] [cursor=pointer]:
+      - img [ref=e99]
+      - generic [ref=e102]: Профиль
+  - generic [ref=e104]:
+    - button "Закрыть" [ref=e105] [cursor=pointer]:
+      - text: Закрыть
+      - img [ref=e106]
+    - generic [ref=e120]:
+      - heading "Выбери свою цель" [level=2] [ref=e121]
+      - generic [ref=e122]:
+        - button "Стать сильнее Максимальная сила и мышечная масса" [ref=e123]:
+          - img [ref=e125]
+          - generic [ref=e131]: Стать сильнее
+          - generic [ref=e132]: Максимальная сила и мышечная масса
+        - button "Набрать форму Сила + выносливость в балансе" [ref=e133]:
+          - img [ref=e135]
+          - generic [ref=e137]: Набрать форму
+          - generic [ref=e138]: Сила + выносливость в балансе
+        - button "Похудеть и рельеф Жиросжигание и мышечный тонус" [ref=e139]:
+          - img [ref=e141]
+          - generic [ref=e143]: Похудеть и рельеф
+          - generic [ref=e144]: Жиросжигание и мышечный тонус
+      - generic [ref=e145]:
+        - paragraph [ref=e146]: Дни тренировок
+        - generic [ref=e147]:
+          - button "Пн" [ref=e148]
+          - button "Вт" [ref=e149]
+          - button "Ср" [ref=e150]
+          - button "Чт" [ref=e151]
+          - button "Пт" [ref=e152]
+          - button "Сб" [ref=e153]
+          - button "Вс" [ref=e154]
+        - paragraph [ref=e155]: "Выбрано: 3 из 7 дней"
+      - generic [ref=e156]:
+        - button "←" [ref=e157] [cursor=pointer]
+        - button "Далее →" [disabled] [ref=e158] [cursor=pointer]

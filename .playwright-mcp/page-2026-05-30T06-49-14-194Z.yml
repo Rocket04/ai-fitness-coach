@@ -1,0 +1,27 @@
+- generic [ref=e2]:
+  - main [ref=e3]:
+    - generic [ref=e6]:
+      - paragraph [ref=e7]: Ошибка отображения раздела
+      - button "Повторить" [ref=e8] [cursor=pointer]:
+        - generic [ref=e9]:
+          - img [ref=e10]
+          - text: Повторить
+  - generic [ref=e15]: 👤 ГОСТЕВОЙ РЕЖИМ
+  - generic [ref=e16]:
+    - button "Начать трекинг" [ref=e17] [cursor=pointer]
+    - status [ref=e18]:
+      - img [ref=e19]
+      - text: Онлайн
+  - navigation "Главное меню" [ref=e23]:
+    - button "Сегодня" [ref=e24] [cursor=pointer]:
+      - img [ref=e26]
+      - generic [ref=e29]: Сегодня
+    - button "Дневник" [ref=e30] [cursor=pointer]:
+      - img [ref=e32]
+      - generic [ref=e34]: Дневник
+    - button "Аналитика" [ref=e35] [cursor=pointer]:
+      - img [ref=e37]
+      - generic [ref=e40]: Аналитика
+    - button "Профиль" [active] [ref=e41] [cursor=pointer]:
+      - img [ref=e43]
+      - generic [ref=e46]: Профиль

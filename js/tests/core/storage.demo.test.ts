@@ -1,29 +1,63 @@
-// js/tests/core/storage.demo.test.ts
-// Tests for demo mode storage operations
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+vi.mock('dexie', () => {
+  return {
+    default: class FakeDexie {
+      version() { return this; }
+      stores() { return this; }
+      async open() { return this; }
+      close() {}
+      async transaction(...args: unknown[]) {
+        const callback = args[args.length - 1];
+        if (typeof callback === 'function') await callback();
+      }
+      sessions = { async bulkPut() {}, async clear() {} };
+      checkins = { async bulkPut() {}, async clear() {} };
+      settings = { async bulkPut() {}, async clear() {} };
+      achievements = { async clear() {} };
+    }
+  };
+});
 
-describe('demo mode storage', () => {
+import { isDemoMode, activateDemoData, deactivateDemoData, loadDemoModeState } from '../../data/storage.js';
+
+const localStorageMock = {
+  getItem: vi.fn(),
+  setItem: vi.fn(),
+  removeItem: vi.fn(),
+};
+
+describe('demo mode', () => {
   beforeEach(() => {
-    vi.resetModules();
+    vi.stubGlobal('localStorage', localStorageMock);
+    localStorageMock.getItem.mockReturnValue(null);
+    localStorageMock.removeItem.mockClear();
   });
 
-  it('should have demo mode functions available', async () => {
-    // Since storage.ts uses Dexie at module level, we test by importing
-    // and checking the module has the expected exports
-    const mod = await import('../../core/storage.js');
-    // The module should export these functions (they may throw if DB not connected,
-    // but they should exist)
-    expect(mod.isDemoMode).toBeDefined();
-    expect(typeof mod.isDemoMode).toBe('function');
-    expect(mod.isDemoMode()).toBe(false);
+  afterEach(async () => {
+    await deactivateDemoData();
   });
 
-  it('should export activateDemoData and deactivateDemoData', async () => {
-    const mod = await import('../../core/storage.js');
-    expect(mod.activateDemoData).toBeDefined();
-    expect(mod.deactivateDemoData).toBeDefined();
-    expect(typeof mod.activateDemoData).toBe('function');
-    expect(typeof mod.deactivateDemoData).toBe('function');
+  it('is inactive by default', () => {
+    expect(isDemoMode()).toBe(false);
+  });
+
+  it('activates after calling activateDemoData', async () => {
+    await activateDemoData({ sessions: [], checkins: [], settings: {} });
+    expect(isDemoMode()).toBe(true);
+  });
+
+  it('deactivates after calling deactivateDemoData', async () => {
+    await activateDemoData({ sessions: [], checkins: [], settings: {} });
+    expect(isDemoMode()).toBe(true);
+    await deactivateDemoData();
+    expect(isDemoMode()).toBe(false);
+  });
+
+  it('reads demo state from localStorage', () => {
+    localStorageMock.getItem.mockReturnValue(null);
+    expect(loadDemoModeState()).toBe(false);
+    localStorageMock.getItem.mockReturnValue('1');
+    expect(loadDemoModeState()).toBe(true);
   });
 });

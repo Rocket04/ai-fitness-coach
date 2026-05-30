@@ -5,7 +5,8 @@
 
 [![PWA Ready](https://img.shields.io/badge/PWA-ready-brightgreen)]()
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)]()
-[![Tests](https://img.shields.io/badge/tests-240%2B%20passed%20(26%20files)-brightgreen)]()
+[![Tests](https://img.shields.io/badge/tests-724%2B%20passed%20(61%20files)-brightgreen)]()
+[![E2E Tests](https://img.shields.io/badge/E2E-51%20specs%20(Playwright)-brightgreen)]()
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue)]()
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)]()
 
@@ -44,7 +45,7 @@
 - **APRE** (Autoregulatory Progressive Resistance Exercise) — нагрузка меняется на основе RPE по таблицам Mann
 - **Recovery Score** — тиерированная система: Full (HRV 40% + Sleep 30% + RHR 10% + Subjective 20%), Medium, Light (100% субъективный)
 - **Мульти-спорт планы** — 8 видов спорта с 12-недельной периодизацией (base → build → peak → deload)
-  - `js/plans/` — running.ts, strength.ts, cycling.ts, swimming.ts, calisthenics.ts, yoga.ts, stretching.ts, walking.ts
+  - `js/domains/training/plans/` — running.ts, strength.ts, cycling.ts, swimming.ts, calisthenics.ts, yoga.ts, stretching.ts, walking.ts
   - Комбинация видов спорта через `combineSportPlans()` с автоматическим разрешением конфликтов
 - **Профиль пользователя** — уровень (beginner/intermediate/advanced), цели (hypertrophy/strength/endurance/rehabilitation), инвентарь
 - **Реабилитационный фильтр** — автоматическое исключение противопоказанных упражнений, замена на реабилитационные
@@ -65,10 +66,47 @@
 - ✅ **PWA** — работает офлайн, Workbox
 - ✅ **Полная приватность** — все данные локально в IndexedDB (Dexie.js)
 - ✅ **TypeScript strict** — полная типизация
+- ✅ **Exercise set completion tracking** — non-APRE per-set checkboxes
+- ✅ **Weekly completion rate** — adherence-based volume multiplier auto-adjusts next week's load
+- ✅ **CSV biometrics import** — Health Sync CSV parser
+- ✅ **Rehab-aware stretching** — auto-filters contraindicated exercises
+- ✅ **Domain-based architecture** — 8 domain modules (training, recovery → checkin, analytics, profile, achievements, import, demo, onboarding)
+- ✅ **Modular Zustand store** — 5 slices + orchestrator pattern
+- ✅ **Type-safe codebase** — all `any` types removed from domain logic
 
 ---
 
-## ⚠️ Честные ограничения
+## 📊 What's New (2026-05-30)
+
+### Architecture Migration Complete
+- **Domain-based architecture**: Moved all logic to `js/domains/` (8 modules: training, checkin, analytics, profile, achievements, import, demo, onboarding)
+- **Shared layer**: `js/shared/` — types, helpers, config, hooks, i18n, UI primitives
+- **Re-export stubs**: `js/core/` and `js/plans/` now serve as backward-compatible re-export bridges — migration path without breaking imports
+- **Cleaned up stale directories**: removed `js/plans/` stubs (real files in `js/domains/training/plans/`)
+
+### Code Quality Improvements
+- **Removed all `any` types** from domain logic (types.ts, storage.ts, planning.ts, loadAdjustments.ts, stats.ts)
+- **Cleaned up 50+ stale files**: removed stale scripts, generated docs, coverage artifacts, old session/plan files
+- **Enhanced test coverage**: +51 new unit tests (storage.ts: 25 tests, useAppStore.ts: 26 tests)
+- **Current test count**: 724+ tests passing (61 files)
+
+### Security & Config
+- **Resolved exposed GitHub PAT** in training plans commit (amended before push)
+- **Updated `.gitignore`** to exclude `.kilo/kilo.json` and `.windsurf/`
+
+---
+
+## 🎯 Coverage Gaps (Help Wanted)
+
+| File | Current | Target | Priority |
+|------|---------|--------|----------|
+| `js/domains/import/importSchemas.ts` | 22% | 80% | high |
+| `js/stores/useAppStore.ts` | 24% | 80% | high |
+| `js/domains/training/planning/planning.ts` | 54% | 80% | medium |
+| `js/domains/analytics/analytics.ts` | 0% | 80% | medium |
+| `js/core/advice.ts` | 0% | 80% | medium |
+
+Run `npm test -- --coverage` to see current coverage.
 
 - Данные вводятся вручную; автоматический сбор через Apple Health / Google Fit — в планах
 - Алгоритм Recovery Score не прошёл клиническую валидацию, основан на научной гипотезе, тестируется
@@ -100,7 +138,8 @@ npm run dev
 ```bash
 npm run type-check   # TypeScript проверка
 npm run lint         # ESLint
-npm test             # 225+ тестов (24 файлов)
+npm test             # 724+ unit-тестов (Vitest)
+npm run test:e2e     # 51 E2E-спеков (Playwright, Chromium + Firefox + Mobile)
 npm run build        # Production сборка
 ```
 
@@ -112,14 +151,15 @@ npm run build        # Production сборка
 |---|---|
 | **React 18** | UI-фреймворк |
 | **Vite 8** | Бандлер и dev-сервер |
-| **TypeScript 6** | Строгая типизация |
+| **TypeScript 6.0** | Строгая типизация |
 | **Zustand 5** | Глобальный стейт (единый стор) |
 | **Dexie.js 4** | IndexedDB-обёртка |
 | **@base-ui/react 1.5** | UI-примитивы (Collapsible, Dialog) |
 | **Lucide React** | Иконки |
 | **react-i18next** | Интернационализация (ru/en) |
 | **Workbox 7** | Service Worker / PWA |
-| **Vitest 4** | Тест-раннер + @testing-library/react |
+| **Vitest 4** | Unit-тесты + @testing-library/react |
+| **Playwright** | E2E-тесты (Chromium, Firefox, Mobile) |
 
 **Никаких:** jQuery, Bootstrap, Tailwind, CSS-фреймворков, Redux, React Context для глобального стейта.
 
@@ -139,6 +179,12 @@ npm run build        # Production сборка
 │   ├── manifest.json           # PWA манифест
 │   └── sw.js                   # Service Worker (Workbox)
 │
+├── e2e/
+│   ├── tests/                  # E2E-спеки (Playwright)
+│   ├── pages/                  # Page Object Models
+│   ├── fixtures/               # Тестовые данные и auth-хелперы
+│   └── utils/                  # Кастомные ассерты и селекторы
+│
 ├── js/
 │   ├── app.tsx                 # Точка входа, навигация, layout
 │   │
@@ -147,56 +193,42 @@ npm run build        # Production сборка
 │   │   ├── tooltips.js         # Конфиг тултипов
 │   │   └── tour-steps.js       # Шаги guided tour
 │   │
-│   ├── core/
+│   ├── domains/                # 8 модулей предметной области
+│   │   ├── training/           # Планирование, APRE, нагрузка
+│   │   │   ├── apre/engine.js
+│   │   │   ├── planning/       # planning.ts, loadAdjustments, completionRate
+│   │   │   ├── plans/          # 8 sport plan modules
+│   │   │   └── session/        # sessionLoad.ts
+│   │   ├── checkin/            # checkinSlice.ts, validation.ts
+│   │   ├── analytics/          # analytics.ts, stats.ts, streak.ts, correlations.ts
+│   │   ├── profile/            # exerciseDatabase.ts, rehabProtocol.ts
+│   │   ├── achievements/       # achievements.ts
+│   │   ├── import/             # csvParser.ts, importSchemas.ts
+│   │   ├── demo/               # demoData.ts, demoSlice.ts
+│   │   └── onboarding/         # onboardingStorage.ts, useTourStore.ts
+│   │
+│   ├── shared/                 # Общий слой
 │   │   ├── types.ts            # Все TypeScript-типы
-│   │   ├── storage.ts          # CRUD над Dexie (IndexedDB)
-│   │   ├── readiness.ts        # calcReadiness, detectRecoveryDebt
-│   │   ├── recoveryScore.ts    # calculateRecoveryScore (tiered)
-│   │   ├── planning.ts         # getWorkoutType, buildSessionFromMonth
-│   │   ├── loadAdjustments.ts  # applyMultiplier, applyApre
-│   │   ├── sessionLoad.ts      # calculateSessionLoad
-│   │   ├── stats.ts            # getWeeklySummary, getMonthStats, getStreak
-│   │   ├── analytics.ts        # getTrendData, detectNegativeTrends
-│   │   ├── advice.ts           # getCoachAdvice, getApreExplanation
 │   │   ├── helpers.ts          # Утилиты дат
-│   │   ├── onboardingStorage.ts # Хранение статуса онбординга
-│   │   ├── apre/
-│   │   │   └── engine.js       # APRE-движок (Mann tables)
-│   │   └── engine.test.js      # Node.js тест-раннер (legacy)
+│   │   ├── config/             # Константы (конфиги)
+│   │   ├── hooks/              # Переиспользуемые хуки
+│   │   ├── i18n/               # Локализация (index.ts, locales/)
+│   │   └── ui/                 # UI-примитивы (Modal, Collapsible, etc.)
 │   │
 │   ├── stores/
+│   │   ├── slices/             # Zustand store slices (checkin, session, ui, data, demo)
 │   │   ├── useAppStore.ts      # Центральный стор
-│   │   ├── useSessionStore.ts  # Состояние формы сессии
 │   │   └── useTourStore.ts     # Состояние для guided tour
 │   │
-│   ├── i18n/
-│   │   ├── index.ts            # i18n конфигурация
-│   │   └── locales/
-│   │       ├── ru.json         # Русские переводы (24 KB)
-│   │       └── en.json         # Английские переводы (16 KB)
-│   │
-│   ├── hooks/
-│   │   └── useFitnessData.ts   # Хук для фитнес-данных
+│   ├── core/                   # Re-export мосты (обратная совместимость)
+│   │   └── storage.ts          # CRUD над Dexie (IndexedDB) — реальная логика
 │   │
 │   ├── ui/
 │   │   ├── components/         # Переиспользуемые компоненты
 │   │   │   ├── CheckinHistory.jsx
-│   │   │   ├── Collapsible.jsx
-│   │   │   ├── CorrelationCard.jsx
-│   │   │   ├── EmptyState.jsx
-│   │   │   ├── ErrorBoundary.jsx
-│   │   │   ├── ExerciseCard.jsx
-│   │   │   ├── ExerciseConfigModal.jsx
-│   │   │   ├── GuidedTour.jsx
 │   │   │   ├── HeatmapGrid.jsx
-│   │   │   ├── HelpIcon.jsx
-│   │   │   ├── MiniSparkline.jsx
-│   │   │   ├── Modal.jsx
 │   │   │   ├── OnboardingWizard.jsx
-│   │   │   ├── ScaleSelector.jsx
-│   │   │   ├── Skeleton.jsx
-│   │   │   ├── StatBox.jsx
-│   │   │   └── TrendIndicator.jsx
+│   │   │   └── ...
 │   │   │
 │   │   └── pages/              # Страницы-вкладки
 │   │       ├── TodayPage.jsx       # Главная (Recovery Score + план)
@@ -204,26 +236,18 @@ npm run build        # Production сборка
 │   │       ├── AnalyticsPage.jsx   # Тренды и аналитика
 │   │       ├── ProfilePage.jsx     # Профиль и настройки
 │   │       ├── MethodologyPage.jsx # Методология и наука
-│   │       ├── CheckinForm.jsx     # Форма чек-ина (вложена в LogPage)
-│   │       ├── SessionLogger.jsx   # Логгер сессии (вложен в LogPage)
-│   │       ├── TrendChart.jsx      # Компонент графика (вложен в AnalyticsPage)
-│   │       ├── WarningsList.jsx    # Список предупреждений (вложен в AnalyticsPage)
-│   │       └── WeeklySummary.jsx   # Недельная сводка (вложен в AnalyticsPage)
+│   │       ├── CheckinForm.jsx     # Форма чек-ина
+│   │       ├── SessionLogger.jsx   # Логгер сессии
+│   │       ├── TrendChart.jsx      # Компонент графика
+│   │       ├── WarningsList.jsx    # Список предупреждений
+│   │       └── WeeklySummary.jsx   # Недельная сводка
 │   │
 │   └── tests/
 │       ├── setup.ts            # Глобальный setup (@testing-library/jest-dom)
-│       ├── components/
-│       │   ├── EmptyState.test.tsx
-│       │   ├── ScaleSelector.test.tsx
-│       │   ├── Skeleton.test.tsx
-│       │   └── StatBox.test.tsx
-│       └── core/
-│           ├── apre.test.ts
-│           ├── correlations.test.ts
-│           ├── planning.test.ts
-│           ├── readiness.test.ts
-│           ├── stats.test.ts
-│           └── validation.test.ts
+│       ├── components/         # Тесты компонентов
+│       ├── core/               # Тесты core (читают через re-export мосты)
+│       ├── stores/             # Тесты стора
+│       └── ui/                 # Тесты страниц
 ```
 
 ---

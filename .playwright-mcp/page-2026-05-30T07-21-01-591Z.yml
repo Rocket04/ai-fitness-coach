@@ -1,0 +1,26 @@
+- generic [ref=e2]:
+  - main [ref=e3]
+  - status [ref=e10]:
+    - img [ref=e11]
+    - text: Онлайн
+  - navigation "Главное меню" [ref=e15]:
+    - button "Сегодня" [ref=e16] [cursor=pointer]:
+      - img [ref=e18]
+      - generic [ref=e21]: Сегодня
+    - button "Дневник" [ref=e22] [cursor=pointer]:
+      - img [ref=e24]
+      - generic [ref=e26]: Дневник
+    - button "Аналитика" [ref=e27] [cursor=pointer]:
+      - img [ref=e29]
+      - generic [ref=e32]: Аналитика
+    - button "Профиль" [ref=e33] [cursor=pointer]:
+      - img [ref=e35]
+      - generic [ref=e38]: Профиль
+  - generic [ref=e40]:
+    - button "Закрыть" [ref=e41] [cursor=pointer]:
+      - text: Закрыть
+      - img [ref=e42]
+    - generic [ref=e51]:
+      - heading "Твой умный тренер готов к работе" [level=1] [ref=e52]
+      - paragraph [ref=e53]: Recovery Score • Авторегуляция APRE • Приватность
+      - button "Начать первую тренировку" [ref=e55] [cursor=pointer]

@@ -1,0 +1,91 @@
+- generic [ref=e2]:
+  - main [ref=e3]:
+    - generic [ref=e6]:
+      - generic [ref=e7]:
+        - img [ref=e8]
+        - generic [ref=e10]: "Совет: переключите уровень чек-ина на \"Полный\" — вы редко заполняете текущие метрики."
+        - button "Переключить" [ref=e11] [cursor=pointer]
+      - generic [ref=e12]:
+        - button "Пн 25 A" [ref=e13] [cursor=pointer]:
+          - generic [ref=e14]: Пн
+          - generic [ref=e15]: "25"
+          - generic [ref=e16]: A
+        - button "Вт 26 Отдых" [ref=e17] [cursor=pointer]:
+          - generic [ref=e18]: Вт
+          - generic [ref=e19]: "26"
+          - generic [ref=e20]: Отдых
+        - button "Ср 27 B" [ref=e21] [cursor=pointer]:
+          - generic [ref=e22]: Ср
+          - generic [ref=e23]: "27"
+          - generic [ref=e24]: B
+        - button "Чт 28 Отдых" [ref=e25] [cursor=pointer]:
+          - generic [ref=e26]: Чт
+          - generic [ref=e27]: "28"
+          - generic [ref=e28]: Отдых
+        - button "Пт 29 A" [ref=e29] [cursor=pointer]:
+          - generic [ref=e30]: Пт
+          - generic [ref=e31]: "29"
+          - generic [ref=e32]: A
+        - button "Сб 30 Отдых" [ref=e33] [cursor=pointer]:
+          - generic [ref=e34]: Сб
+          - generic [ref=e35]: "30"
+          - generic [ref=e36]: Отдых
+        - button "Вс 31 Отдых" [ref=e37] [cursor=pointer]:
+          - generic [ref=e38]: Вс
+          - generic [ref=e39]: "31"
+          - generic [ref=e40]: Отдых
+      - button "План на неделю Неделя 2" [ref=e42] [cursor=pointer]:
+        - img [ref=e43]
+        - generic [ref=e45]: План на неделю
+        - generic [ref=e46]: Неделя 2
+        - img [ref=e48]
+      - generic [ref=e50]:
+        - heading "Почему?" [level=4] [ref=e51]
+        - list [ref=e52]:
+          - listitem [ref=e53]: Recovery Score 58 — Красный
+          - listitem [ref=e54]: Обнаружен recovery debt (недовосстановление). Нагрузка адаптирована.
+          - listitem [ref=e55]: Recovery Score средний (yellow readiness) → объём снижен (минус 1 подход)
+          - listitem [ref=e56]: Обнаружен recovery debt → нагрузка адаптирована
+          - listitem [ref=e57]: Добавлены разогревающие реабилитационные упражнения перед тренировкой
+      - 'generic "Recovery Score: 58%" [ref=e58]':
+        - 'button "Recovery Score: 58%. Нажмите для метрик." [ref=e59]':
+          - img [ref=e60]:
+            - generic [ref=e63]: "58"
+            - generic [ref=e64]: Восстановление
+        - generic [ref=e65]: Средне
+        - paragraph [ref=e66]: ↓ score.below
+        - paragraph [ref=e67]:
+          - text: Нажмите на кольцо для метрик за 7 дней
+          - button "Подробнее о термине \"Recovery Score\"" [ref=e69] [cursor=pointer]: ？
+      - button "Начать тренировку" [ref=e71] [cursor=pointer]:
+        - img [ref=e72]
+        - generic [ref=e74]: Начать тренировку
+      - generic [ref=e75]:
+        - generic [ref=e76]: Завтра
+        - generic [ref=e77]:
+          - img [ref=e78]
+          - text: 🛌 Отдых
+      - generic [ref=e80]:
+        - text: суббота, 30 мая
+        - generic [ref=e81]:
+          - img [ref=e82]
+          - text: "30"
+  - generic [ref=e84]: 👤 ГОСТЕВОЙ РЕЖИМ
+  - generic [ref=e85]:
+    - button "Начать трекинг" [ref=e86] [cursor=pointer]
+    - status [ref=e87]:
+      - img [ref=e88]
+      - text: Онлайн
+  - navigation "Главное меню" [ref=e92]:
+    - button "Сегодня" [ref=e93] [cursor=pointer]:
+      - img [ref=e95]
+      - generic [ref=e98]: Сегодня
+    - button "Дневник" [ref=e99] [cursor=pointer]:
+      - img [ref=e101]
+      - generic [ref=e103]: Дневник
+    - button "Аналитика" [ref=e104] [cursor=pointer]:
+      - img [ref=e106]
+      - generic [ref=e109]: Аналитика
+    - button "Профиль" [ref=e110] [cursor=pointer]:
+      - img [ref=e112]
+      - generic [ref=e115]: Профиль

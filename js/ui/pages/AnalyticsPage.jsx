@@ -4,8 +4,8 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TrendingUp, BarChart } from 'lucide-react';
-import { useAppStore } from '../../stores/useAppStore.js';
-import TrendChart from './TrendChart.jsx';
+import { useAppStore } from '../../store/index.js';
+import TrendChart from './TrendChart.tsx';
 import WarningsList from './WarningsList.jsx';
 import WeeklySummary from './WeeklySummary.jsx';
 import EmptyState from '../components/EmptyState.jsx';
@@ -15,9 +15,16 @@ export default function AnalyticsPage() {
   const { t } = useTranslation();
   const state = useAppStore();
   
-  // Add safeguard for context availability
-  if (!state) {
-    return React.createElement('div', { className: 'card' }, 'Загрузка контекста...');
+  // Guard: store not ready
+  if (!state || !state.dataLoaded) {
+    return React.createElement(
+      'div',
+      { className: 'page-enter' },
+      React.createElement('h2', null, t('analytics.title')),
+      React.createElement('div', { className: 'card', style: { textAlign: 'center', padding: 'var(--spacing-xl)' } },
+        React.createElement('p', { className: 'text-muted' }, 'Загрузка аналитики...')
+      )
+    );
   }
   
   const {
@@ -39,7 +46,7 @@ export default function AnalyticsPage() {
   if (!currentTrend || currentTrend.length < 2) {
     return React.createElement(
       'div',
-      { className: 'page-enter' },
+      { className: 'page-enter', 'data-testid': 'analytics-empty' },
       React.createElement('h2', null, t('analytics.title')),
       React.createElement(EmptyState, {
         icon: React.createElement(TrendingUp, { size: 20 }),
@@ -112,10 +119,15 @@ export default function AnalyticsPage() {
     ),
 
     // ── Warning banner ──
-    React.createElement(WarningsList, { overtrainingWarning, trendWarnings }),
+    React.createElement('div', { 'data-testid': 'warnings-list' },
+      React.createElement(WarningsList, { overtrainingWarning, trendWarnings })
+    ),
 
     // ── Weekly summary ──
-    React.createElement(WeeklySummary, { weeklySummary, monthStats }),
+    React.createElement(WeeklySummary, {
+      weeklySummary: weeklySummary || { completed: 0, avgRPE: null, green: 0, yellow: 0, red: 0, dominantStatus: '' },
+      monthStats: monthStats || { completed: 0, green: 0, yellow: 0, red: 0 },
+    }),
 
     // ── Toggle 7 / 30 days ──
     React.createElement(
@@ -155,7 +167,7 @@ export default function AnalyticsPage() {
     // ── Recovery Score ──
     React.createElement(
       'div',
-      { className: 'card chart-card' },
+      { className: 'card chart-card', 'data-testid': 'trend-chart' },
       React.createElement(
         'div',
         { className: 'chart-header' },
@@ -290,18 +302,6 @@ export default function AnalyticsPage() {
         )
       ),
 
-    // ── Empty state ──
-    currentTrend.length === 0 &&
-      React.createElement(
-        'div',
-        { className: 'empty-state' },
-        React.createElement('div', { className: 'empty-state-icon' }, React.createElement(BarChart, { size: 20 })),
-        React.createElement('div', { className: 'empty-state-text' }, 'Пока нет данных для анализа.'),
-        React.createElement(
-          'div',
-          { className: 'empty-state-hint' },
-          'Заполняй чек-ины ежедневно, и через несколько дней здесь будут графики твоих трендов.'
-        )
-      )
+
   );
 }

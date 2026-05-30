@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { calcReadiness, getEffectiveReadiness, detectRecoveryDebt } from '../../core/readiness.js';
+import { calcReadiness, getEffectiveReadiness, detectRecoveryDebt } from '../../domains/recovery/readiness.js';
 import type { Checkin } from '../../core/types.js';
 
 function makeCheckin(overrides: Partial<Checkin> = {}): Checkin {

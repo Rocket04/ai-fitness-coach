@@ -1,26 +1,33 @@
 // js/tests/ui/CheckinForm.test.tsx
-// TDD: CheckinForm tier-adaptive field visibility
+// TDD: CheckinForm user-facing behavior — what the user can see and do
 
-import { describe, it, expect, vi } from 'vitest';
-import { render } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-// Tier control — each sub-suite sets this before importing
-let __tier: 'full' | 'medium' | 'light' = 'full';
-export function __setTier(t: 'full' | 'medium' | 'light') { __tier = t; }
+let mockTier: 'full' | 'medium' | 'light' = 'full';
+let mockCheckins: Array<{ date: string }> = [{ date: '2026-05-24' }];
+const mockStore = {
+  weight: 0, restHR: 0, hrv: 0, sleepHours: 0,
+  hipPain: 0, shoulderPain: 0, breathing: 'good' as const, notes: '',
+  muscleSoreness: 0, energy: 0, mood: 0, sleepQuality: 0, stress: 0,
+  setWeight: (v: number) => { mockStore.weight = v; },
+  setRestHR: vi.fn(), setHrv: vi.fn(), setSleepHours: (v: number) => { mockStore.sleepHours = v; },
+  setHipPain: vi.fn(), setShoulderPain: vi.fn(), setBreathing: vi.fn(), setNotes: vi.fn(),
+  setMuscleSoreness: (v: number) => { mockStore.muscleSoreness = v; },
+  setEnergy: (v: number) => { mockStore.energy = v; },
+  setMood: (v: number) => { mockStore.mood = v; },
+  setSleepQuality: (v: number) => { mockStore.sleepQuality = v; },
+  setStress: (v: number) => { mockStore.stress = v; },
+  handleSaveCheckin: vi.fn().mockResolvedValue(undefined),
+  get checkins() { return mockCheckins; },
+  showToast: vi.fn(), todayISO: '2026-05-24',
+  get checkinTier() { return mockTier; },
+};
 
-vi.mock('../../stores/useAppStore.js', () => ({
-  useAppStore: () => ({
-    weight: 0, restHR: 0, hrv: 0, sleepHours: 0,
-    hipPain: 0, shoulderPain: 0, breathing: 'good' as const, notes: '',
-    muscleSoreness: 0, energy: 0, mood: 0, sleepQuality: 0, stress: 0,
-    setWeight: vi.fn(), setRestHR: vi.fn(), setHrv: vi.fn(), setSleepHours: vi.fn(),
-    setHipPain: vi.fn(), setShoulderPain: vi.fn(), setBreathing: vi.fn(), setNotes: vi.fn(),
-    setMuscleSoreness: vi.fn(), setEnergy: vi.fn(), setMood: vi.fn(), setSleepQuality: vi.fn(), setStress: vi.fn(),
-    handleSaveCheckin: vi.fn().mockResolvedValue(undefined),
-    checkins: [], showToast: vi.fn(), todayISO: '2026-05-24',
-    get checkinTier() { return __tier; },
-  }),
+vi.mock('../../store/index.js', () => ({
+  useAppStore: () => mockStore,
 }));
 
 vi.mock('react-i18next', () => ({
@@ -36,47 +43,96 @@ vi.mock('../../ui/components/Collapsible.jsx', () => ({
 
 import CheckinForm from '../../ui/pages/CheckinForm.jsx';
 
-describe('CheckinForm — tier-adaptive biometric fields', () => {
-  it('shows HRV and RHR fields for full tier', () => {
-    __setTier('full');
-    const { unmount } = render(React.createElement(CheckinForm));
-    const sections = document.querySelectorAll('.checkin-section');
-    const bioSection = Array.from(sections).find(s => s.textContent?.includes('Биометрика'));
-    expect(bioSection).toBeTruthy();
-    const numberInputs = bioSection?.querySelectorAll('input[type="number"]');
-    expect(numberInputs?.length).toBeGreaterThanOrEqual(3); // RHR + HRV + weight
-    unmount();
+beforeEach(() => {
+  mockCheckins = [{ date: '2026-05-24' }];
+  mockStore.weight = 0;
+  mockStore.restHR = 0;
+  mockStore.hrv = 0;
+  mockStore.sleepHours = 0;
+  mockStore.muscleSoreness = 0;
+  mockStore.energy = 0;
+  mockStore.mood = 0;
+  mockStore.sleepQuality = 0;
+  mockStore.stress = 0;
+  mockStore.hipPain = 0;
+  mockStore.shoulderPain = 0;
+  mockStore.notes = '';
+  mockStore.breathing = 'good';
+});
+
+function getInputForLabel(labelText: string): HTMLInputElement | null {
+  const label = screen.queryByText(labelText, { selector: 'span' });
+  if (!label) return null;
+  const row = label.closest('.checkin-row');
+  if (!row) return null;
+  return row.querySelector('input[type="number"]');
+}
+
+describe('CheckinForm — user can enter daily check-in data', () => {
+  it('shows weight, RHR, and HRV fields when user has full tier', () => {
+    mockTier = 'full';
+    render(React.createElement(CheckinForm));
+
+    expect(screen.getByText('Вес')).toBeInTheDocument();
+    expect(screen.getByText('ЧСС покоя')).toBeInTheDocument();
+    expect(screen.getByText('HRV')).toBeInTheDocument();
+
+    expect(getInputForLabel('Вес')).toBeTruthy();
+    expect(getInputForLabel('ЧСС покоя')).toBeTruthy();
+    expect(getInputForLabel('HRV')).toBeTruthy();
   });
 
-  it('hides HRV field for medium tier', () => {
-    __setTier('medium');
-    const { unmount } = render(React.createElement(CheckinForm));
-    const sections = document.querySelectorAll('.checkin-section');
-    const bioSection = Array.from(sections).find(s => s.textContent?.includes('Биометрика'));
-    expect(bioSection).toBeTruthy();
-    const numberInputs = bioSection?.querySelectorAll('input[type="number"]');
-    expect(numberInputs?.length).toBe(2); // RHR + weight (no HRV)
-    unmount();
+  it('shows weight and RHR but not HRV when user has medium tier', () => {
+    mockTier = 'medium';
+    render(React.createElement(CheckinForm));
+
+    expect(screen.getByText('Вес')).toBeInTheDocument();
+    expect(screen.getByText('ЧСС покоя')).toBeInTheDocument();
+    expect(screen.queryByText('HRV')).not.toBeInTheDocument();
   });
 
-  it('hides both HRV and RHR for light tier', () => {
-    __setTier('light');
-    const { unmount } = render(React.createElement(CheckinForm));
-    const sections = document.querySelectorAll('.checkin-section');
-    const bioSection = Array.from(sections).find(s => s.textContent?.includes('Биометрика'));
-    expect(bioSection).toBeTruthy();
-    const numberInputs = bioSection?.querySelectorAll('input[type="number"]');
-    expect(numberInputs?.length).toBeLessThanOrEqual(1); // Only weight
-    unmount();
+  it('shows only weight (no biometric devices) when user has light tier', () => {
+    mockTier = 'light';
+    render(React.createElement(CheckinForm));
+
+    expect(screen.getByText('Вес')).toBeInTheDocument();
+    expect(screen.queryByText('ЧСС покоя')).not.toBeInTheDocument();
+    expect(screen.queryByText('HRV')).not.toBeInTheDocument();
   });
 
-  it('always shows subjective fields regardless of tier', () => {
+  it('always shows subjective well-being fields regardless of tier', () => {
     for (const tier of ['full', 'medium', 'light'] as const) {
-      __setTier(tier);
+      mockTier = tier;
       const { unmount } = render(React.createElement(CheckinForm));
-      const scaleRows = document.querySelectorAll('.checkin-row--scale');
-      expect(scaleRows.length).toBeGreaterThanOrEqual(3);
+
+      expect(screen.getByText('Энергия')).toBeInTheDocument();
+      expect(screen.getByText('Настроение')).toBeInTheDocument();
+      expect(screen.getByText('Болезненность')).toBeInTheDocument();
+      expect(screen.getByText('Стресс')).toBeInTheDocument();
+
       unmount();
     }
+  });
+
+  it('shows validation error when user tries to save with no data entered', async () => {
+    mockTier = 'full';
+    render(React.createElement(CheckinForm));
+
+    const saveBtn = screen.getByRole('button', { name: /сохранить чек-ин/i });
+    await userEvent.click(saveBtn);
+
+    expect(screen.getByRole('alert')).toHaveTextContent(/заполните хотя бы одно поле/i);
+  });
+
+  it('allows user to save when at least one field has data', async () => {
+    mockTier = 'light';
+    mockStore.weight = 75; // Simulate user entered weight
+    render(React.createElement(CheckinForm));
+
+    const saveBtn = screen.getByRole('button', { name: /сохранить чек-ин/i });
+    await userEvent.click(saveBtn);
+
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent(/чек-ин сохранён/i);
   });
 });

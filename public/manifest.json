@@ -1,7 +1,7 @@
 {
-  "name": "Smart Fitness Coach",
+  "name": "Smart Fitness Coach — Умный тренер тренировок",
   "short_name": "FitCoach",
-  "description": "Умный тренер тренировок с авторегуляцией APRE и Recovery Score",
+  "description": "Умный тренер тренировок с авторегуляцией APRE и Recovery Score. Полностью бесплатно, все данные на устройстве.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0a0a0a",
@@ -9,6 +9,7 @@
   "orientation": "portrait",
   "lang": "ru",
   "categories": ["fitness", "health", "sports"],
+  "id": "/",
   "icons": [
     {
       "src": "/icons/icon-192.png",
@@ -21,6 +22,30 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Сегодня",
+      "short_name": "Сегодня",
+      "description": "Открыть главный экран Recovery Score",
+      "url": "/?tab=0",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Чек-ин",
+      "short_name": "Чек-ин",
+      "description": "Заполнить утренний чек-ин",
+      "url": "/?tab=1",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Аналитика",
+      "short_name": "Аналитика",
+      "description": "Просмотр трендов и графиков",
+      "url": "/?tab=2",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
     }
   ]
 }

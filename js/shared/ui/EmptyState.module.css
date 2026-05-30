@@ -1,0 +1,26 @@
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xl) var(--spacing-md);
+  text-align: center;
+  color: var(--text3);
+}
+.empty-state__icon {
+  font-size: 2.25rem;
+  line-height: 1;
+  margin-bottom: var(--spacing-xs);
+  opacity: 0.7;
+}
+.empty-state__title {
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  color: var(--text2);
+}
+.empty-state__subtitle {
+  font-size: var(--font-size-caption);
+  color: var(--text3);
+  max-width: 240px;
+}

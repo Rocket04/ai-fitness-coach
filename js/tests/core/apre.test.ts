@@ -11,86 +11,86 @@ import {
 
 // ── applyApre ──────────────────────────────────────────────────────────────
 
-describe('applyApre — APRE_6 (кг)', () => {
-  it('≤2 повтора → set4: -5, nextWeek: -5', () => {
+describe('applyApre — APRE_6 (kg)', () => {
+  it('reduces weight after weak performance (≤2 reps)', () => {
     expect(applyApre('APRE_6', 2)).toEqual({ set4Adjust: -5, nextWeekAdjust: -5 });
     expect(applyApre('APRE_6', 1)).toEqual({ set4Adjust: -5, nextWeekAdjust: -5 });
   });
 
-  it('3-4 повтора → set4: -2.5, nextWeek: 0', () => {
+  it('makes small adjustments after moderate performance (3-4 reps)', () => {
     expect(applyApre('APRE_6', 3)).toEqual({ set4Adjust: -2.5, nextWeekAdjust: 0 });
     expect(applyApre('APRE_6', 4)).toEqual({ set4Adjust: -2.5, nextWeekAdjust: 0 });
   });
 
-  it('5-7 повторов → set4: 0, nextWeek: 2.5', () => {
+  it('increases weight after solid performance (5-7 reps)', () => {
     expect(applyApre('APRE_6', 7)).toEqual({ set4Adjust: 0, nextWeekAdjust: 2.5 });
   });
 
-  it('8-12 повторов → set4: 2.5, nextWeek: 5', () => {
+  it('increases weight more after good performance (8-12 reps)', () => {
     expect(applyApre('APRE_6', 10)).toEqual({ set4Adjust: 2.5, nextWeekAdjust: 5 });
   });
 
-  it('>12 повторов → set4: 5, nextWeek: 7.5', () => {
+  it('increases weight most after strong performance (>12 reps)', () => {
     expect(applyApre('APRE_6', 15)).toEqual({ set4Adjust: 5, nextWeekAdjust: 7.5 });
   });
 });
 
-describe('applyApre — APRE_3 (кг)', () => {
-  it('≤2 повтора → set4: -5, nextWeek: -2.5', () => {
+describe('applyApre — APRE_3 (kg)', () => {
+  it('reduces weight after weak performance (≤2 reps)', () => {
     expect(applyApre('APRE_3', 2)).toEqual({ set4Adjust: -5, nextWeekAdjust: -2.5 });
   });
 
-  it('5-6 повторов → set4: 5, nextWeek: 5', () => {
+  it('increases weight after solid performance (5-6 reps)', () => {
     expect(applyApre('APRE_3', 6)).toEqual({ set4Adjust: 5, nextWeekAdjust: 5 });
   });
 
-  it('>6 повторов → set4: 10, nextWeek: 7.5', () => {
+  it('increases weight most after strong performance (>6 reps)', () => {
     expect(applyApre('APRE_3', 8)).toEqual({ set4Adjust: 10, nextWeekAdjust: 7.5 });
   });
 });
 
-describe('applyApre — APRE_10 (кг)', () => {
-  it('≤6 повторов → set4: -5, nextWeek: -5', () => {
+describe('applyApre — APRE_10 (kg)', () => {
+  it('reduces weight after weak performance (≤6 reps)', () => {
     expect(applyApre('APRE_10', 5)).toEqual({ set4Adjust: -5, nextWeekAdjust: -5 });
   });
 
-  it('7-8 повторов → set4: -2.5, nextWeek: 0', () => {
+  it('makes small adjustments after moderate performance (7-8 reps)', () => {
     expect(applyApre('APRE_10', 8)).toEqual({ set4Adjust: -2.5, nextWeekAdjust: 0 });
   });
 
-  it('9-11 повторов → set4: 0, nextWeek: 2.5', () => {
+  it('maintains weight after solid performance (9-11 reps)', () => {
     expect(applyApre('APRE_10', 11)).toEqual({ set4Adjust: 0, nextWeekAdjust: 2.5 });
   });
 });
 
-describe('applyApre — lbs конвертация', () => {
-  it('APRE_6 ≤2 повтора lbs → set4: -10, nextWeek: -10', () => {
+describe('applyApre — lbs conversion', () => {
+  it('doubles kg adjustments for lbs unit', () => {
     expect(applyApre('APRE_6', 2, 'lbs')).toEqual({ set4Adjust: -10, nextWeekAdjust: -10 });
   });
 
-  it('APRE_6 >12 повторов lbs → set4: 10, nextWeek: 15', () => {
+  it('scales large adjustments correctly for lbs', () => {
     expect(applyApre('APRE_6', 15, 'lbs')).toEqual({ set4Adjust: 10, nextWeekAdjust: 15 });
   });
 
-  it('APRE_3 >6 повторов lbs → set4: 20, nextWeek: 15', () => {
+  it('applies lbs-specific rounding for APRE_3', () => {
     expect(applyApre('APRE_3', 8, 'lbs')).toEqual({ set4Adjust: 20, nextWeekAdjust: 15 });
   });
 });
 
-describe('applyApre — граничные случаи', () => {
-  it('несуществующий протокол → 0, 0', () => {
+describe('applyApre — edge cases', () => {
+  it('returns zero adjustments for unknown protocol', () => {
     expect(applyApre('APRE_INVALID' as never, 5)).toEqual({ set4Adjust: 0, nextWeekAdjust: 0 });
   });
 
-  it('NaN повторений → 0, 0', () => {
+  it('returns zero adjustments for invalid rep count (NaN)', () => {
     expect(applyApre('APRE_6', NaN)).toEqual({ set4Adjust: 0, nextWeekAdjust: 0 });
   });
 
-  it('null повторений → 0, 0', () => {
+  it('returns zero adjustments for null rep count', () => {
     expect(applyApre('APRE_6', null as never)).toEqual({ set4Adjust: 0, nextWeekAdjust: 0 });
   });
 
-  it('0 повторений → находит первую строку (≤2)', () => {
+  it('falls back to weakest adjustment band for zero reps', () => {
     expect(applyApre('APRE_6', 0)).toEqual({ set4Adjust: -5, nextWeekAdjust: -5 });
   });
 });
@@ -98,87 +98,86 @@ describe('applyApre — граничные случаи', () => {
 // ── roundToNearestStep ────────────────────────────────────────────────────
 
 describe('roundToNearestStep', () => {
-  it('кг: 101 → 100 (ближайшие 2.5)', () => {
+  it('rounds kg down to nearest 2.5 increment', () => {
     expect(roundToNearestStep(101, 'kg')).toBe(100);
   });
 
-  it('кг: 102.5 → 102.5', () => {
+  it('preserves exact kg step values', () => {
     expect(roundToNearestStep(102.5, 'kg')).toBe(102.5);
   });
 
-  it('кг: 103 → 102.5', () => {
+  it('rounds kg to nearest 2.5 increment (down)', () => {
     expect(roundToNearestStep(103, 'kg')).toBe(102.5);
   });
 
-  it('кг: 104 → 105', () => {
+  it('rounds kg to nearest 2.5 increment (up)', () => {
     expect(roundToNearestStep(104, 'kg')).toBe(105);
   });
 
-  it('lbs: 101 → 100', () => {
+  it('rounds lbs down to nearest 5 increment', () => {
     expect(roundToNearestStep(101, 'lbs')).toBe(100);
   });
 
-  it('lbs: 103 → 105', () => {
+  it('rounds lbs up to nearest 5 increment', () => {
     expect(roundToNearestStep(103, 'lbs')).toBe(105);
   });
 
-  it('NaN → 0', () => {
+  it('returns 0 for NaN input', () => {
     expect(roundToNearestStep(NaN)).toBe(0);
   });
 
-  it('дефолт unit = кг', () => {
+  it('defaults to kg when unit is omitted', () => {
     expect(roundToNearestStep(100)).toBe(100);
   });
 });
 
 // ── calcApreSets ──────────────────────────────────────────────────────────
 
-describe('calcApreSets — базовый расчёт (кг)', () => {
-  it('возвращает null для невалидного RM', () => {
+describe('calcApreSets — basic calculation (kg)', () => {
+  it('returns null for invalid RM values', () => {
     expect(calcApreSets({ protocol: 'APRE_6', currentRM: 0 })).toBeNull();
     expect(calcApreSets({ protocol: 'APRE_6', currentRM: -10 })).toBeNull();
   });
 
-  it('set1: 50% от RM, set2: 75%', () => {
+  it('starts warmup sets light and builds to working weight', () => {
     const result = calcApreSets({ protocol: 'APRE_6', currentRM: 100 });
     expect(result?.set1.weight).toBe(50);
     expect(result?.set2.weight).toBe(75);
   });
 
-  it('set1 и set2 — readonly', () => {
+  it('locks warmup sets from editing', () => {
     const result = calcApreSets({ protocol: 'APRE_6', currentRM: 100 });
     expect(result?.set1.readonly).toBe(true);
     expect(result?.set2.readonly).toBe(true);
   });
 
-  it('set3 — AMRAP, не readonly', () => {
+  it('marks set3 as AMRAP and editable', () => {
     const result = calcApreSets({ protocol: 'APRE_6', currentRM: 100 });
     expect(result?.set3.readonly).toBe(false);
     expect(result?.set3.reps).toBe('AMRAP');
   });
 
-  it('set4 disabled до заполнения set3', () => {
+  it('disables set4 until AMRAP reps are entered', () => {
     const result = calcApreSets({ protocol: 'APRE_6', currentRM: 100 });
     expect(result?.set4.disabled).toBe(true);
     expect(result?.set4.weight).toBeNull();
   });
 
-  it('set4 рассчитывается после set3Reps', () => {
+  it('calculates set4 weight based on AMRAP performance', () => {
     const result = calcApreSets({ protocol: 'APRE_6', currentRM: 100, set3Reps: 10 });
     expect(result?.set4.disabled).toBe(false);
-    // APRE_6, 10 повторений → set4Adjust = +2.5 → 100 + 2.5 = 102.5
     expect(result?.set4.weight).toBe(102.5);
   });
 });
 
 describe('calcApreSets — recovery score', () => {
-  it('recoveryScore < 40 → effectiveRM снижается на ~10%', () => {
+  it('adjusts working weight down when recovery is poor', () => {
     const result = calcApreSets({ protocol: 'APRE_6', currentRM: 100, recoveryScore: 30 });
     expect(result?.effectiveRM).toBeLessThan(100);
     expect(result?.recoveryReduction).toBeGreaterThan(0);
   });
 
-  it('recoveryScore >= 40 → effectiveRM не изменяется', () => {
+  it('keeps working weight unchanged when recovery is adequate', () => {
     const result = calcApreSets({ protocol: 'APRE_6', currentRM: 100, recoveryScore: 50 });
     expect(result?.effectiveRM).toBe(100);
     expect(result?.recoveryReduction).toBe(0);
@@ -186,7 +185,7 @@ describe('calcApreSets — recovery score', () => {
 });
 
 describe('calcApreSets — lbs', () => {
-  it('веса округляются до ближайших 5 lbs', () => {
+  it('rounds weights to nearest 5 lbs', () => {
     const result = calcApreSets({ protocol: 'APRE_6', currentRM: 100, unit: 'lbs' });
     expect(result?.set1.weight).toBe(50);
     expect(result?.set2.weight).toBe(75);
@@ -196,60 +195,62 @@ describe('calcApreSets — lbs', () => {
 // ── calcNextWeekRM ────────────────────────────────────────────────────────
 
 describe('calcNextWeekRM', () => {
-  it('APRE_6, 10 повторений → currentRM + 5', () => {
+  it('increases RM after solid performance', () => {
     expect(calcNextWeekRM('APRE_6', 100, 10)).toBe(105);
   });
 
-  it('APRE_6, 15 повторений → currentRM + 7.5', () => {
+  it('increases RM more after strong performance', () => {
     expect(calcNextWeekRM('APRE_6', 100, 15)).toBe(107.5);
   });
 
-  it('APRE_6, 2 повторения → currentRM - 5', () => {
+  it('decreases RM after weak performance', () => {
     expect(calcNextWeekRM('APRE_6', 100, 2)).toBe(95);
   });
 
-  it('не может стать отрицательным', () => {
+  it('never drops below zero', () => {
     expect(calcNextWeekRM('APRE_6', 5, 1)).toBeGreaterThanOrEqual(0);
   });
 
-  it('калистеника: прогрессия ограничена [1, 5]', () => {
-    expect(calcNextWeekRM('APRE_6', 5, 15, 'kg', true)).toBe(5);
-    expect(calcNextWeekRM('APRE_6', 1, 2, 'kg', true)).toBe(1);
+  it('uses weight-based progression for calisthenics (added weight in kg)', () => {
+    // 5kg added + 15 reps in set4 -> +7.5kg adjustment = 12.5kg
+    expect(calcNextWeekRM('APRE_6', 5, 15, 'kg', true)).toBe(12.5);
+    // 1kg added + 2 reps in set4 -> -5kg adjustment = 0kg (can't go negative)
+    expect(calcNextWeekRM('APRE_6', 1, 2, 'kg', true)).toBe(0);
   });
 });
 
 // ── isStrengthExercise ────────────────────────────────────────────────────
 
 describe('isStrengthExercise', () => {
-  it('подтягивания с 3 подходами и числовыми повторениями → true', () => {
+  it('recognises multi-set resistance exercises as strength', () => {
     expect(isStrengthExercise({ n: 'Подтягивания', s: '3', r: '6–8' })).toBe(true);
   });
 
-  it('отжимания 3×8 → true', () => {
+  it('recognises tempo resistance exercises as strength', () => {
     expect(isStrengthExercise({ n: 'Отжимания темп 3-0-1', s: '3', r: '6–8' })).toBe(true);
   });
 
-  it('бег Zone 2 → false', () => {
+  it('excludes cardio zones from strength classification', () => {
     expect(isStrengthExercise({ n: 'Бег Zone 2', s: '—', r: '12–15 мин · 125–140 bpm' })).toBe(false);
   });
 
-  it('ходьба разминка → false', () => {
+  it('excludes mobility work from strength classification', () => {
     expect(isStrengthExercise({ n: 'Ходьба разминка', s: '—', r: '7–8 мин' })).toBe(false);
   });
 
-  it('планка (изометрия с сек) → false', () => {
+  it('excludes isometric holds from strength classification', () => {
     expect(isStrengthExercise({ n: 'Планка на локтях', s: '3', r: '25–35 сек' })).toBe(false);
   });
 
-  it('тестовое упражнение → false', () => {
+  it('excludes test exercises from strength classification', () => {
     expect(isStrengthExercise({ n: 'Тест: подтягивания', s: '1', r: 'макс', isTest: true })).toBe(false);
   });
 
-  it('1 подход → false (слишком мало)', () => {
+  it('exercises with only 1 set are not strength', () => {
     expect(isStrengthExercise({ n: 'Подтягивания', s: '1', r: '5' })).toBe(false);
   });
 
-  it('null упражнение → false', () => {
+  it('handles null exercise safely', () => {
     expect(isStrengthExercise(null as never)).toBe(false);
   });
 });
@@ -263,25 +264,25 @@ describe('annotateExercisesWithApre', () => {
     { n: 'Отжимания темп 3-0-1', s: '3', r: '6–8' },
   ];
 
-  it('помечает силовые, пропускает кардио/мобильность', () => {
+  it('tags strength exercises for APRE and skips cardio', () => {
     const result = annotateExercisesWithApre(exercises);
     expect(result[0].isApre).toBe(true);
     expect(result[1].isApre).toBeUndefined();
     expect(result[2].isApre).toBe(true);
   });
 
-  it('использует defaultLevel=2 без предыдущих результатов', () => {
+  it('uses default RM of 0 (no added weight) when no prior results exist', () => {
     const result = annotateExercisesWithApre(exercises);
-    expect(result[0].currentRM).toBe(2);
+    expect(result[0].currentRM).toBe(0);
   });
 
-  it('применяет nextRM из предыдущих результатов', () => {
+  it('applies next RM from previous session results', () => {
     const prev = [{ exerciseName: 'Подтягивания параллельным хватом', nextRM: 4, protocol: 'APRE_6' as const, unit: 'kg' as const, isCalisthenics: true, lastSet3Reps: 8, lastSet4Reps: 8 }];
     const result = annotateExercisesWithApre(exercises, prev);
     expect(result[0].currentRM).toBe(4);
   });
 
-  it('не мутирует исходный массив', () => {
+  it('does not mutate the original array', () => {
     const original = exercises.map(e => ({ ...e }));
     annotateExercisesWithApre(exercises);
     expect(exercises[0]).toEqual(original[0]);
@@ -291,19 +292,19 @@ describe('annotateExercisesWithApre', () => {
 // ── inferApreProtocol ─────────────────────────────────────────────────────
 
 describe('inferApreProtocol', () => {
-  it('5 повторений → APRE_3', () => {
+  it('selects APRE_3 for low-rep ranges', () => {
     expect(inferApreProtocol('Жим', '5')).toBe('APRE_3');
   });
 
-  it('6 повторений → APRE_6', () => {
+  it('selects APRE_6 for moderate-rep ranges', () => {
     expect(inferApreProtocol('Присед', '6–8')).toBe('APRE_6');
   });
 
-  it('10 повторений → APRE_10', () => {
+  it('selects APRE_10 for high-rep ranges', () => {
     expect(inferApreProtocol('Тяга', '10')).toBe('APRE_10');
   });
 
-  it('нет числа → APRE_6 (fallback)', () => {
+  it('falls back to APRE_6 when rep count is not numeric', () => {
     expect(inferApreProtocol('Упражнение', 'макс')).toBe('APRE_6');
   });
 });

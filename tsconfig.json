@@ -24,6 +24,6 @@
 
     /* Path mapping handled by vite.config.ts */
   },
-  "include": ["js/**/*.ts", "js/**/*.tsx", "global.d.ts"],
+  "include": ["js/**/*.ts", "js/**/*.tsx", "js/**/*.d.ts", "global.d.ts"],
   "exclude": ["node_modules", "dist"]
 }

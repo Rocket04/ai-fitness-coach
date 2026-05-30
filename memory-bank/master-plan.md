@@ -1,325 +1,230 @@
-# MASTER PLAN — Smart Fitness Coach
-
-**Generated:** 2026-05-24
-**Last Updated:** 2026-05-27
-**Scope:** Complete APEI cycle — Analyze, Plan, Execute, Iterate
-**Phase Status:** Phase 1-4 ✅ 100% — All core features complete. Phase 5 (Granular Logging, Live Workout) in progress.
-
----
-
-## 1. CURRENT STATE ASSESSMENT
-
-### 1.1 Architecture (Confirmed Working)
-
-| Layer | File | Status |
-|-------|------|--------|
-| Entry | `index.html` | ✅ App shell, critical CSS inline, SW registration |
-| Entry | `js/app.tsx` | ✅ React 18 root, lazy pages, i18n, ErrorBoundary, OnboardingWizard |
-| Store | `js/stores/useAppStore.ts` | ✅ Full store with profile, rehab, weeklyTemplate, demo mode |
-| Storage | `js/core/storage.ts` | ✅ Extended with all profile/rehab/persistence fields |
-| Core | `js/core/types.ts` | ✅ Complete type definitions including UserProfile, Equipment, FitnessLevel, FitnessGoal |
-| Core | `js/core/readiness.ts` | ✅ calcReadiness, getEffectiveReadiness, detectRecoveryDebt |
-| Core | `js/core/recoveryScore.ts` | ✅ Tiered weights (full/medium/light), z-score model |
-| Core | `js/core/planning.ts` | ✅ Multi-sport periodization, profile adaptation, rehab filtering, equipment awareness |
-| Core | `js/core/apre/engine.js` | ✅ Mann tables, 56 tests |
-| Core | `js/core/exerciseDatabase.ts` | ✅ Exercise library with rehab/equipment metadata, filtering helpers |
-| Core | `js/core/analytics.ts` | ✅ Trend detection, weekly averages, overtraining warnings |
-| Core | `js/core/stats.ts` | ✅ Weekly/monthly stats, streak |
-| Core | `js/core/advice.ts` | ✅ Coach advice engine |
-| Core | `js/core/helpers.ts` | ✅ Date utilities |
-| Config | `js/config/constants.js` | ✅ MONTHS, APRE_TABLES, SPORT_CATEGORIES, GADGETS, deriveTierFromGadgets |
-| Plans | `js/plans/*.ts` (8 files) | ✅ All sport templates with 4-phase periodization |
-| UI | `js/ui/components/OnboardingWizard.jsx` | ✅ 5-step wizard |
-| UI | `js/ui/components/UserProfileEditor.jsx` | ✅ Level, goals, equipment configuration |
-| UI | `js/ui/pages/CheckinForm.jsx` | ✅ Tier-adaptive fields |
-| UI | `js/ui/pages/ProfilePage.jsx` | ✅ Settings, developer panel, rehab config, integrations |
-| UI | `js/ui/pages/TodayPage.jsx` | ✅ Dashboard with weekly strip + rehab notification |
-| UI | `js/ui/pages/ProfilePage.jsx` | ⚠️ No checkinTier selector |
-| CSS | `css/styles.css` | ✅ ~70KB, dark theme, onboarding styles |
-| PWA | `public/manifest.json` | ⚠️ Wrong path (index.html references root) |
-| PWA | `public/sw.js` | ✅ Cache-first SW |
-| Tests | `js/tests/` (11 files, 153 tests) | ✅ All passing |
-| Docs | `README.md` | ⚠️ References non-existent files |
-| Docs | `PROJECT_CONTEXT.md` | ⚠️ Outdated (references old 3-step wizard) |
-| Docs | `docs/ANALYSIS_REPORT.md` | ⚠️ Outdated test counts, feature status |
-| Docs | `docs/audit-report.md` | ⚠️ Lists deleted files as present |
-
-### 1.2 What's Broken
-
-1. **`app.tsx:185`** — TypeScript error: `checkinTier` is `string` but `completeOnboarding` expects `CheckinTier`
-   - Root cause: Wizard `onComplete` callback has implicit `string` type for `checkinTier`
-2. **`manifest.json` path** — `index.html` line 7: `<link rel="manifest" href="manifest.json">` but file is at `public/manifest.json`
-3. **Store test mock** — `js/tests/stores/useAppStore.test.ts` mocks `storage.ts` but doesn't include `saveSetting` export
-   - Will cause: `Cannot read properties of undefined` when `setCheckinTier` is called in tests
-
-### 1.3 What's Missing (Phase 2 → 100%)
-
-1. **Modular plan templates** — `js/plans/running.ts` and `js/plans/strength.ts` don't exist (empty dir)
-2. **CheckinForm tier adaptation** — HRV field should be hidden/disabled for medium/light tiers; RHR for light tier
-3. **ProfilePage tier selector** — No UI to change checkinTier after onboarding
-4. **English i18n UI activation** — `changeLanguage()` exists in `js/i18n/index.ts` but no language switcher in ProfilePage
-
-### 1.4 What's Missing (Phase 3 Roadmap)
-
-All Phase 3 features are now complete. The remaining items are Phase 4 enhancements.
-
-### 1.5 Dead Code (From Audit, Still Present)
-
-- `js/ui/components/MiniChart.jsx` — stub returning null
-- `js/ui/components/ReadinessRing.jsx` — stub returning null  
-- `js/ui/components/RecoveryBar.jsx` — stub returning null
-- `js/ui/pages/InfoPage.jsx` — 14KB, never loaded
-- `js/ui/pages/NutritionPage.jsx` — 6KB, never loaded
-- `js/ui/pages/QuickStats.jsx` — 869B, never loaded
-- `ui/` root directory — 8 legacy files (Collapsible, Modal, Pill, MiniChart, InfoPage, LogPage, NutritionPage, RehabPage)
-- Root stubs: `constants.js`, `engine.js`, `fitness-tracker` (empty files)
-
----
-
-## 2. IMMEDIATE ACTIONS — Phase 2 → 100%
-
-### Task I1: Fix Critical TypeScript Error in `app.tsx`
-
-**File:** `js/app.tsx` line 184-185  
-**Problem:** `checkinTier` in wizard `onComplete` data is `string`, store expects `CheckinTier`  
-**Fix:** Type the callback parameter:
-```tsx
-onComplete={(data: { trainDays: number[]; selectedGoal?: string; apreProtocol?: string; checkinTier?: 'full' | 'medium' | 'light'; selectedGadgets?: string[]; selectedSports?: string[] }) => {
-```
-**Verification:** `npx tsc --noEmit` — zero errors  
-**Tests:** `npm test` — all 153 pass
-
-### Task I2: Fix `manifest.json` Path
-
-**File:** `index.html` line 7  
-**Problem:** References `manifest.json` at root, but file is at `public/manifest.json`  
-**Fix:** Move `public/manifest.json` to root `manifest.json` OR change href to `public/manifest.json`  
-**Decision:** Move to root since `sw.js` is also loaded from root (`/sw.js` in index.html line 204)  
-**Verification:** Browser loads manifest, PWA installable  
-**Tests:** No code tests needed — visual browser check
-
-### Task I3: Fix Store Test Mock
+﻿# MASTER PLAN — Smart Fitness Coach
 
-**File:** `js/tests/stores/useAppStore.test.ts` line 7-23  
-**Problem:** Mock doesn't include `saveSetting` export  
-**Fix:** Add `saveSetting: vi.fn().mockResolvedValue(undefined)` to the mock  
-**Verification:** `npm test` — all 153 pass  
-**Tests:** Specifically verify `handleSaveCheckin` still works after adding saveSetting mock
+**Last verified:** 2026-05-26  
+**Current status:** Architecture migration complete, 724 tests passing, domain-based structure.  
+**Primary objective:** make the daily training recommendation reliable, explainable, and testable.
 
-### Task I4: Create Modular Plan Templates
+## 1. Verified Current State
 
-**Files to create:**
-- `js/plans/running.ts` — Running-specific plan data (distance-based progression)
-- `js/plans/strength.ts` — Strength-specific plan data (weight-based progression)
+### Working or mostly working
 
-**Approach:**
-1. Extract relevant exercise subsets from `MONTHS` in `constants.js` (running exercises → `running.ts`, strength exercises → `strength.ts`)
-2. Export typed plan objects with same shape as `MONTHS[index].days`
-3. Keep the existing 12-week structure but sport-specific exercises
+| Area | Status |
+|---|---|
+| React/Vite app | Working |
+| Zustand store | Working, central state |
+| Dexie / IndexedDB | Working |
+| Manual check-in | Working |
+| Tiered Recovery Score | Implemented |
+| Readiness status | Implemented with threshold logic |
+| APRE engine | Implemented |
+| 8 sport plan modules | Present |
+| Profile: sports, gadgets, rehab, equipment | Partially implemented |
+| Analytics charts | Present |
+| Demo mode / virtual date | Present |
+| i18n ru/en | Present |
 
-**Verification:** `npx tsc --noEmit`  
-**Tests:** `js/tests/core/planning.test.ts` — add tests for sport-specific plan loading
+### Known technical state
 
-### Task I5: Connect Modular Plans to `planning.ts`
+- `npm run type-check` passes.
+- `npm test` — 724 passed, 0 failures (61 files).
+- Architecture migrated to `js/domains/` (8 modules) + `js/shared/` layer.
+- Re-export bridges in `js/core/` for backward compatibility.
 
-**File:** `js/core/planning.ts`  
-**Changes:**
-1. Import from `js/plans/running.ts` and `js/plans/strength.ts`
-2. Extend `buildSessionFromMonth` to accept optional `sport` parameter
-3. Select plan based on sport (default: current MONTHS for backward compatibility)
+### Known test failure categories
 
-**Verification:** `npx tsc --noEmit`, `npm test`
+- `MiniSparkline`: `React is not defined`.
+- `TrendChart`: `ResizeObserver is not defined` in tests.
+- `TodayPage.weekly`: expected `.weekly-strip` not rendered.
+- Additional component/UI test failures require triage.
 
-### Task I6: Add CheckinTier Selector to ProfilePage
-
-**File:** `js/ui/pages/ProfilePage.jsx`  
-**Changes:**
-1. Import `checkinTier` and `setCheckinTier` from `useAppStore`
-2. Add a collapsible "Настройки чек-ина" section with three radio buttons: Full / Medium / Light
-3. Show description of what each tier collects
-4. On change, call `setCheckinTier(value)`
+## 2. Product Truth
 
-**Verification:** `npx tsc --noEmit`, visual browser check  
-**Tests:** Add component test for tier selector rendering and interaction
+### This project is currently
 
-### Task I7: Adapt CheckinForm to Tier
+A local-first adaptive training planner with manual data entry and transparent APRE-based strength autoregulation.
 
-**File:** `js/ui/pages/CheckinForm.jsx`  
-**Changes:**
-1. Import `checkinTier` from `useAppStore`
-2. When tier is `light`: hide HRV and RHR rows, show only sleep + subjective
-3. When tier is `medium`: hide HRV row, show RHR + sleep + subjective
-4. When tier is `full`: show all fields (current behavior)
-5. Add subtle tier indicator: "Уровень: Лёгкий/Средний/Полный" near save button
-
-**Verification:** `npx tsc --noEmit`, visual browser check  
-**Tests:** Update `validation.test.ts` — validation should adapt to tier (HRV validation skipped for medium/light)
+### This project is not yet
 
-### Task I8: Activate English Language Switcher
+- a wearable-connected health platform;
+- a clinical safety system;
+- a complete health OS;
+- a personalized nutrition coach;
+- a validated recovery model;
+- a full annual periodization engine.
 
-**File:** `js/ui/pages/ProfilePage.jsx`  
-**Changes:**
-1. Import `getCurrentLanguage` and `changeLanguage` from `../../i18n/index.js`
-2. Add language toggle button (ru/en) in ProfilePage settings section
-3. Persist selection (i18next localStorage detector handles this automatically)
+## 3. Priority Roadmap
 
-**Verification:** `npx tsc --noEmit`, visual browser check
+## Phase 0 — Stabilization
 
----
+**Goal:** make the current product honest and shippable.
 
-## 3. PHASE 3 COMPLETED ✅
+### Status
 
-All Phase 3 features are now complete:
+✅ **Complete.**
 
-- **Virtual date offset system** — Fully functional with 30-day scrollable strip and week navigation
-- **Demo Mode** — Complete with deterministic synthetic data (30 days), isolated IndexedDB, developer panel
-- **30-day date strip** — Expanded from 7-day to 30-day scrollable strip with prev/next/today navigation
-- **Adaptive tier suggestion** — `detectOptimalTier()` implemented, showing suggestions in TodayPage banner
-- **Integration placeholders** — Apple Health, Google Fit, Garmin, Huawei cards with waitlist modal
+- All tests passing (724/724).
+- Architecture migrated to domain-based structure.
+- Removed stale directories and re-export stubs.
+- Docs aligned with actual code.
+- Recommendation explanation block implemented.
 
----
+## Phase 1 — Better Session Logging
 
-## 4. PHASE 4 VISION
+**Goal:** make training results useful for adaptation.
 
-### Apple Health / Google Fit Integration
-- Create `js/core/healthConnect.ts` abstraction
-- Platform detection + OAuth flow
-- Import HRV, RHR, sleep data automatically
+### Tasks
 
-### PDF Report Export
-- Use `jspdf` or similar client-side PDF library
-- Generate monthly summary PDF with charts
-- Useful for onboarding, testing, and showcasing features
+1. Add set-level data model:
+   - exerciseId;
+   - setIndex;
+   - target reps;
+   - actual reps;
+   - weight;
+   - RPE;
+   - pain;
+   - completed.
+2. Persist set logs in IndexedDB.
+3. Connect set logs to APRE.
+4. Add live workout autosave.
+5. Add post-session pain and fatigue feedback.
 
-### Apple Health / Google Fit Integration
-- Create `js/core/healthConnect.ts` abstraction
-- Platform detection + OAuth flow
-- Import HRV, RHR, sleep data automatically
-- **TDD:** Mock health platform API, write integration tests
+### Exit criteria
 
-### PDF Report Export
-- Use `jspdf` or similar client-side PDF library
-- Generate monthly summary PDF with charts
-- **TDD:** Test PDF generation with mock data
-
----
-
-## 5. TDD INTEGRATION PLAN
+- A completed workout contains enough data to adapt the next workout.
+- APRE uses actual set results, not only generic session RPE.
 
-### 5.1 Test Audit
+## Phase 2 — Explanation and Safety
 
-| Test File | Tests | Coverage | Needs Update? |
-|-----------|-------|----------|---------------|
-| `js/tests/core/apre.test.ts` | 56 | APRE engine — Mann tables, calisthenics | No |
-| `js/tests/core/readiness.test.ts` | 17 | calcReadiness, recoveryDebt | Add: tier-aware readiness tests |
-| `js/tests/core/planning.test.ts` | 16 | Workout type, session building | Add: sport-specific plan tests |
-| `js/tests/core/stats.test.ts` | 12 | Weekly/monthly stats, streak | No |
-| `js/tests/core/validation.test.ts` | 6 | Checkin validation | Add: tier-adaptive validation |
-| `js/tests/core/correlations.test.ts` | 7 | Metric correlations | No |
-| `js/tests/components/EmptyState.test.tsx` | 8 | EmptyState rendering | No (fixed this session) |
-| `js/tests/components/StatBox.test.tsx` | 8 | StatBox rendering | No |
-| `js/tests/components/ScaleSelector.test.tsx` | 7 | ScaleSelector interaction | No |
-| `js/tests/components/Skeleton.test.tsx` | 7 | Skeleton loading | No |
-| `js/tests/stores/useAppStore.test.ts` | 9 | Store critical path | Yes: add saveSetting mock + tier tests |
-
-### 5.2 New Test Files Needed
-
-1. `js/tests/core/recoveryScore.test.ts` — Tiered score calculation (full/medium/light with various data combinations)
-2. `js/tests/core/analytics.test.ts` — Trend detection, period comparison
-3. `js/tests/ui/OnboardingWizard.test.tsx` — 5-step wizard flow
-4. `js/tests/ui/CheckinForm.test.tsx` — Tier-adaptive field rendering
-5. `js/tests/ui/ProfilePage.test.tsx` — Tier selector, language switcher
-6. `js/tests/plans/running.test.ts` — Running plan structure validation
-7. `js/tests/plans/strength.test.ts` — Strength plan structure validation
-
-### 5.3 Enforcement Strategy
-
-- **Invariant:** `tsc --noEmit` + `npm test` must always be green
-- **Before any code change:** write or update the relevant test
-- **After any code change:** run full test suite
-- **Coverage target:** >80% line coverage on core logic modules
-
----
-
-## 6. SKILL USAGE PLAN
-
-| Skill | Task | When |
-|-------|------|------|
-| `static-pwa-development` | PWA audit, manifest/SW verification | Phase 2 cleanup, Phase 3 |
-| `systematic-debugging` | Root-cause TS errors, test failures | Throughout |
-| `test-driven-development` | All new features (Phase 3+) | Phase 3+ |
-| `subagent-driven-development` | Complex UI components (tier selector, analytics) | Phase 2 cleanup |
-| `writing-plans` | Before executing any multi-step task | Throughout |
-| `spike` | Quick experiments (chart tooltip approach) | Phase 3 |
-| `requesting-code-review` | Before merging major features | Phase 3 |
-
----
-
-## 7. DOCUMENTATION UPDATE PLAN
-
-### 7.1 Files Requiring Updates
-
-| File | What to Update | Priority |
-|------|----------------|----------|
-| `README.md` | Fix manifest.json path reference; update Phase 2 status to 100% when done; fix modular plans references | High |
-| `PROJECT_CONTEXT.md` | Update Phase 2 status; update data model section with checkinTier/gadgets/sports fields | High |
-| `docs/ANALYSIS_REPORT.md` | Update test count (153 all passing); update feature inventory; fix phase status | Medium |
-| `docs/rnd-report.md` | Add "What's Been Implemented Since" section | Medium |
-| `CONVENTIONS.md` | Add section on tiered feature development guidelines | Low |
-| `docs/audit-report.md` | Remove references to files already deleted, or mark as historical | Low |
-
-### 7.2 Documentation Rules
-
-- Every feature must have test file reference in docs
-- README must accurately reflect file structure
-- Phase status in all docs must be synchronized
-- All code examples in docs must match actual API
-
----
-
-## 8. RISK REGISTER
-
-| Risk | Probability | Impact | Mitigation |
-|------|-------------|--------|------------|
-| Tiered recovery score changes break existing user data | Medium | High | Default to 'medium' tier for all existing users; weight normalization |
-| Empty `js/plans/` causes import errors | High | High | Create stub files immediately (Task I4) before any import attempts |
-| `manifest.json` path breaks PWA installability | High | Medium | Fix in Task I2 before testing PWA |
-| Store test mock missing `saveSetting` causes silent test failures | High | Medium | Fix in Task I3 before any store test changes |
-| `app.tsx` TS error blocks compilation | High | High | Fix in Task I1 — blocks everything else |
-| Onboarding wizard changes break first-time user flow | Medium | Medium | Test wizard flow in isolated browser context after changes |
-
----
-
-## 9. EXECUTION ORDER
-
-1. **Task I1** — Fix `app.tsx` TS error (blocks compilation)
-2. **Task I2** — Fix `manifest.json` path (blocks PWA)
-3. **Task I3** — Fix store test mock (blocks test accuracy)
-4. **Task I4** — Create modular plan stubs (blocks import errors)
-5. **Task I5** — Connect plans to `planning.ts`
-6. **Task I6** — ProfilePage tier selector
-7. **Task I7** — CheckinForm tier adaptation
-8. **Task I8** — Language switcher
-9. **Docs update** — Synchronize all documentation
-10. **Phase 3 kickoff** — Adaptive Recovery Score (TDD-first)
-
----
-
-## 10. TRACEABILITY
-
-| Plan Item | File | Verification |
-|-----------|------|--------------|
-| I1 | `js/app.tsx:184-185` | `npx tsc --noEmit` |
-| I2 | `index.html:7` + `manifest.json` | Browser loads manifest |
-| I3 | `js/tests/stores/useAppStore.test.ts:7-23` | `npm test` green |
-| I4 | `js/plans/running.ts`, `js/plans/strength.ts` | `npx tsc --noEmit` |
-| I5 | `js/core/planning.ts` | `npm test` green |
-| I6 | `js/ui/pages/ProfilePage.jsx` | Visual + component test |
-| I7 | `js/ui/pages/CheckinForm.jsx` | Visual + validation test |
-| I8 | `js/ui/pages/ProfilePage.jsx` | Visual + i18n test |
-| Docs | `README.md`, `PROJECT_CONTEXT.md`, `docs/ANALYSIS_REPORT.md` | Manual review |
-| Phase 3 | `js/core/recoveryScore.ts` + new tests | TDD cycle |
-
----
-
-*Plan version 1.0 — Generated after full-file audit of 90+ source files, 11 test files, 6 docs, and 10 skills.*
+**Goal:** earn trust.
+
+### Tasks
+
+1. Add PAR-Q+ inspired safety questionnaire.
+2. Add red-flag rules:
+   - acute pain;
+   - chest symptoms;
+   - abnormal breathing;
+   - severe fatigue;
+   - high pain trend.
+3. Add pain-aware substitutions:
+   - pain location;
+   - movement pattern;
+   - contraindicated exercises;
+   - replacement;
+   - reduced dose.
+4. Show explanations:
+   - "why readiness changed";
+   - "what was changed in the plan";
+   - "what to watch next".
+
+### Exit criteria
+
+- The app can explain every training reduction.
+- Pain no longer only filters strings; it changes movement selection.
+
+## Phase 3 — Load Model
+
+**Goal:** move beyond simple readiness.
+
+### Tasks
+
+1. Keep sRPE session load.
+2. Add weekly acute/chronic load approximation.
+3. Decide whether to implement ACWR or explicitly reject it.
+4. Add CTL/ATL/TSB-inspired metrics or simpler transparent alternative.
+5. Add sport-specific load units.
+
+### Exit criteria
+
+- The app can detect load spikes and undertraining.
+- Warnings are based on both recovery and load.
+
+## Phase 4 — Periodized Planning
+
+**Goal:** move from repeating weekly templates to goal-based planning.
+
+### Tasks
+
+1. Add goal date or event.
+2. Add mesocycles.
+3. Add deload scheduling.
+4. Add test/retest weeks.
+5. Add taper/off-season.
+6. Add annual overview.
+
+### Exit criteria
+
+- User can plan 3-12 months.
+- The plan adapts when sessions are missed or recovery is poor.
+
+## Phase 5 — Data Ingestion
+
+**Goal:** reduce manual input.
+
+### Tasks
+
+1. Define integration strategy:
+   - Apple Health / HealthKit;
+   - Health Connect Android;
+   - Garmin / Strava import;
+   - CSV import fallback.
+2. Add source metadata per metric.
+3. Add permissions and privacy UI.
+4. Add baseline confidence scoring.
+5. Add failure states for missing or stale data.
+
+### Exit criteria
+
+- At least one real data source imports HRV/RHR/sleep.
+- The app can distinguish manual vs imported data.
+- User can revoke access.
+
+## Phase 6 — Optional Health Layer
+
+**Goal:** only after training core is trustworthy.
+
+### Tasks
+
+1. Sleep trend recommendations.
+2. Nutrition target calculator by goal and body weight.
+3. Supplement education with safety disclaimers.
+4. Lab marker tracking as manual fields.
+5. Optional encrypted sync.
+
+### Exit criteria
+
+- Advice is personalized from actual data.
+- No medical claims without evidence and disclaimer.
+
+## 4. Architecture Post-Migration
+
+Current layout:
+
+- `js/domains/` — 8 domain modules: training, checkin, analytics, profile, achievements, import, demo, onboarding
+- `js/shared/` — types, helpers, config, hooks, i18n, UI primitives
+- `js/stores/` — Zustand store (useAppStore.ts) + 5 slices
+- `js/core/` — re-export bridges + 4 remaining real files (storage.ts, advice.ts, recoveryScore.ts, readiness.ts)
+- `js/ui/` — pages and components
+- `js/tests/` — test suites
+
+## 5. Non-goals
+
+For now, do not prioritize:
+
+- social feed;
+- leaderboards;
+- PDF export as core feature;
+- generic AI chat;
+- community exercise library without moderation;
+- "Health OS" branding.
+
+## 6. Documentation Rules
+
+Docs must classify every feature as:
+
+- implemented;
+- partial;
+- planned;
+- removed.
+
+No document may claim "0 failures" unless verified in the same session.

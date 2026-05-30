@@ -2,6 +2,7 @@
 // Тепловая карта 7 дней × 4 метрики (Recovery, HRV, Sleep, Readiness)
 
 import React from 'react';
+import styles from './HeatmapGrid.module.css';
 import { useTranslation } from 'react-i18next';
 
 function getDayLabel(dateStr) {
@@ -30,7 +31,7 @@ export default function HeatmapGrid({ data }) {
   if (!data || data.length === 0) {
     return React.createElement(
       'div',
-      { className: 'heatmap-grid' },
+      { className: styles['heatmap-grid'] },
       React.createElement('p', { className: 'text-muted text-center text-sm' }, t('log.noDataHeatmap'))
     );
   }
@@ -54,46 +55,44 @@ export default function HeatmapGrid({ data }) {
     { key: 'readiness', label: 'Готовность', get: d => d.readiness },
   ];
 
-  return React.createElement(
+return React.createElement(
     'div',
-    { className: 'heatmap-grid' },
+    { className: styles['heatmap-grid'] },
     React.createElement(
       'div',
-      { className: 'heatmap-grid__header' },
-      React.createElement('span', { className: 'heatmap-grid__title' }, 'Недельная тепловая карта'),
-      React.createElement('span', { className: 'heatmap-grid__subtitle' }, `${days.length} дней`)
+      { className: styles['heatmap-grid__header'] },
+      React.createElement('span', { className: styles['heatmap-grid__title'] }, 'Недельная тепловая карта'),
+      React.createElement('span', { className: styles['heatmap-grid__subtitle'] }, `${days.length} дней`)
     ),
     React.createElement(
       'div',
-      { className: 'heatmap-grid__table' },
-      // Header row with day labels
+      { className: styles['heatmap-grid__table'] },
       React.createElement(
         'div',
-        { className: 'heatmap-grid__row heatmap-grid__row--header' },
-        React.createElement('div', { className: 'heatmap-grid__label' }, ''),
+        { className: `${styles['heatmap-grid__row']} ${styles['heatmap-grid__row--header']}` },
+        React.createElement('div', { className: styles['heatmap-grid__label'] }, ''),
         ...days.map((d, i) =>
-          React.createElement('div', { key: i, className: 'heatmap-grid__day' }, getDayLabel(d.date))
+          React.createElement('div', { key: i, className: styles['heatmap-grid__day'] }, getDayLabel(d.date))
         )
       ),
-      // Data rows
-      ...rows.map(row =>
+      rows.map(row =>
         React.createElement(
           'div',
-          { key: row.key, className: 'heatmap-grid__row' },
-          React.createElement('div', { className: 'heatmap-grid__label' }, row.label),
+          { key: row.key, className: styles['heatmap-grid__row'] },
+          React.createElement('div', { className: styles['heatmap-grid__label'] }, row.label),
           ...days.map((d, i) => {
             const val = row.get(d);
             if (row.key === 'readiness') {
               return React.createElement('div', {
                 key: i,
-                className: 'heatmap-grid__cell heatmap-grid__cell--dot',
+                className: `${styles['heatmap-grid__cell']} ${styles['heatmap-grid__cell--dot']}`,
                 style: { background: readinessDot(val) },
               });
             }
             const isEmpty = val === undefined || val === null || val === 0;
             return React.createElement('div', {
               key: i,
-              className: 'heatmap-grid__cell',
+              className: styles['heatmap-grid__cell'],
               style: { background: isEmpty ? 'var(--surface3)' : cellColor(val, row.min, row.max, row.key === 'hrv') },
               title: isEmpty ? '' : `${val}`,
             });

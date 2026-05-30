@@ -1,0 +1,9 @@
+{
+  "last_report_path": "C:\\Users\\Rocket\\AppData\\Local\\hermes\\logs\\curator\\20260525-153007",
+  "last_run_at": "2026-05-25T15:30:07.511418+00:00",
+  "last_run_duration_seconds": 537.954472,
+  "last_run_summary": "auto: no changes; llm: `windows-cdp-workflows` is gone from the active skills list. Only `static-pwa-development` remains as the sole agent-created skill, now enriched with the Windows CDP Workflows section.\n\n---\n\n## Summary\n\nWith only 2 agent-created skills in t…\narchived 1 skill(s):\n  • windows-cdp-workflows → static-pwa-development\nfull report: hermes curator status\nkeep an umbrella stable: hermes curator pin static-pwa-development",
+  "last_run_summary_shown_at": "2026-05-25T15:30:07.511418+00:00",
+  "paused": false,
+  "run_count": 1
+}

@@ -1,217 +1,337 @@
-AGENTS.md — Smart Fitness Coach
-This file provides AI coding agents with the essential context to work effectively on this project. Inspired by analysis of 2,500+ repositories and proven to reduce runtime by 28% and tokens by 16% in controlled studies.
+﻿# AGENTS.md — Smart Fitness Coach
 
-🎯 Project Identity
-Smart Fitness Coach — An open-source personal training coach (Whoop/Athlytic alternative). Zero subscription, zero cloud, full privacy.
+## Project Identity
 
-Primary goal: Answer "Am I ready to train today and what exactly should I do?" with transparent, science-based autoregulation.
+Smart Fitness Coach is a local-first adaptive training planner.
 
-Core value: APRE-based load adjustment + tiered recovery scoring + user profile adaptation, not a "black box."
+Primary goal:
 
-Target user: Amateur athletes who want evidence-based training without paying $30/month. Supports 8 sports, rehabilitation filtering, and equipment-aware planning.
+**Answer "Am I ready to train today, and what exactly should I do?"**
 
-🛠️ Tech Stack (Exact Versions)
+Current product strength:
+
+- transparent APRE-based strength autoregulation;
+- tiered recovery scoring;
+- manual check-in;
+- local data ownership;
+- basic multi-sport planning.
+
+Do not describe the product as a complete Health OS, wearable platform, or medical system unless those features are actually implemented.
+
+## Tech Stack
+
+Use the versions in `package.json` as source of truth.
+
+Core stack:
+
+- React 18;
+- TypeScript;
+- Vite;
+- Zustand;
+- Dexie / IndexedDB;
+- Vitest;
+- react-i18next;
+- lucide-react;
+- custom CSS.
+
+## Product Boundaries
+
+### Data privacy
+
+Default rule:
+
+- Data stays local unless the user explicitly opts into an integration, export, or sync.
+
+Allowed with explicit product approval:
+
+- Apple Health / HealthKit;
+- Health Connect;
+- Garmin;
+- Strava;
+- CSV import/export;
+- optional encrypted sync.
+
+Disallowed:
+
+- selling user data;
+- advertising trackers;
+- silent health-data upload;
+- external calls without user-facing purpose.
+
+## Architecture
+
+```text
+Input → IndexedDB → Zustand → derived state → UI recommendation
 ```
-React 18.2.0 + TypeScript 5.x (strict) + Vite 8 + Zustand 5 + Dexie.js 4
-Vitest 4 + @testing-library/react 16 + Workbox 7 + react-i18next 17
-UI Primitives: @base-ui/react 1.5 (Collapsible, Dialog only)
-Icons: Lucide React 1.16 (named imports, no Icon suffix)
-Styling: Custom CSS only (design-tokens.css + styles.css) — NO Tailwind, NO Bootstrap
-Storage: IndexedDB via Dexie.js (checkins, sessions, settings, achievements)
-State: Single Zustand store (useAppStore.ts) with computed derived state
-i18n: Russian (default) + English via react-i18next (locales: ru.json, en.json)
+
+Core files:
+
+- `js/stores/useAppStore.ts`;
+- `js/stores/slices/` — Zustand store slices (checkin, session, ui, data, demo);
+- `js/domains/recovery/recoveryScore.ts`;
+- `js/domains/recovery/readiness.ts`;
+- `js/domains/training/planning/planning.ts`;
+- `js/domains/training/apre/engine.js`;
+- `js/domains/profile/exerciseDatabase.ts`;
+- `js/domains/training/planning/completionRate.ts`;
+- `js/domains/import/csvParser.ts`;
+- `js/domains/analytics/analytics.ts`;
+- `js/domains/training/session/sessionLoad.ts`.
+
+## Coding Rules
+
+### Core logic
+
+- Keep domain logic pure when possible.
+- Add tests for new domain functions.
+- Avoid `any` in `js/domains/`; use proper types or `unknown` with guards.
+- Keep `types.ts` synchronized with store state.
+
+### React
+
+- New components should use JSX.
+- Legacy pages may still use `React.createElement`.
+- Do not expand legacy style unless required.
+- Prefer one Zustand subscription per component.
+
+### Styling
+
+- Use existing CSS tokens.
+- Custom CSS is acceptable.
+- Accessibility has priority over visual purity.
+- Do not forbid light/high-contrast/reduced-motion support if product needs it.
+
+### Storage
+
+- User data belongs in IndexedDB.
+- LocalStorage is acceptable only for small UI/settings flags.
+- Any integration must track data source and timestamp.
+
+### Commit Discipline
+
+- Documentation is part of the commit: every commit that changes API, data model, architecture, or user-facing behavior must update the relevant README/docs/
+- Split commits by concern: one logical change per commit, not a dump of unrelated files
+- Commit messages summarize the "why" in one line, then list changed files/areas
+
+## Feature Honesty Rules
+
+Every feature must be labeled as one of:
+
+- implemented;
+- partial;
+- planned;
+- placeholder;
+- removed.
+
+Do not call placeholders "integrations".
+
+Do not call rule-based advice "AI".
+
+Do not claim test suite is green unless `npm test` was run and passed in the current session.
+
+## Testing Rules
+
+Before declaring completion:
+
+**PowerShell:**
+```powershell
+Set-Location -Path 'c:\Projects\fitness-tracker'; npm run type-check; npm test
 ```
 
-📁 Key Directories
-```
-js/core/          — Domain logic (readiness, recoveryScore, planning, exerciseDatabase)
-js/plans/         — 8 sport plan modules (running, strength_gym, cycling, swimming, calisthenics, yoga, stretching, walking)
-js/stores/        — Zustand store (useAppStore.ts)
-js/ui/pages/      — TodayPage.jsx, ProfilePage.jsx, CheckinForm.jsx, AnalyticsPage.jsx
-js/ui/components/ — OnboardingWizard, UserProfileEditor, GuidedTour, Modal, etc.
-js/config/        — constants.js, tour-steps.js
-docs/             — ANALYSIS_REPORT.md, audit-report.md, I18N_SETUP.md
-memory-bank/      — progress.md, master-plan.md, systemPatterns.md
+**E2E tests** (Playwright — requires `npm run dev` on `:3000`):
+```powershell
+Set-Location -Path 'c:\Projects\fitness-tracker'; npm run test:e2e
 ```
 
-🚫 Absolute Prohibitions
-No jQuery, Bootstrap, Tailwind, or any CSS framework
+If tests fail, report:
 
-No external API calls (weather, GPS, social — all data stays local)
+- failed files;
+- failed test count;
+- whether the failure is pre-existing or caused by the change.
 
-No server-side rendering (pure client-side SPA)
+## Product Priorities
 
-No cloud storage (no user data leaves the device)
+When uncertain, prioritize:
 
-No Redux or React Context for global state (Zustand only)
+1. correctness;
+2. safety;
+3. explanation;
+4. data quality;
+5. training specificity;
+6. privacy;
+7. UI polish.
 
-No any type in core/ modules (use unknown + type guards)
+Do not prioritize PDF export, badges, or generic AI chat over the training decision engine.
 
-No React.createElement in NEW code (JSX only) — except TodayPage.jsx (legacy)
+## Model Selection by Task Type
 
-🏗️ Architecture (One Flow)
-text
-Check-in → Dexie (IndexedDB) → computeDerived() → UI (React)
-text
-js/
-├── app.tsx                         # Entry: React root, lazy pages, BottomNav, OnboardingWizard
-├── stores/useAppStore.ts           # Single Zustand store + computeDerived()
-├── core/                           # Pure functions (NO side effects except storage)
-│   ├── readiness.ts                # calcReadiness, detectRecoveryDebt
-│   ├── recoveryScore.ts            # Tiered recovery (full/medium/light weights)
-│   ├── planning.ts                 # buildWeeklyPlan, getSessionForDate
-│   ├── stats.ts                    # getWeeklySummary, getStreak
-│   ├── analytics.ts                # getTrendData, detectNegativeTrends
-│   ├── advice.ts                   # getCoachAdvice
-│   ├── apre/engine.js              # APRE Mann tables (56 tests)
-│   └── helpers.ts                  # getAppDate, parseLocalDate, formatISO
-├── plans/                          # Modular sport plans (running.ts, strength.ts)
-├── ui/pages/                       # 5 tab pages + sub-components
-├── ui/components/                  # Reusable components (CheckinHistory, HeatmapGrid, etc.)
-├── i18n/                           # Locale files (ru.json, en.json)
-├── tests/                          # Vitest tests (24 files, 225+ tests)
-└── ...
-📁 File Naming & Structure
-Type	Pattern	Example
-React components	PascalCase.jsx	TodayPage.jsx, ExerciseCard.jsx
-Core utilities	camelCase.ts	recoveryScore.ts, helpers.ts
-Tests	*.test.ts or .test.tsx	planning.test.ts, TodayPage.test.tsx
-Types	types.ts (single file)	js/core/types.ts
-CSS	kebab-case.css	design-tokens.css
-🧪 Testing (Mandatory)
-bash
-npm test                 # Run all tests (225+ tests, 24 files)
-npm run test:watch       # Watch mode
-npm run test:coverage    # Coverage report (v8)
-Rules:
+- **SWE 1.6 Fast/SWE 1.6** — быстрые правки, простой рефакторинг, выполнение рутинных действий. Используется по умолчанию.
+- **Kimi K2.6** — написание кода (экономный режим, подходит для большей части рутины).
+- **Claude Opus 4.7 Think (Medium/High)/ChatGPT 5.5 (xhigh/high)** — сложная архитектура, глубокий анализ, распутывание запутанной логики. Переключаться при упоминании слов "архитектура", "дизайн", "проблема".
 
-Every core function must have a unit test in js/tests/core/
+## Agent Skills / Trigger Words
 
-Every component with non-trivial logic must have a test in js/tests/components/
+When a user request matches a trigger phrase, invoke the corresponding skill via `skill(name)`.
 
-Before committing: tsc --noEmit + npm test must be green
+### Engineering & Code Quality
 
-Do not delete or weaken existing tests without justification
+| Trigger phrase / intent | Skill | Description |
+|---|---|---|
+| "fix this bug", "broken", "failing test", "debug this" | `diagnose` | Reproduce → instrument → fix loop |
+| "test this first", "red-green-refactor", "TDD" | `tdd` | Test-driven development loop |
+| "fill test gaps", "more coverage", "backfill tests" | `test-backfill` | Fill coverage gaps to hit target |
+| "ready for review", "clean up commits", "PR prep" | `pr-ready` | Squash WIP, polish messages, green checks |
+| "find all X that don't Y", "refactor structurally" | `ast-grep` | AST-aware search and refactoring |
+| "architecture needs work", "refactor opportunities" | `improve-codebase-architecture` | Find deepening opportunities |
+| "too much context", "compact", "context rot" | `compact-hygiene` | Proactive `/compact` with preservation |
+| "zoom out", "bigger picture", "how does this fit" | `zoom-out` | Broader context / higher-level perspective |
+| "review my plan against docs", "grill my design" | `grill-with-docs` | Stress-test plan against domain model |
+| "setup issue tracker skills", "configure triage" | `setup-matt-pocock-skills` | Setup agent skills for issue tracking |
+| "refactor agent instructions", "split AGENTS.md" | `agent-md-refactor` | Refactor bloated agent instruction files |
+| "scrape secrets before commit", "check for leaked keys" | `secret-scrubber` | Scan for leaked secrets, API keys, tokens |
 
-💅 Code Conventions
-Styling
-All styles from css/design-tokens.css (CSS custom properties)
+### Planning & Issue Management
 
-BEM class naming: .component__element--modifier
+| Trigger phrase / intent | Skill | Description |
+|---|---|---|
+| "make a plan", "plan this out", "planning mode" | `planning-with-files` | Persistent markdown plan for non-trivial tasks |
+| "turn this into tickets", "break into issues" | `to-issues` | Decompose plan into tracker issues |
+| "write a PRD", "product requirements" | `to-prd` | Turn conversation into a PRD |
+| "triage this", "new bug report", "review incoming" | `triage` | State-machine issue triage |
+| "speckit specify", "formal spec" | `speckit-specify` | Turn loose request into formal spec |
+| "speckit plan", "implementable plan" | `speckit-plan` | Decompose spec into plan with checkboxes |
 
-Inline styles ONLY for dynamic values (animation, color based on state)
+### Testing & QA
 
-Dark theme only (no light theme, no media queries)
+| Trigger phrase / intent | Skill | Description |
+|---|---|---|
+| "test the webapp", "UI testing", "frontend QA" | `webapp-testing` | Playwright-based web app testing |
+| "dogfood this", "exploratory QA", "find bugs" | `dogfood` | Exploratory QA, find bugs with evidence |
+| "review my UI", "check accessibility", "audit UX" | `web-design-guidelines` | Review UI code for best practices |
+| "visual iteration", "screenshot fix loop" | `visual-iteration` | Screenshot → describe → fix for UI work |
 
-css
-/* design-tokens.css provides: */
---spacing-sm, --spacing-md, --spacing-lg
---green, --yellow, --red, --blue, --orange
---font-size-caption, --font-size-body, --font-size-title
---transition-fast (150ms)
-React Components
-Prefer JSX syntax (some legacy code uses React.createElement — avoid expanding)
+### Web Scraping & Research (Firecrawl)
 
-Destructure store state once per component:
+| Trigger phrase / intent | Skill | Description |
+|---|---|---|
+| "scrape this URL", "get the page", "extract from web" | `firecrawl-scrape` | Extract clean markdown from any URL |
+| "search the web", "find articles", "look up" | `firecrawl-search` | Web search with full page content |
+| "crawl this site", "get all pages", "bulk extract" | `firecrawl-crawl` | Bulk extract from entire website |
+| "deep research", "compare perspectives", "briefing" | `firecrawl-deep-research` | Multi-source deep research |
+| "interact with page", "click through", "fill form" | `firecrawl-interact` | Browser interaction for dynamic pages |
+| "download this site", "offline copy", "save docs" | `firecrawl-download` | Download entire website as local files |
+| "extract structured data", "get all products", "JSON from site" | `firecrawl-agent` | AI-powered autonomous structured extraction |
+| "SEO audit", "heading review", "sitemap analysis" | `firecrawl-seo-audit` | Audit website SEO |
+| "market research", "industry trends", "earnings" | `firecrawl-market-research` | Extract market and financial metrics |
+| "competitive intel", "track competitor pricing" | `firecrawl-competitive-intel` | Monitor competitor changes |
+| "lead gen", "prospect list", "CRM-ready leads" | `firecrawl-lead-gen` | Generate structured lead lists |
+| "build knowledge base", "RAG docs", "docs mirror" | `firecrawl-knowledge-base` | Build knowledge base from web content |
+| "parse this PDF", "extract from document" | `firecrawl-parse` | Extract text from PDF/DOCX/XLSX |
+| "research papers", "literature review", "PDF summary" | `firecrawl-research-papers` | Find and synthesize research papers |
+| "map this site", "list all URLs", "site structure" | `firecrawl-map` | Discover all URLs on a website |
+| "QA this site", "pre-launch quality review" | `firecrawl-qa` | QA test a live website |
 
-jsx
-// ✅ DO
-const { sessions, readiness, handleSaveCheckin } = useAppStore();
+### Creative & Visual
 
-// ❌ DON'T — double subscription
-const state = useAppStore();
-const dispatch = useAppStore();
-Lazy load pages: const LogPage = lazy(() => import('./ui/pages/LogPage.jsx'));
+| Trigger phrase / intent | Skill | Description |
+|---|---|---|
+| "design a landing page", "web component", "poster" | `frontend-design` | Production-grade frontend interfaces |
+| "architecture diagram", "infra diagram", "cloud chart" | `architecture-diagram` | Dark-themed SVG architecture diagrams |
+| "excalidraw diagram", "hand-drawn flowchart" | `excalidraw` | Hand-drawn style diagrams |
+| "ASCII art", "figlet", "cowsay", "image to ASCII" | `ascii-art` | ASCII art generation |
+| "ASCII video", "convert to colored ASCII" | `ascii-video` | Convert video to colored ASCII MP4/GIF |
+| "pixel art", "NES style", "Game Boy style" | `pixel-art` | Pixel art with era palettes |
+| "p5js sketch", "generative art", "interactive sketch" | `p5js` | p5.js sketches and generative art |
+| "manim video", "3Blue1Brown style", "math animation" | `manim-video` | Manim CE math/algorithm animations |
+| "claude design", "one-off HTML artifact" | `claude-design` | Design one-off HTML artifacts |
+| "sketch mockup", "design variants", "compare layouts" | `sketch` | Throwaway HTML mockups |
+| "popular web designs", "clone Stripe/Vercel/Linear" | `popular-web-designs` | 54 real design systems as HTML/CSS |
+| "pretext", "ASCII art layout", "typographic flow" | `pretext` | DOM-free text layout experiments |
+| "article illustration", "type × style × palette" | `baoyu-article-illustrator` | Article illustrations |
+| "knowledge comic", "educational comic", "biography comic" | `baoyu-comic` | Knowledge comics |
+| "infographic", "information visualization" | `baoyu-infographic` | Infographics in 21 layouts × 21 styles |
+| "comfyui image", "generate image", "run workflow" | `comfyui` | ComfyUI image/video/audio generation |
+| "touchdesigner", "real-time visuals", "TD operator" | `touchdesigner-mcp` | Control TouchDesigner via MCP |
+| "songwriting", "AI music", "Suno prompt" | `songwriting-and-ai-music` | Songwriting craft and Suno prompts |
+| "creative ideas", "project ideas", "ideation" | `creative-ideation` | Generate project ideas via constraints |
+| "design tokens", "DESIGN.md", "token spec" | `design-md` | Author/validate Google DESIGN.md spec |
 
-Max function: 40 lines; Max file: 300 lines (pages are exceptions)
+### Agent Tools & Integration
 
-TypeScript
-Strict mode enabled — strict: true in tsconfig
+| Trigger phrase / intent | Skill | Description |
+|---|---|---|
+| "claude code", "delegate to Claude CLI" | `claude-code` | Delegate coding to Claude Code CLI |
+| "codex", "openai codex", "delegate to Codex" | `codex` | Delegate coding to OpenAI Codex CLI |
+| "opencode", "delegate to OpenCode" | `opencode` | Delegate coding to OpenCode CLI |
+| "hermes agent", "configure Hermes" | `hermes-agent` | Configure or extend Hermes Agent |
+| "kanban worker", "kanban pitfalls" | `kanban-worker` | Kanban worker guidance |
+| "kanban orchestrator", "decompose for kanban" | `kanban-orchestrator` | Kanban orchestrator playbook |
+| "kanban codex lane", "Codex as kanban lane" | `kanban-codex-lane` | Run Codex CLI as isolated implementation lane |
 
-All new types in js/core/types.ts
+### Productivity & Documents
 
-No any in js/core/ (use unknown + type guards when needed)
+| Trigger phrase / intent | Skill | Description |
+|---|---|---|
+| "notion page", "notion database", "sync to Notion" | `notion` | Notion API: pages, databases, markdown |
+| "powerpoint", "create slides", "edit .pptx" | `powerpoint` | Create, read, edit PowerPoint decks |
+| "humanize this", "strip AI-isms", "real voice" | `humanizer` | Humanize text, add real voice |
+| "apple notes", "create note", "search notes" | `apple-notes` | Manage Apple Notes via memo CLI |
+| "apple reminders", "add reminder", "list reminders" | `apple-reminders` | Apple Reminders via remindctl |
+| "google workspace", "gmail", "calendar", "sheets" | `google-workspace` | Gmail, Calendar, Drive, Docs, Sheets |
+| "airtable", "base", "records CRUD" | `airtable` | Airtable REST API via curl |
+| "linear", "linear issues", "linear projects" | `linear` | Linear: issues, projects, teams |
+| "maps", "geocode", "POIs", "routes", "timezone" | `maps` | Geocode, POIs, routes via OpenStreetMap |
+| "ocr this", "extract text from PDF/scan" | `ocr-and-documents` | Extract text from PDFs and scans |
+| "nano pdf", "edit PDF text", "PDF typos" | `nano-pdf` | Edit PDF text/titles via nano-pdf CLI |
+| "find my device", "track AirTag", "FindMy" | `findmy` | Track Apple devices/AirTags |
+| "imessage", "send iMessage", "SMS" | `imessage` | Send/receive iMessages via imsg CLI |
+| "macos computer use", "drive macOS desktop" | `macos-computer-use` | Drive macOS desktop in background |
+| "teams meeting", "summarize Teams", "meeting pipeline" | `teams-meeting-pipeline` | Teams meeting summary pipeline |
+| "handoff", "compact for another agent" | `handoff` | Compact conversation into handoff document |
+| "file organizer", "organize files", "cleanup" | `file-organizer` | Intelligently organize files and folders |
 
-Keep AppState in types.ts synchronized with useAppStore.ts
+### Meta / Workflow
 
-Imports Order
-js
-import React from 'react';
-import { useTranslation } from 'react-i18next';
-import { Sun, Moon, Check } from 'lucide-react';
-import { useAppStore } from '../../stores/useAppStore.js';
-import { detectOptimalTier } from '../../core/recoveryScore.js';
-import ExerciseCard from '../components/ExerciseCard.jsx';
-import '../../css/styles.css';  // only in app.tsx
-🔄 Essential Workflows
-Adding a New Core Function
-Write pure function in js/core/[module].ts
+| Trigger phrase / intent | Skill | Description |
+|---|---|---|
+| "caveman mode", "less tokens", "be brief" | `caveman` | Ultra-compressed communication mode |
+| "prototype this", "mock up", "try designs" | `prototype` | Throwaway prototype: terminal app or UI variations |
+| "grill me", "stress-test my plan", "challenge me" | `grill-me` | Interview user relentlessly about plan/design |
+| "write a skill", "create a new skill", "skill creator" | `skill-creator` / `write-a-skill` | Guide for creating effective agent skills |
+| "reflection loop", "generate evaluate revise" | `reflection-loop` | Generate → evaluate → revise with external signal |
+| "ralph safe", "persistent loop", "iterate until green" | `ralph-safe` | Ralph Wiggum persistent loop with kill-switch |
+| "swarm split", "parallel subtasks", "6 sessions" | `swarm-split` | Decompose into 6 disjoint subtasks for parallel execution |
+| "vercel react best practices", "optimize React" | `vercel-react-best-practices` | React/Next.js performance optimization |
+| "wiki query", "read project wiki", "vault docs" | `wiki-query` | Read project wiki before non-trivial tasks |
+| "wiki update", "update vault", "document decision" | `wiki-update` | Maintain project wiki after decisions |
 
-Add tests in js/tests/core/[module].test.ts
+## Documentation Update Rule
 
-Export via js/core/index.ts if shared
+Любое изменение в ядре системы (каталоги `js/core/`, `js/domains/`, `js/stores/`, `js/ui/`) должно сопровождаться обновлением соответствующего файла `docs/domains/<домен>/README.md`.
 
-Update computeDerived() in useAppStore.ts if state-dependent
+Если изменение затрагивает API, модель данных или архитектурное решение – README домена обязательно обновляется. В остальных случаях – по необходимости.
 
-Adding a New UI Component
-Create js/ui/components/[ComponentName].jsx
+## Session Logging
 
-Add CSS classes to css/styles.css (use BEM)
+В начале каждой сессии, связанной с новой задачей, создавать файл `docs/sessions/YYYY-MM-DD-краткое-описание.md`. В начале файла указать цель сессии, в конце сессии дополнить файл кратким итогом: что сделано, какие решения приняты, что осталось на потом.
 
-Write component test in js/tests/components/
+Если сессия продолжает предыдущую – дописывать в существующий файл.
 
-Import with import ComponentName from '../components/ComponentName.jsx'
+## Memory Usage
 
-Modifying Store State
-ts
-// In useAppStore.ts, after data mutation:
-void (async () => {
-  await storage.saveSessions(newSessions);
-  set({ sessions: newSessions });
-  get()._recompute();  // Recalculates all derived state
-})();
-Working with Virtual Dates
-Use getAppDate() from js/core/helpers.ts instead of new Date()
+**Перед началом сессии:**
+- Всегда читать Cascade MEMORY (системные записи о проекте, доступных инструментах, статусе)
+- Проверять релевантность memory к текущей задаче
+- Использовать memory для контекста: tech stack, project boundaries, available skills/workflows
 
-Virtual offset is stored in Zustand + IndexedDB, persists across sessions
+**В конце сессии:**
+- Если задача изменила проект (новые файлы, изменённая архитектура, новые правила) — обновить memory через `create_memory` tool
+- Сохранять только ключевые решения и паттерны, не временные данные
+- Добавлять теги для будущего поиска (например, `project-context`, `rules`, `api-changes`)
 
-Used for date strip navigation, planning, recovery score, and stats
+### Session Skill Log
 
-Working with Plans (Modular)
-Sport plans are in js/plans/running.ts and js/plans/strength.ts
+If a skill was invoked successfully in this session, prefer it for similar subsequent tasks without requiring explicit re-invocation. Log format (mental only, no file):
 
-Planning engine (planning.ts) selects plan based on selectedSports
-
-To add a new sport: create plan module, add to getPlanForSport()
-
-🔒 Boundaries & Constraints
-DO	DON'T
-Store everything in IndexedDB via Dexie	Store large data in localStorage
-Use Zustand for global state	Use Redux or React Context for global state
-Write pure functions in js/core/	Write side effects inside core/
-Use design tokens from design-tokens.css	Hardcode colors or spacing
-Keep all data local	Make external API calls
-Write tests for new features	Skip tests for "small" changes
-🚧 Current Blockers (May 2026)
-TypeScript syntax error in js/ui/pages/TodayPage.jsx (lines 631, 668) — requires fix before verification
-
-2 failing tests in correlations.test.ts — pre-existing, non-blocking
-
-Recovery Score dash appears occasionally — needs debugging
-
-📋 Phase Status
-Phase	Status	Description
-Phase 1 — Foundation	✅ 100%	Architecture, storage, store, APRE, Recovery Score
-Phase 2 — Personalization	✅ 100%	Tiered check-in, modular plans, onboarding wizard, gamification
-Phase 3 — Adaptivity	✅ 100%	Virtual date, 30-day date strip, demo mode, AI suggestions
-Phase 4 — Ecosystem	⏳ 0%	Apple Health / Google Fit, PDF reports
-📚 When Unsure, Read These
-memory-bank/progress.md — Latest feature additions and bug fixes
-
-memory-bank/master-plan.md — Complete roadmap and task status
-
-js/core/types.ts — All TypeScript interfaces
-
-js/stores/useAppStore.ts — State shape and actions
-
-.github/agents/ — Specialized agent instructions (if exists)
+- Skill used → Task type → Result (success / partial / failed)
+- Example: `diagnose` → "bug in recovery score calc" → success → prefer for future "bug", "fix", "broken" intents

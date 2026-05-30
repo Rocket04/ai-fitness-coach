@@ -1,0 +1,7 @@
+.trend-indicator {
+  font-size: var(--font-size-caption);
+  font-weight: 600;
+  font-family: var(--font-mono);
+  margin-right: var(--spacing-xs);
+  white-space: nowrap;
+}

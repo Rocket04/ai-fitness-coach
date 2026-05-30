@@ -3,7 +3,8 @@
 
 import { useEffect, useState } from 'react';
 import { Trophy, Medal } from 'lucide-react';
-import { useAppStore } from '../../stores/useAppStore.js';
+import { useAppStore } from '../../store/index.js';
+import styles from './AchievementToast.module.css';
 
 const TIER_CONFIG = {
   bronze: { 
@@ -47,17 +48,17 @@ export default function AchievementToast() {
   const TierIcon = config.icon;
 
   return (
-    <div className={`achievement-toast ${visible ? 'achievement-toast--visible' : ''}`}>
-      <div className="achievement-toast__icon" style={{ background: config.bg }}>
-        <span className="achievement-toast__emoji">{pendingAchievement.icon}</span>
-        <TierIcon className="achievement-toast__tier-icon" />
+    <div className={`${styles['achievement-toast']} ${visible ? styles['achievement-toast--visible'] : ''}`}>
+      <div className={styles['achievement-toast__icon']} style={{ background: config.bg }}>
+        <span className={styles['achievement-toast__emoji']}>{pendingAchievement.icon}</span>
+        <TierIcon className={styles['achievement-toast__tier-icon']} />
       </div>
-      <div className="achievement-toast__content">
-        <div className="achievement-toast__label">Achievement Unlocked!</div>
-        <div className="achievement-toast__name">{pendingAchievement.name}</div>
-        <div className="achievement-toast__tier">{config.label}</div>
+      <div className={styles['achievement-toast__content']}>
+        <div className={styles['achievement-toast__label']}>Achievement Unlocked!</div>
+        <div className={styles['achievement-toast__name']}>{pendingAchievement.name}</div>
+        <div className={styles['achievement-toast__tier']}>{config.label}</div>
       </div>
-      <button className="achievement-toast__close" onClick={() => { setVisible(false); setTimeout(clearPendingAchievement, 300); }}>
+      <button className={styles['achievement-toast__close']} onClick={() => { setVisible(false); setTimeout(clearPendingAchievement, 300); }}>
         ×
       </button>
     </div>

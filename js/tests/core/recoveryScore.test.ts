@@ -2,7 +2,7 @@
 // TDD: Tiered Recovery Score calculation — Full, Medium, Light
 
 import { describe, it, expect } from 'vitest';
-import { calculateRecoveryScore, getWeightsForTier } from '../../core/recoveryScore.js';
+import { calculateRecoveryScore, getWeightsForTier } from '../../domains/recovery/recoveryScore.js';
 import type { Checkin } from '../../core/types.js';
 
 function makeCheckin(overrides: Partial<Checkin> = {}): Checkin {
@@ -36,7 +36,7 @@ function makeHistory(days: number, base?: Partial<Checkin>): Checkin[] {
 }
 
 describe('getWeightsForTier', () => {
-  it('returns full weights with HRV', () => {
+  it('full tier weights HRV at 0.4, sleep at 0.3, RHR at 0.1, subjective at 0.2', () => {
     const w = getWeightsForTier('full');
     expect(w.hrv).toBe(0.4);
     expect(w.sleep).toBe(0.3);
@@ -44,7 +44,7 @@ describe('getWeightsForTier', () => {
     expect(w.subjective).toBe(0.2);
   });
 
-  it('returns medium weights without HRV', () => {
+  it('medium tier zeroes HRV and shifts weight to RHR and subjective', () => {
     const w = getWeightsForTier('medium');
     expect(w.hrv).toBe(0);
     expect(w.sleep).toBe(0.3);
@@ -52,12 +52,12 @@ describe('getWeightsForTier', () => {
     expect(w.subjective).toBe(0.4);
   });
 
-  it('returns light weights with subjective only', () => {
+  it('light tier uses only subjective weight (1.0)', () => {
     const w = getWeightsForTier('light');
     expect(w.hrv).toBe(0);
     expect(w.sleep).toBe(0);
     expect(w.rhr).toBe(0);
-    expect(w.subjective).toBe(1.0);
+    expect(w.subjective).toBe(1);
   });
 });
 
@@ -92,30 +92,26 @@ describe('calculateRecoveryScore — tier comparison', () => {
     expect(score).toBeGreaterThan(80);
   });
 
-  it('medium tier incorporates RHR when data available', () => {
+  it('medium tier scores higher with good RHR than without RHR', () => {
     const withRHR = makeCheckin({ restHR: 55 });
     const noRHR = makeCheckin({ restHR: 0 });
     const scoreWith = calculateRecoveryScore(withRHR, history, 'medium');
     const scoreWithout = calculateRecoveryScore(noRHR, history, 'medium');
-    // Both should be valid scores
-    expect(scoreWith).toBeGreaterThanOrEqual(0);
-    expect(scoreWithout).toBeGreaterThanOrEqual(0);
+    expect(scoreWith).toBeGreaterThan(scoreWithout);
   });
 
-  it('full tier incorporates HRV when data available', () => {
+  it('full tier scores higher with good HRV than without HRV', () => {
     const withHRV = makeCheckin({ hrv: 70 });
     const noHRV = makeCheckin({ hrv: 0 });
     const scoreWith = calculateRecoveryScore(withHRV, history, 'full');
     const scoreWithout = calculateRecoveryScore(noHRV, history, 'full');
-    expect(scoreWith).toBeGreaterThanOrEqual(0);
-    expect(scoreWithout).toBeGreaterThanOrEqual(0);
+    expect(scoreWith).toBeGreaterThan(scoreWithout);
   });
 
-  it('returns 0 when no checkin data and empty history', () => {
+  it('returns a valid score with default values and empty history', () => {
     const score = calculateRecoveryScore(makeCheckin(), [], 'medium');
-    // With all zeros, medium tier uses defaults (sleep=8, hr=63) + subjective defaults
-    expect(typeof score).toBe('number');
     expect(score).toBeGreaterThanOrEqual(0);
+    expect(score).toBeLessThanOrEqual(100);
   });
 
   it('handles missing baseline gracefully (less than 3 history entries)', () => {

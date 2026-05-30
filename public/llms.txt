@@ -1,0 +1,38 @@
+# Smart Fitness Coach
+
+**Smart Fitness Coach** — PWA-приложение для персональных тренировок с авторегуляцией.
+
+## Overview
+PWA-приложение для персональных тренировок с авторегуляцией. Алгоритмы APRE (Auto-Regressive Progressive Overload) + Recovery Score для адаптивных программ.
+
+## Core Features
+- 7-дневная лента тренировок (A/B/Отдых)
+- APRE симуляторы: автоматическое определение нагрузки
+- Recovery Score: оценка готовности к тренировке
+- Локальное хранение (IndexedDB, 100% офлайн)
+- PWA: установка на устройство, работа без интернета
+
+## Pages
+- [TodayPage](/today) — домашняя лента
+- [LogPage](/log) — журнал тренировок
+- [AnalyticsPage](/analytics) — прогресс и графики
+- [MethodologyPage](/methodology) — симуляторы APRE
+- [ProfilePage](/profile) — настройки и профиль
+
+## Tech Stack
+- [React 18](https://react.dev) + [Vite 5](https://vitejs.dev) + TypeScript strict
+- [Zustand](https://zustand.docs.pmnd.rs) store + [Dexie](https://dexie.org)/IndexedDB
+- Service Worker (Workbox)
+- Tailwind CSS (dark theme)
+
+## Key Concepts
+- APRE = Auto-Regressive Progressive Overload — алгоритм подбора веса/повторений
+- Recovery Score = 0-100 баллов готовности к тренировке
+- workRate = объем × интенсивность (1-5 баллов)
+
+## Install
+```bash
+npm install
+npm run dev    # localhost:5173
+npm run build  # production
+```

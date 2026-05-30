@@ -2,8 +2,8 @@
 
 ## Quality Gates ✅
 - TypeScript: 0 errors (`npx tsc --noEmit`)
-- Tests: 240+ passing (26 files, 0 failures)
-- Build: Clean compilation
+- Tests: 724 passing (61 files)
+- Build: Clean compilation (Vite 8)
 
 ## Complete Feature Set
 
@@ -13,116 +13,137 @@
 - Dexie.js IndexedDB persistence (sessions, checkins, settings, achievements)
 - Offline-first PWA with Workbox service worker
 - Dark theme with CSS custom properties
-- 153 original unit tests
 
 ### Phase 2: Personalization ✅
 - Tiered Recovery Score (Full/Medium/Light weights based on gadget availability)
 - APRE autoregulation engine (Mann tables, 56 tests)
-- HRV zones guide with color-coded recommendations
-- 12-week modular training plans (8 sport templates: running, strength_gym, cycling, swimming, calisthenics, yoga, stretching, walking)
-- Multi-sport selection in onboarding with combineSportPlans() engine
-- Gadget selection with auto-tier-derivation
-- Guided 5-step onboarding wizard
-- i18n (Russian/English translations)
-- Guided spotlight tour (8 steps with animated tooltips + pulse highlights)
-- UserProfile with level, goals, equipment, rehab configuration
+- 12-week modular training plans (8 sport templates)
+- Multi-sport selection in onboarding
+- i18n (Russian/English)
+- Guided tour, onboarding wizard, user profile editor
 
 ### Phase 3: Adaptivity ✅
-- Virtual date offset system (getAppDate/getAppTodaySync helpers)
-- `virtualTodayOffset` persisted in Zustand + IndexedDB
-- All date-sensitive logic uses virtual date (planning, recovery score, stats)
-- 30-day scrollable strip in TodayPage with week navigation arrows
-- Negative offset support (past date navigation)
-- Period-over-period analytics comparison (getPeriodComparison)
-- Chart SVG hover tooltips in TrendChart
+- Virtual date offset system
+- 30-day scrollable strip in TodayPage
+- Period-over-period analytics comparison
+- Chart SVG hover tooltips
 
-### Phase 4: Advanced Profile & Rehab 🆕
-- **UserProfileEditor** — Level (beginner/intermediate/advanced), goals (hypertrophy/strength/endurance/rehabilitation), equipment selection
-- **Rehab exercise filtering** — exerciseLibrary with avoidIf/rehabFor metadata, automatic exercise substitution
-- **Equipment-aware planning** — Exercises filtered by available equipment (barbell→dumbbells→resistance bands substitution)
-- **Level-based sets** — beginner: 2-3, intermediate: 3-4, advanced: 4-5
-- **Goal-based reps** — hypertrophy: 8-12, strength: 3-6, endurance: 15-20, rehabilitation: 10-15
-- **Profile adaptation** — getAdaptedSessionForDate() combines readiness + rehab + profile filtering
+### Phase 4: Advanced Profile & Rehab ✅
+- UserProfileEditor, rehab filtering, equipment-aware planning
+- Level-based sets, goal-based reps
+- Profile adaptation engine
 
-### Architecture: New Modules 🆕
-- `js/core/exerciseDatabase.ts` — Exercise library with rehab/equipment metadata
-- `js/core/warmup.ts` — Warmup routine generator (planned)
-- `js/ui/components/UserProfileEditor.jsx` — Profile configuration form
-- `js/ui/components/LiveWorkoutMode.jsx` — Live workout timer + per-set logging (planned)
+### Phase 5: Premium Dashboard ✅
+- TrendChart: Multi-metric overlay, clickable legend, enhanced tooltips, animations, responsive
+- MethodologyPage: Interactive APRE + Recovery Score simulators
+- OnlineStatus, UpdateBanner, Data Export/Import, Error/Loading/Empty States
+- Accessibility: Focus trap Modal, sr-only utility, aria-labels
 
-### Demo Mode ✅
-- Deterministic synthetic data generator (seeded PRNG, 30 days)
-- Realistic athlete recovery patterns (sinusoidal + noise)
-- Separate IndexedDB `SmartFitnessCoachDemo` for complete isolation
-- activateDemoMode/deactivateDemoMode store actions with backup/restore
-- Developer panel in ProfilePage (±7, ±1, Today, demo toggle)
-- Demo badge in app header (animated pulse)
+### Phase 6: Exercise Tracking Loop ✅
+- Per-set completion checkboxes for non-APRE exercises (ExerciseCard)
+- SetResult tracking in store (pendingSetResults → ExerciseResult[] on save)
+- `completionRate.ts` — session + weekly completion rate (6 tests, TDD)
+- `getVolumeMultiplierFromAdherence()` in planning.ts (≥0.8→1.2x, ≥0.6→1.0x, <0.6→0.8x) (7 tests, TDD)
+- Post-session fatigue/pain inputs in TodayPage
+- `getAdaptedSessionForDate()` accepts `volumeMultiplier` parameter
 
-## Bug Fixes (Recent Sessions)
-1. Fixed 44 TypeScript compilation errors across 12 files
-2. TodayPage `trainType` → derived from `sessionPlan?.sessionType`
-3. `weekNumber` → `totalWeek` property rename
-4. Store imports cleaned up (removed 6 unused imports)
-5. `manifest.json` path fixed
-6. Vite HMR WebSocket CDP limitation documented
+### Phase 7: Architecture Migration ✅ (2026-05-30)
+- Domain-based architecture: 8 modules in `js/domains/` (training, checkin, analytics, profile, achievements, import, demo, onboarding)
+- Shared layer: `js/shared/` — types, helpers, config, hooks, i18n, UI primitives
+- Re-export bridges in `js/core/` and `js/plans/` for backward compatibility
+- Removed stale `js/plans/` stubs (real files in `js/domains/training/plans/`)
+- All `any` types removed from domain logic
+- 724+ tests passing (61 files)
 
-## Test Coverage (240+ tests, 26 files)
-- Original: 153 tests (11 files)
-- New: 87+ tests (8 new files)
-  - demoData.test.ts: 8 tests
-  - helpers.test.ts: 6 tests
-  - useAppStore.offset.test.ts: 4 tests
-  - TodayPage.weekly.test.tsx: 2 tests
-  - storage.demo.test.ts: 2 tests
-  - deriveTier.test.ts: 8 tests
-  - recoveryScore.test.ts: 11 tests
-  - OnboardingWizard.test.tsx: 6 tests
-  - CheckinForm.test.tsx: 4 tests
-  - planning.test.ts: 16 tests (updated with new filters)
+### PWA Enhancements ✅
+- sw.js v2: SKIP_WAITING, cache-first, stale-while-revalidate
+- manifest.json: shortcuts (Today/Checkin/Analytics)
+- SW update detection via useServiceWorkerUpdate hook
+
+### Phase 8: Documentation Sync ✅
+- README.md: test counts (300/33), feature list, file tree (import/, slices/)
+- AGENTS.md: core files list, commit discipline rule
+- memory-bank/progress.md: phases, file structure
+
+## Test Coverage (724 tests, 61 files)
+### Core (via re-export bridges)
+- `completionRate.test.ts` (6) — session/weekly completion rate
+- `adherenceMultiplier.test.ts` (7) — volume multiplier boundaries
+- Existing: achievements(8), analytics(4), apre(56), correlations(7), helpers(5), planning(11), readiness(17), recoveryScore(11), stats(12), streak(12), storage.demo(4), sessionLoad(6), advice(6), validation(9), adaptiveTier(6), deriveTier(8), storage(25)
+
+### UI Components
+- EmptyState(6), ScaleSelector, Skeleton(2), StatBox(3), CorrelationCard(6), MiniSparkline(4)
+
+### Stores
+- useAppStore(11), useAppStore.offset(4)
 
 ## File Structure (Key Files)
-- `js/app.tsx` — Entry point, layout, demo badge
-- `js/stores/useAppStore.ts` — Central store with virtual offset + demo mode + weeklyTemplate + profile
-- `js/config/constants.js` — Training plans, zones, sport categories, gadgets, tour steps
-- `js/core/helpers.ts` — Date utilities (getAppDate, parseLocalDate, formatISO)
-- `js/core/demoData.ts` — Deterministic synthetic data generator
-- `js/core/storage.ts` — Dexie CRUD with demo mode + profile persistence
-- `js/core/planning.ts` — Workout planning with periodization + profile adaptation
-- `js/core/recoveryScore.ts` — Tiered recovery score calculation
-- `js/core/exerciseDatabase.ts` — Exercise library with rehab/equipment metadata 🆕
-- `js/core/apre/engine.js` — APRE autoregulation engine
-- `js/plans/running.ts` — Running plan module
-- `js/plans/strength.ts` — Strength plan module (sport: 'strength_gym')
-- `js/plans/cycling.ts` — Cycling plan module 🆕
-- `js/plans/swimming.ts` — Swimming plan module 🆕
-- `js/plans/calisthenics.ts` — Calisthenics plan module 🆕
-- `js/plans/yoga.ts` — Yoga plan module 🆕
-- `js/plans/stretching.ts` — Stretching plan module 🆕
-- `js/plans/walking.ts` — Walking plan module 🆕
-- `js/ui/pages/TodayPage.jsx` — Dashboard with weekly strip + rehab notification
-- `js/ui/pages/ProfilePage.jsx` — Settings with developer panel + integrations + rehab config
-- `js/ui/components/UserProfileEditor.jsx` — Profile configuration form 🆕
-- `js/ui/components/OnboardingWizard.jsx` — 5-step onboarding
+### Domain Modules (js/domains/)
+- `js/domains/training/apre/engine.js` — APRE engine
+- `js/domains/training/planning/planning.ts` — Periodized plans + adherence multiplier
+- `js/domains/training/planning/completionRate.ts` — session/weekly completion rate
+- `js/domains/training/planning/loadAdjustments.ts` — load adjustments
+- `js/domains/training/plans/` — 8 sport plan modules
+- `js/domains/training/session/sessionLoad.ts` — session load calculation
+- `js/domains/checkin/checkinSlice.ts` — checkin state slice
+- `js/domains/checkin/validation.ts` — checkin validation
+- `js/domains/analytics/analytics.ts` — Trend analysis, correlation detection
+- `js/domains/analytics/stats.ts` — Statistics
+- `js/domains/analytics/streak.ts` — Streak tracking
+- `js/domains/analytics/correlations.ts` — Correlation detection
+- `js/domains/profile/exerciseDatabase.ts` — exercise library with rehab contraindications
+- `js/domains/profile/rehabProtocol.ts` — rehab protocols
+- `js/domains/achievements/achievements.ts` — Achievements
+- `js/domains/import/csvParser.ts` — Health Sync CSV parser + biometrics merger
+- `js/domains/import/importSchemas.ts` — Import schemas
+- `js/domains/import/mergeImportedData.ts` — Data merging
+- `js/domains/demo/demoData.ts` — Demo data generation
+- `js/domains/demo/demoSlice.ts` — Demo state slice
+- `js/domains/onboarding/onboardingStorage.ts` — Onboarding storage
+- `js/domains/onboarding/useTourStore.ts` — Tour state
 
----
+### Shared Layer (js/shared/)
+- `js/shared/types.ts` — All TypeScript types
+- `js/shared/helpers.ts` — Date utilities
+- `js/shared/config/` — Constants, achievements, tour steps
+- `js/shared/hooks/` — Reusable hooks (useFitnessData, useOnlineStatus, useServiceWorkerUpdate)
+- `js/shared/i18n/` — Localization (ru/en)
+- `js/shared/ui/` — UI primitives (Modal, Collapsible, EmptyState, etc.)
 
-## Development Workflow
+### Core Bridges (js/core/)
+- `js/core/storage.ts` — Dexie CRUD + demo mode + export/import (real logic)
+- `js/core/advice.ts` — Coach advice generation (real logic)
+- `js/core/recoveryScore.ts` — Tiered recovery scoring (real logic)
+- `js/core/readiness.ts` — Readiness determination (real logic)
+- Re-export stubs for other modules (backward compatibility)
 
-### Build & Test
-```bash
-npm run build          # Vite production build
-npx tsc --noEmit      # TypeScript type checking
-npm test               # Vitest test suite (240+ tests)
-npx vitest run --reporter=verbose  # Detailed test output
-```
+### Stores
+- `js/stores/useAppStore.ts` — Central store + set result tracking + export/import/reset
+- `js/stores/slices/` — 5 modular slices (checkin, session, ui, data, demo)
 
-### Key Patterns
-- `define config → add types → update store → update UI → write tests → run test suite → verify via Chrome DevTools MCP`
-- All user data stored locally in IndexedDB only (no external APIs)
-- Recovery Score drives workout readiness decisions (green/yellow/red)
-- APRE protocol supports 3, 6, or 10 rep schemes with automatic load adjustment
-- 12-week periodization program across 8 sport templates
+### UI Components
+- `js/ui/components/ExerciseCard.jsx` — Per-set checkboxes (non-APRE) + APRE AMRAP inputs
+- `js/ui/components/OnlineStatus.jsx` — Online/offline pill
+- `js/ui/components/TrendChart.tsx` — Multi-metric chart
 
-### Known Issues
-- Vite HMR WebSocket doesn't connect through CDP browser → manual hard reload (Ctrl+Shift+R) needed
-- TodayPage uses React.createElement (legacy code, not JSX) — exception in CONVENTIONS.md
+### Pages
+- `js/ui/pages/TodayPage.jsx` — Dashboard with post-session fatigue/pain inputs
+- `js/ui/pages/MethodologyPage.jsx` — Interactive simulators
+
+## Known Issues
+- TodayPage uses React.createElement (legacy code, not JSX) — planned refactor in Phase 5
+- `computeDerived()` not yet wired to `calculateWeeklyCompletionRate` + `getVolumeMultiplierFromAdherence` — functions exist, integration deferred
+- 4 real logic files remain in `js/core/` (storage.ts, advice.ts, recoveryScore.ts, readiness.ts) — gradual migration to `js/domains/` in progress
+
+## Phase Status Summary
+
+| Phase | Report Phase | Actual Status |
+|-------|-------------|---------------|
+| Phase 0 (cleanup) | Preparation | ✅ Done — dead code, demo-mode bug, launch_handler |
+| Phase 1 (tracking loop) | Core Logic (W1-4) | ✅ Done — per-set tracking, completion rate, adherence multiplier |
+| Phase 2 (CSV import) | Data Integration (W5-6) | ✅ Done — CSV biometrics parser, exerciseDatabase |
+| Phase 3 (rehab stretching) | Additional Features (W7-8) | ✅ Done — rehab-aware stretching, contraindication filter |
+| Phase 4 (store refactor) | Refactoring (W9-10) | ✅ Done — 5-slice Zustand store |
+| Phase 5 (test coverage) | Testing (W11-12) | ✅ Done — 300+ tests (33 files) |
+| Phase 6 (docs-i18n) | Documentation (Ongoing) | ✅ Done — README, AGENTS.md, progress.md sync |
+| Phase 7 (arch migration) | Architecture Migration | ✅ Done — domain-based structure, 724 tests, js/domains/ + js/shared/ |

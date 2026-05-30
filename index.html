@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Умный тренер тренировок с авторегуляцией APRE и Recovery Score. Полностью бесплатно, все данные на устройстве.">
   <meta name="theme-color" content="#4f7c44">
+  <meta http-equiv="Content-Security-Policy" content="__CSP__">
   <title>Smart Fitness Coach</title>
   <link rel="manifest" href="manifest.json">
   <!-- Critical CSS inline to eliminate render blocking -->
@@ -181,7 +182,22 @@
       background: linear-gradient(135deg, rgba(74, 222, 128, 0.08), rgba(96, 165, 250, 0.05));
     }
 
-    /* ── Readiness Ring Base (Critical) ── */
+    /* ── Online Status (Critical) ── */
+    .online-status { transition: all var(--transition-normal); }
+
+    /* ── Update Banner (Critical) ── */
+    @keyframes slideDown {
+      from { transform: translateY(-100%); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    /* ── Skeleton Page (Critical) ── */
+    .skeleton-page {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-md);
+      padding: var(--spacing-md);
+    }
     .readiness-ring { cursor: pointer; transition: transform 0.2s ease; }
     .readiness-ring:hover { transform: scale(1.02); }
     .readiness-ring__svg { display: block; margin: 0 auto; }
@@ -194,21 +210,6 @@
 <body>
   <div id="root"></div>
   <script type="module" src="js/app.tsx"></script>
-
-  <script>
-    window.addEventListener('error', function(event) {
-      console.error('[Global Error]', event.error || event.message);
-    });
-    window.addEventListener('unhandledrejection', function(event) {
-      console.error('[Unhandled Promise Rejection]', event.reason);
-    });
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').then(reg => {
-        console.log('Service Worker зарегистрирован:', reg.scope);
-      }).catch(err => {
-        console.error('Ошибка регистрации Service Worker:', err);
-      });
-    }
-  </script>
+  <script src="/sw-register.js"></script>
 </body>
 </html>
